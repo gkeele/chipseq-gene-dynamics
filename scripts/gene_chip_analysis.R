@@ -91,6 +91,22 @@ gridExtra::grid.arrange(writer_loss, writer_eraser_loss, writer_add, nrow = 1)
 gene_chip_lmm <- lmer(value ~ 1 + timepoint + assay + timepoint:assay + (1 | rep_id) + (assay + timepoint + assay:timepoint - 1 | gene), data = gene_chip_dat, REML = FALSE)
 #gene_chip_lmm <- lmer(value ~ 1 + timepoint + assay + (1 | rep_id) + (timepoint | rep_id), data = gene_chip_dat) # Fails to converge
 
+## Test for assay
+gene_chip_lmm_assay <- lmer(value ~ 1 + timepoint + assay + (1 | rep_id) + (timepoint - 1 | batch_id), data = gene_chip_dat, REML = FALSE)
+gene_chip_lmm_noassay <- lmer(value ~ 1 + timepoint + (1 | rep_id) + (timepoint - 1 | batch_id), data = gene_chip_dat, REML = FALSE)
+anova(gene_chip_lmm_assay, gene_chip_lmm_noassay)
+
+## Test for timepoint
+gene_chip_lmm_assay <- lmer(value ~ 1 + timepoint + assay + (1 | rep_id) + (timepoint - 1 | batch_id), data = gene_chip_dat, REML = FALSE)
+gene_chip_lmm_noassay <- lmer(value ~ 1 + timepoint + (1 | rep_id) + (timepoint - 1 | batch_id), data = gene_chip_dat, REML = FALSE)
+anova(gene_chip_lmm_assay, gene_chip_lmm_noassay)
+
+## Test for interaction of assay with time
+gene_chip_lmm_full <- lmer(value ~ 1 + timepoint + assay + timepoint:assay + (1 | rep_id), data = gene_chip_dat, REML = FALSE)
+gene_chip_lmm_noint <- lmer(value ~ 1 + timepoint + assay + (1 | rep_id), data = gene_chip_dat, REML = FALSE)
+anova(gene_chip_lmm_full, gene_chip_lmm_noint)
+
+
 ## Mean model
 mean_gene_chip_lmm1 <- lmer(value ~ 1 + assay*timepoint + (1 + assay*timepoint | gene), data = mean_gene_chip_dat, REML = FALSE)
 mean_gene_chip_lmm2 <- lmer(value ~ 1 + assay*timepoint + (1 + assay + timepoint | gene), data = mean_gene_chip_dat, REML = FALSE)
