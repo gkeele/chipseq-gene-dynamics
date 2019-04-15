@@ -10,8 +10,8 @@ names(gene_chip_dat) <- c("gene", "assay", "replicate", "timepoint", "value")
 gene_chip_dat <- gene_chip_dat %>%
   mutate(assay = factor(assay),
          assay = recode(assay, "1" = "writer_loss", "2" = "writer_eraser_loss", "3" = "writer_add"),
-         rep_id = paste(gene, assay, timepoint, sep = "_"),
-         batch_id = paste(gene, assay, sep = "_"))
+         sample_unit = paste(gene, assay, sep = "_"),
+         rep_id = paste(gene, assay, timepoint, sep = "_"))
 
 ###### Individual gene plots
 practice <- gene_chip_dat %>%
@@ -92,6 +92,8 @@ gridExtra::grid.arrange(writer_loss, writer_eraser_loss, writer_add, nrow = 1)
 
 
 ## Full model
+gene_chip_lmm <- lmer(value ~ (1 + timepoint + assay + timepoint:assay | sample_unit), REML = FALSE, data = gene_chip_dat)
+
 gene_chip_lmm <- lmer(value ~ 1 + timepoint + assay + timepoint:assay + (1 | rep_id) + (assay + timepoint + assay:timepoint - 1 | gene), data = gene_chip_dat, REML = FALSE)
 #gene_chip_lmm <- lmer(value ~ 1 + timepoint + assay + (1 | rep_id) + (timepoint | rep_id), data = gene_chip_dat) # Fails to converge
 
