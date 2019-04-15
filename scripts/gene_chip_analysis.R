@@ -10,16 +10,16 @@ names(gene_chip_dat) <- c("gene", "assay", "replicate", "timepoint", "value")
 gene_chip_dat <- gene_chip_dat %>%
   mutate(assay = factor(assay),
          assay = recode(assay, "1" = "writer_loss", "2" = "writer_eraser_loss", "3" = "writer_add"),
-         sample_unit = paste(gene, assay, sep = "_"),
-         rep_id = paste(gene, assay, timepoint, sep = "_"))
+         sample_unit = paste(gene, assay, replicate, sep = "_"))
 
 ###### Individual gene plots
 practice <- gene_chip_dat %>%
-  filter(gene %in% unique(gene_chip_dat$gene)[1:3])
+  filter(gene %in% unique(gene_chip_dat$gene)[1:5]) %>%
+  group_by(sample_unit)
 
 ## Linear
-g <- ggplot(data = practice, aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line() + facet_wrap(~gene)
-g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm")
+g <- ggplot(data = practice, aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
+g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
 g <- g + theme(panel.grid.major = element_blank(), 
                     panel.grid.minor = element_blank(),
                     panel.background = element_blank(), 
@@ -31,7 +31,7 @@ g <- g + theme(panel.grid.major = element_blank(),
 g
 
 ## LOESS (curves)
-g <- ggplot(data = practice, aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + facet_wrap(~gene)
+g <- ggplot(data = practice, aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
 g <- g + geom_smooth(aes(y = value, x = timepoint), method = "loess")
 g <- g + theme(panel.grid.major = element_blank(), 
                panel.grid.minor = element_blank(),
@@ -42,6 +42,15 @@ g <- g + theme(panel.grid.major = element_blank(),
                axis.title = element_text(size = 12, face = "bold"),
                axis.text.x = element_text(hjust = 1, face = "bold")) + guides(color = FALSE)
 g
+
+
+
+######## Use linear models
+fifth_gene <- practice %>% filter(gene == practice$gene[1])
+
+temp1 <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), data = first_gene %>% filter(assay == "writer_loss", value != 0, value != 1), family = "beta")
+temp2 <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), data = first_gene %>% filter(assay == "writer_eraser_loss", value != 0, value != 1), family = "beta")
+temp3 <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), data = first_gene %>% filter(assay == "writer_add", value != 0, value != 1), family = "beta")
 
 ## Assay specific plots
 mean_gene_chip_dat <- gene_chip_dat %>%
