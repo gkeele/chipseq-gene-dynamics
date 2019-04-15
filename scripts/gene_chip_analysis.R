@@ -1,8 +1,10 @@
 library(lme4)
 library(tidyverse)
 
+setwd("~/projects/chipseq-gene-dynamics/")
+
 ## Read in the data
-gene_chip_dat <- read.table("~/projects/Valdar_stuff/chipseq-gene-dynamics/data/scaled_matrix_for_LMM_model_nonOverlappingGenes.txt") # path to data
+gene_chip_dat <- read.table("data/scaled_matrix_for_LMM_model_nonOverlappingGenes.txt") # path to data
 names(gene_chip_dat) <- c("gene", "assay", "replicate", "timepoint", "value")
 
 gene_chip_dat <- gene_chip_dat %>%
@@ -11,11 +13,12 @@ gene_chip_dat <- gene_chip_dat %>%
          rep_id = paste(gene, assay, timepoint, sep = "_"),
          batch_id = paste(gene, assay, sep = "_"))
 
-## Individual gene plots
+###### Individual gene plots
 practice <- gene_chip_dat %>%
   filter(gene %in% unique(gene_chip_dat$gene)[1:3])
 
-g <- ggplot(data = practice, aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + facet_wrap(~gene)
+## Linear
+g <- ggplot(data = practice, aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line() + facet_wrap(~gene)
 g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm")
 g <- g + theme(panel.grid.major = element_blank(), 
                     panel.grid.minor = element_blank(),
@@ -27,6 +30,7 @@ g <- g + theme(panel.grid.major = element_blank(),
                     axis.text.x = element_text(hjust = 1, face = "bold")) + guides(color = FALSE)
 g
 
+## LOESS (curves)
 g <- ggplot(data = practice, aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + facet_wrap(~gene)
 g <- g + geom_smooth(aes(y = value, x = timepoint), method = "loess")
 g <- g + theme(panel.grid.major = element_blank(), 
