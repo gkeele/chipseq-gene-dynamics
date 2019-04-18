@@ -56,35 +56,6 @@ g
 
 ######## Stan analysis
 ## Try YAL012W and YAL066W
-
-# YAL012W - clean signal
-yal012w_wl <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), data = gene_chip_dat %>% filter(gene == "YAL012W",
-                                                                                                               assay == "writer_loss", 
-                                                                                                               value != 0, 
-                                                                                                               value != 1), family = "beta")
-yal012w_wel <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), data = gene_chip_dat %>% filter(gene == "YAL012W",
-                                                                                                          assay == "writer_eraser_loss", 
-                                                                                                          value != 0, 
-                                                                                                          value != 1), family = "beta")
-yal012w_wa <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), data = gene_chip_dat %>% filter(gene == "YAL012W",
-                                                                                                          assay == "writer_add", 
-                                                                                                          value != 0, 
-                                                                                                          value != 1), family = "beta")
-
-# YAL066W - messy signal
-yal066w_wl <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), data = gene_chip_dat %>% filter(gene == "YAL066W",
-                                                                                                               assay == "writer_loss", 
-                                                                                                               value != 0, 
-                                                                                                               value != 1), family = "beta")
-yal066w_wel <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), data = gene_chip_dat %>% filter(gene == "YAL066W",
-                                                                                                                assay == "writer_eraser_loss", 
-                                                                                                                value != 0, 
-                                                                                                                value != 1), family = "beta")
-yal066w_wa <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), data = gene_chip_dat %>% filter(gene == "YAL066W",
-                                                                                                               assay == "writer_add", 
-                                                                                                               value != 0, 
-                                                                                                               value != 1), family = "beta")
-
 ## Function to run brms
 run_brms_on_chipseq <- function(chipseq_dat, this_gene) {
   use_dat <- chipseq_dat %>% filter(gene == this_gene,
