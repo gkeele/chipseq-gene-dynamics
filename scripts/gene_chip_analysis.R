@@ -23,11 +23,11 @@ gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$time
 
 ###### Individual gene plots
 practice <- gene_chip_dat %>%
-  filter(gene %in% unique(gene_chip_dat$gene)[1:16]) %>%
+  filter(gene %in% unique(gene_chip_dat$gene)[1]) %>%
   group_by(sample_unit)
 
 ## Linear
-g <- ggplot(data = practice, aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
+g <- ggplot(data = practice, aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
 g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
 g <- g + theme(panel.grid.major = element_blank(), 
                     panel.grid.minor = element_blank(),
@@ -36,7 +36,7 @@ g <- g + theme(panel.grid.major = element_blank(),
                     plot.title = element_text(hjust = 0.5), 
                     axis.text = element_text(size = 12, face = "bold"),
                     axis.title = element_text(size = 12, face = "bold"),
-                    axis.text.x = element_text(hjust = 1, face = "bold")) + guides(color = FALSE)
+                    axis.text.x = element_text(hjust = 1, face = "bold"))
 g
 
 ## LOESS (curves)
@@ -54,7 +54,7 @@ g
 
 
 
-######## Stan analysis
+######## Example Stan analysis
 ## Try YAL012W and YAL066W
 ## Function to run brms
 run_brms_on_chipseq <- function(chipseq_dat, this_gene) {
@@ -88,6 +88,111 @@ run_brms_on_chipseq <- function(chipseq_dat, this_gene) {
 
 yal012w_models <- run_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "YAL012W")
 yal066w_models <- run_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "YAL066W")
+
+
+## Parsing full set of Stan results
+stan_fit_paths <- list.files("individual_gene_Stan_models/", full.names = TRUE)
+for (i in 1:length(stan_fit_paths)) {
+  this_fit <- readRDS(stan_fit_paths[i])
+  this_gene <- gsub(x = stan_fit_paths[i], pattern = "individual_gene_Stan_models//sacCer3_nonOverlappingGenes_noChrMGenes_", replacement = "", fixed = TRUE) %>%
+    gsub(x = ., replacement = "", pattern = "_Stan.rds", fixed = TRUE)
+  
+  if (i == 1) {
+    timepoint_dat <- bind_rows(data.frame(gene = this_gene, assay = "writer_loss", this_fit$writer_loss %>% filter(parameter == "timepoint")),
+                               data.frame(gene = this_gene, assay = "writer_eraser_loss", this_fit$writer_eraser_loss %>% filter(parameter == "timepoint")),
+                               data.frame(gene = this_gene, assay = "writer_add", this_fit$writer_add %>% filter(parameter == "timepoint")))
+  }
+  else {
+    timepoint_dat <- bind_rows(timepoint_dat,
+                               data.frame(gene = this_gene, assay = "writer_loss", this_fit$writer_loss %>% filter(parameter == "timepoint")),
+                               data.frame(gene = this_gene, assay = "writer_eraser_loss", this_fit$writer_eraser_loss %>% filter(parameter == "timepoint")),
+                               data.frame(gene = this_gene, assay = "writer_add", this_fit$writer_add %>% filter(parameter == "timepoint")))
+  }
+}
+timepoint_dat <- timepoint_dat %>% 
+  select(-parameter) %>%
+  mutate(estimate = estimate * 60,
+         is_pos = ifelse(lower_95 > 0), TRUE, FALSE,
+         is_neg = ifelse(upper_95 < 0), TRUE, FALSE)
+timepoint_dat$category[timepoint_dat$lower_95 > 0] <- "positive"
+timepoint_dat$category[timepoint_dat$upper_95 < 0] <- "negative"
+timepoint_dat$category[timepoint_dat$lower_95 < 0 & timepoint_dat$upper_95 > 0] <- "zero"
+
+  
+ggplot(data = timepoint_dat, aes(x = estimate)) + geom_histogram() + facet_grid(assay~.)
+ggplot(data = timepoint_dat %>% filter(category %in% c("positive", "negative"),
+                                       estimate > -10), 
+       aes(x = estimate)) + geom_histogram() + facet_grid(assay~.)
+
+## Grabbing extreme negative genes
+low_genes <- timepoint_dat %>% 
+  filter(estimate < -10,
+         category == "negative") %>%
+  pull(gene) %>%
+  unique
+
+## Grabbing extreme negative genes
+zero_genes <- timepoint_dat %>% 
+  filter(category == "zero") %>%
+  pull(gene) %>%
+  unique
+
+g <- ggplot(data = gene_chip_dat %>% filter(gene %in% low_genes[1:25]), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
+g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
+g <- g + theme(panel.grid.major = element_blank(), 
+               panel.grid.minor = element_blank(),
+               panel.background = element_blank(), 
+               axis.line = element_line(colour = "black"),
+               plot.title = element_text(hjust = 0.5), 
+               axis.text = element_text(size = 12, face = "bold"),
+               axis.title = element_text(size = 12, face = "bold"),
+               axis.text.x = element_text(hjust = 1, face = "bold")) + guides(color = FALSE)
+g
+g <- ggplot(data = gene_chip_dat %>% filter(gene %in% zero_genes[1:25]), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
+g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
+g <- g + theme(panel.grid.major = element_blank(), 
+               panel.grid.minor = element_blank(),
+               panel.background = element_blank(), 
+               axis.line = element_line(colour = "black"),
+               plot.title = element_text(hjust = 0.5), 
+               axis.text = element_text(size = 12, face = "bold"),
+               axis.title = element_text(size = 12, face = "bold"),
+               axis.text.x = element_text(hjust = 1, face = "bold")) + guides(color = FALSE)
+g
+
+genes_all <- unique(gene_chip_dat$gene)
+genes_pos_wa <- timepoint_dat %>% 
+  filter(assay == "writer_add",
+         category == "positive") %>%
+  pull(gene)
+genes_neg_wl <- timepoint_dat %>% 
+  filter(assay == "writer_loss",
+         category == "negative") %>%
+  pull(gene)
+genes_neg_wel <- timepoint_dat %>% 
+  filter(assay == "writer_eraser_loss",
+         category == "negative") %>%
+  pull(gene)
+genes_neg_loss <- intersect(genes_neg_wl, genes_neg_wel)
+genes_overlap <- intersect(genes_pos_wa, genes_neg_wl) %>% intersect(genes_neg_wel)
+
+library(UpSetR)
+upset_dat <- data.frame(genes = genes_all,
+                        WA_positive = sapply(1:length(genes_all), function(i) as.numeric(genes_all[i] %in% genes_pos_wa)),
+                        WL_negative = sapply(1:length(genes_all), function(i) as.numeric(genes_all[i] %in% genes_neg_wl)),
+                        WEL_negative = sapply(1:length(genes_all), function(i) as.numeric(genes_all[i] %in% genes_neg_wel)))
+upset(upset_dat, order.by = "freq", text.scale = c(1.5, 1.5, 1.5, 1.2, 1.2), sets.bar.color = c("coral", "magenta", "seagreen1"))
+
+## Estimate by error
+plot(timepoint_dat$est_error, timepoint_dat$estimate, pch = ifelse(timepoint_dat$category == "zero", 1, 19), col = c("coral", "magenta", "seagreen1")[as.factor(timepoint_dat$assay)], 
+     las = 1, ylab = "Trend with time", xlab = "Error on trend")
+plot(timepoint_dat$est_error, timepoint_dat$estimate, ylim = c(-7, 7), pch = ifelse(timepoint_dat$category == "zero", 1, 19), col = c("coral", "magenta", "seagreen1")[as.factor(timepoint_dat$assay)], 
+     las = 1, ylab = "Trend with time", xlab = "Error on trend")
+
+time_alt_fit <- lm(estimate ~ 1 + assay, data = timepoint_dat, weights = 1/timepoint_dat$est_error)
+time_null_fit <- lm(estimate ~ 1, data = timepoint_dat, weights = 1/timepoint_dat$est_error)
+anova(time_alt_fit, time_null_fit)
+
 
 ## Assay specific plots
 mean_gene_chip_dat <- gene_chip_dat %>%
@@ -136,41 +241,4 @@ writer_add
 
 gridExtra::grid.arrange(writer_loss, writer_eraser_loss, writer_add, nrow = 1)
 
-
-## Full model
-gene_chip_lmm <- lmer(value ~ (1 + timepoint + assay + timepoint:assay | sample_unit), REML = FALSE, data = gene_chip_dat)
-
-gene_chip_lmm <- lmer(value ~ 1 + timepoint + assay + timepoint:assay + (1 | rep_id) + (assay + timepoint + assay:timepoint - 1 | gene), data = gene_chip_dat, REML = FALSE)
-#gene_chip_lmm <- lmer(value ~ 1 + timepoint + assay + (1 | rep_id) + (timepoint | rep_id), data = gene_chip_dat) # Fails to converge
-
-## Test for assay
-gene_chip_lmm_assay <- lmer(value ~ 1 + timepoint + assay + (1 | rep_id) + (timepoint - 1 | batch_id), data = gene_chip_dat, REML = FALSE)
-gene_chip_lmm_noassay <- lmer(value ~ 1 + timepoint + (1 | rep_id) + (timepoint - 1 | batch_id), data = gene_chip_dat, REML = FALSE)
-anova(gene_chip_lmm_assay, gene_chip_lmm_noassay)
-
-## Test for timepoint
-gene_chip_lmm_assay <- lmer(value ~ 1 + timepoint + assay + (1 | rep_id) + (timepoint - 1 | batch_id), data = gene_chip_dat, REML = FALSE)
-gene_chip_lmm_noassay <- lmer(value ~ 1 + timepoint + (1 | rep_id) + (timepoint - 1 | batch_id), data = gene_chip_dat, REML = FALSE)
-anova(gene_chip_lmm_assay, gene_chip_lmm_noassay)
-
-## Test for interaction of assay with time
-gene_chip_lmm_full <- lmer(value ~ 1 + timepoint + assay + timepoint:assay + (1 | rep_id), data = gene_chip_dat, REML = FALSE)
-gene_chip_lmm_noint <- lmer(value ~ 1 + timepoint + assay + (1 | rep_id), data = gene_chip_dat, REML = FALSE)
-anova(gene_chip_lmm_full, gene_chip_lmm_noint)
-
-
-## Mean model
-mean_gene_chip_lmm1 <- lmer(value ~ 1 + assay*timepoint + (1 + assay*timepoint | gene), data = mean_gene_chip_dat, REML = FALSE)
-mean_gene_chip_lmm2 <- lmer(value ~ 1 + assay*timepoint + (1 + assay + timepoint | gene), data = mean_gene_chip_dat, REML = FALSE)
-
-
-
-lmm1 <- lmer(value ~ 1 + timepoint + assay + (1 + timepoint + assay | gene), data = mean_gene_chip_dat, REML = 0)
-lmm2 <- lmer(value ~ 1 + timepoint + assay + (1| gene) + (timepoint - 1 | gene) + (assay - 1 | gene), data = mean_gene_chip_dat, REML = 0)
-lmm3 <- lmer(value ~ 1 + timepoint + (1| gene) + (timepoint - 1 | gene), data = mean_gene_chip_dat, REML = 0)
-anova(lmm1, lmm2)
-anova(lmm3, lmm2)
-
-
-blup <- ranef(mean_gene_chip_lmm)
 
