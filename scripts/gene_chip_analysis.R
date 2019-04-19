@@ -12,12 +12,12 @@ gene_chip_dat <- gene_chip_dat %>%
   mutate(assay = factor(assay),
          assay = recode(assay, "1" = "writer_loss", "2" = "writer_eraser_loss", "3" = "writer_add"),
          sample_unit = paste(gene, assay, replicate, sep = "_"))
-gene_chip_dat$timepoint[gene_chip_dat$assay %in% c("writer_loss", "writer_eraser_loss") & gene_chip_dat$timepoint == 1] <- 30
-gene_chip_dat$timepoint[gene_chip_dat$assay %in% c("writer_loss", "writer_eraser_loss") & gene_chip_dat$timepoint == 2] <- 60
-gene_chip_dat$timepoint[gene_chip_dat$assay %in% c("writer_loss", "writer_eraser_loss") & gene_chip_dat$timepoint == 3] <- 90
-gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$timepoint == 1] <- 20
-gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$timepoint == 2] <- 40
-gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$timepoint == 3] <- 60
+gene_chip_dat$timepoint[gene_chip_dat$assay %in% c("writer_loss", "writer_eraser_loss") & gene_chip_dat$timepoint == 1] <- 30/60
+gene_chip_dat$timepoint[gene_chip_dat$assay %in% c("writer_loss", "writer_eraser_loss") & gene_chip_dat$timepoint == 2] <- 60/60
+gene_chip_dat$timepoint[gene_chip_dat$assay %in% c("writer_loss", "writer_eraser_loss") & gene_chip_dat$timepoint == 3] <- 90/60
+gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$timepoint == 1] <- 20/60
+gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$timepoint == 2] <- 40/60
+gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$timepoint == 3] <- 60/60
 
 
 
@@ -57,25 +57,34 @@ g
 ######## Example Stan analysis
 ## Try YAL012W and YAL066W
 ## Function to run brms
-run_brms_on_chipseq <- function(chipseq_dat, this_gene) {
+run_brms_on_chipseq <- function(chipseq_dat, 
+                                this_gene, 
+                                adapt_delta = 0.8,
+                                iter = 2000) {
   use_dat <- chipseq_dat %>% filter(gene == this_gene,
                                     !(value %in% c(0, 1)))
   # writer loss
   wl_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
                       data = use_dat %>% filter(assay == "writer_loss"), 
-                      family = "beta")
+                      family = "beta",
+                      iter = iter,
+                      control = list(adapt_delta = adapt_delta))
   wl_fixed <- summary(wl_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
   wl_random <- summary(wl_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
   # writer-eraser loss
   wel_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
                        data = use_dat %>% filter(assay == "writer_eraser_loss"), 
-                       family = "beta")
+                       family = "beta",
+                       iter = iter,
+                       control = list(adapt_delta = adapt_delta))
   wel_fixed <- summary(wel_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
   wel_random <- summary(wel_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
   # writer add
   wa_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
-                       data = use_dat %>% filter(assay == "writer_add"), 
-                       family = "beta")
+                      data = use_dat %>% filter(assay == "writer_add"), 
+                      family = "beta",
+                      iter = iter,
+                      control = list(adapt_delta = adapt_delta))
   wa_fixed <- summary(wa_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
   wa_random <- summary(wa_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
 
@@ -88,6 +97,10 @@ run_brms_on_chipseq <- function(chipseq_dat, this_gene) {
 
 yal012w_models <- run_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "YAL012W")
 yal066w_models <- run_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "YAL066W")
+
+
+## Gene with extreme low effect
+yal041w_models <- run_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "YAL041W", adapt_delta = 0.99, iter = 5000)
 
 
 ## Parsing full set of Stan results
@@ -183,7 +196,7 @@ upset_dat <- data.frame(genes = genes_all,
                         WEL_negative = sapply(1:length(genes_all), function(i) as.numeric(genes_all[i] %in% genes_neg_wel)))
 upset(upset_dat, order.by = "freq", text.scale = c(1.5, 1.5, 1.5, 1.2, 1.2), sets.bar.color = c("coral", "magenta", "seagreen1"))
 
-## Estimate by error
+## Time trend estimate by error
 plot(timepoint_dat$est_error, timepoint_dat$estimate, pch = ifelse(timepoint_dat$category == "zero", 1, 19), col = c("coral", "magenta", "seagreen1")[as.factor(timepoint_dat$assay)], 
      las = 1, ylab = "Trend with time", xlab = "Error on trend")
 plot(timepoint_dat$est_error, timepoint_dat$estimate, ylim = c(-7, 7), pch = ifelse(timepoint_dat$category == "zero", 1, 19), col = c("coral", "magenta", "seagreen1")[as.factor(timepoint_dat$assay)], 
@@ -193,6 +206,17 @@ time_alt_fit <- lm(estimate ~ 1 + assay, data = timepoint_dat, weights = 1/timep
 time_null_fit <- lm(estimate ~ 1, data = timepoint_dat, weights = 1/timepoint_dat$est_error)
 anova(time_alt_fit, time_null_fit)
 
+## Gene level
+gene_timepoint_dat <- timepoint_dat %>% 
+  select(gene, assay, estimate) %>%
+  spread(key = assay, value = estimate) 
+
+plot(gene_timepoint_dat$writer_eraser_loss, gene_timepoint_dat$writer_loss)
+plot(gene_timepoint_dat$writer_eraser_loss, gene_timepoint_dat$writer_loss, xlim = c(-5, 5), ylim = c(-5, 5))
+
+plot(gene_timepoint_dat$writer_add, gene_timepoint_dat$writer_loss, xlim = c(-5, 5), ylim = c(-5, 5))
+abline(h = 0, lty = 2)
+abline(v = 0, lty = 2)
 
 ## Assay specific plots
 mean_gene_chip_dat <- gene_chip_dat %>%
