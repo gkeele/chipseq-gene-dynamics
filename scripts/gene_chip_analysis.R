@@ -13,13 +13,18 @@ names(gene_chip_dat) <- c("gene", "assay", "replicate", "timepoint", "value")
 gene_chip_dat <- gene_chip_dat %>%
   mutate(assay = factor(assay),
          assay = recode(assay, "1" = "writer_loss", "2" = "writer_eraser_loss", "3" = "writer_add"),
-         sample_unit = paste(gene, assay, replicate, sep = "_"))
-gene_chip_dat$timepoint[gene_chip_dat$assay %in% c("writer_loss", "writer_eraser_loss") & gene_chip_dat$timepoint == 1] <- 30/60
-gene_chip_dat$timepoint[gene_chip_dat$assay %in% c("writer_loss", "writer_eraser_loss") & gene_chip_dat$timepoint == 2] <- 60/60
-gene_chip_dat$timepoint[gene_chip_dat$assay %in% c("writer_loss", "writer_eraser_loss") & gene_chip_dat$timepoint == 3] <- 90/60
-gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$timepoint == 1] <- 20/60
-gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$timepoint == 2] <- 40/60
-gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$timepoint == 3] <- 60/60
+         sample_unit = paste(gene, assay, replicate, sep = "_"),
+         value = ifelse(value == 0, value + 0.0001, value),
+         value = ifelse(value == 1, value - 0.0001, value),
+         timepoint_cat = factor(timepoint))
+gene_chip_dat$timepoint[gene_chip_dat$assay %in% c("writer_loss", "writer_eraser_loss") & gene_chip_dat$timepoint_cat == 0] <- 0
+gene_chip_dat$timepoint[gene_chip_dat$assay %in% c("writer_loss", "writer_eraser_loss") & gene_chip_dat$timepoint_cat == 1] <- 30/60
+gene_chip_dat$timepoint[gene_chip_dat$assay %in% c("writer_loss", "writer_eraser_loss") & gene_chip_dat$timepoint_cat == 2] <- 60/60
+gene_chip_dat$timepoint[gene_chip_dat$assay %in% c("writer_loss", "writer_eraser_loss") & gene_chip_dat$timepoint_cat == 3] <- 90/60
+gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$timepoint_cat == 0] <- 0
+gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$timepoint_cat == 1] <- 20/60
+gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$timepoint_cat == 2] <- 40/60
+gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$timepoint_cat == 3] <- 60/60
 
 
 
@@ -63,8 +68,8 @@ run_brms_on_chipseq <- function(chipseq_dat,
                                 this_gene, 
                                 adapt_delta = 0.8,
                                 iter = 2000) {
-  use_dat <- chipseq_dat %>% filter(gene == this_gene,
-                                    !(value %in% c(0, 1)))
+  use_dat <- chipseq_dat %>% filter(gene == this_gene)#,
+                                    #!(value %in% c(0, 1)))
   # writer loss
   wl_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
                       data = use_dat %>% filter(assay == "writer_loss"), 
@@ -226,17 +231,35 @@ abline(v = 0, lty = 2)
 
 
 ## Looking at differences between wl and wel
-practice_dat <- gene_chip_dat %>% 
-  filter(gene == gene_chip_dat$gene[10],
-         value != 0 & value != 1,
-         assay %in% c("writer_loss", "writer_eraser_loss"))
-compare_fit <- brms::brm(value ~ 1 + timepoint + assay + timepoint:assay + (1 + timepoint + assay + timepoint:assay | sample_unit), 
+loss_compare_dat <- gene_chip_dat %>%
+  filter(assay %in% c("writer_loss", "writer_eraser_loss"))
+
+practice_dat <- loss_compare_dat %>% 
+  filter(gene == gene_chip_dat$gene[10])
+compare_fit <- brms::brm(value ~ 1 + timepoint_cat + assay + timepoint_cat:assay + (1 + timepoint_cat + assay + timepoint_cat:assay | sample_unit), 
                     data = practice_dat, 
                     family = "beta",
                     iter = 2000,
                     control = list(adapt_delta = 0.8))
 
+compare_wl_to_wel_brms <- function(chipseq_dat, 
+                                   this_gene, 
+                                   adapt_delta = 0.8,
+                                   iter = 2000) {
+  use_dat <- chipseq_dat %>% filter(gene == this_gene,
+                                    assay %in% c("writer_loss", "writer_eraser_loss"))
+  
+  compare_fit <- brms::brm(value ~ 1 + timepoint_cat + assay + timepoint_cat:assay + (1 + timepoint_cat + assay + timepoint_cat:assay | sample_unit), 
+                           data = use_dat, 
+                           family = "beta",
+                           iter = iter,
+                           control = list(adapt_delta = adapt_delta))
+  compare_fixed <- summary(compare_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
+  compare_fixed
+}
 
+practice <- compare_wl_to_wel_brms(chipseq_dat = gene_chip_dat,
+                                   this_gene = gene_chip_dat$gene[10])
 
 ## Assay specific plots
 mean_gene_chip_dat <- gene_chip_dat %>%
