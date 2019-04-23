@@ -113,8 +113,8 @@ yal041w_models <- run_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "
 ## Parsing full set of Stan results
 stan_fit_paths <- list.files("individual_gene_Stan_models/", full.names = TRUE)
 #stan_fit_paths <- list.files("individual_gene_Stan_models_alpha_0.99_iter_5000//", full.names = TRUE)
-#file_path <- "individual_gene_Stan_models//sacCer3_nonOverlappingGenes_noChrMGenes_"
-file_path <- "individual_gene_Stan_models_alpha_0.99_iter_5000///sacCer3_nonOverlappingGenes_noChrMGenes_"
+file_path <- "individual_gene_Stan_models//sacCer3_nonOverlappingGenes_noChrMGenes_"
+#file_path <- "individual_gene_Stan_models_alpha_0.99_iter_5000///sacCer3_nonOverlappingGenes_noChrMGenes_"
 for (i in 1:length(stan_fit_paths)) {
   this_fit <- readRDS(stan_fit_paths[i])
 
@@ -155,13 +155,19 @@ low_genes <- timepoint_dat %>%
   pull(gene) %>%
   unique
 
-## Grabbing extreme negative genes
-zero_genes <- timepoint_dat %>% 
-  filter(category == "zero") %>%
+## Grabbing high genes
+high_genes <- timepoint_dat %>% 
+  filter(category == "positive") %>%
   pull(gene) %>%
   unique
 
-g <- ggplot(data = gene_chip_dat %>% filter(gene %in% low_genes[1:25]), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
+## Grabbing low genes
+high_genes <- timepoint_dat %>% 
+  filter(category == "positive") %>%
+  pull(gene) %>%
+  unique
+
+g <- ggplot(data = gene_chip_dat %>% filter(gene %in% high_genes[1:6]), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
 g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
 g <- g + theme(panel.grid.major = element_blank(), 
                panel.grid.minor = element_blank(),
@@ -172,7 +178,7 @@ g <- g + theme(panel.grid.major = element_blank(),
                axis.title = element_text(size = 12, face = "bold"),
                axis.text.x = element_text(hjust = 1, face = "bold")) + guides(color = FALSE)
 g
-g <- ggplot(data = gene_chip_dat %>% filter(gene %in% zero_genes[1:25]), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
+g <- ggplot(data = gene_chip_dat %>% filter(gene %in% high_genes[1:6]), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
 g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
 g <- g + theme(panel.grid.major = element_blank(), 
                panel.grid.minor = element_blank(),
@@ -183,6 +189,29 @@ g <- g + theme(panel.grid.major = element_blank(),
                axis.title = element_text(size = 12, face = "bold"),
                axis.text.x = element_text(hjust = 1, face = "bold")) + guides(color = FALSE)
 g
+g <- ggplot(data = gene_chip_dat %>% filter(gene %in% genes_all_zero[1:6]), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
+#g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
+g <- g + theme(panel.grid.major = element_blank(), 
+               panel.grid.minor = element_blank(),
+               panel.background = element_blank(), 
+               axis.line = element_line(colour = "black"),
+               plot.title = element_text(hjust = 0.5), 
+               axis.text = element_text(size = 12, face = "bold"),
+               axis.title = element_text(size = 12, face = "bold"),
+               axis.text.x = element_text(hjust = 1, face = "bold")) + guides(color = FALSE)
+g
+g <- ggplot(data = gene_chip_dat %>% filter(gene %in% genes_all_nonzero[1:6]), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
+#g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
+g <- g + theme(panel.grid.major = element_blank(), 
+               panel.grid.minor = element_blank(),
+               panel.background = element_blank(), 
+               axis.line = element_line(colour = "black"),
+               plot.title = element_text(hjust = 0.5), 
+               axis.text = element_text(size = 12, face = "bold"),
+               axis.title = element_text(size = 12, face = "bold"),
+               axis.text.x = element_text(hjust = 1, face = "bold")) + guides(color = FALSE)
+g
+
 
 genes_all <- unique(gene_chip_dat$gene)
 genes_pos_wa <- timepoint_dat %>% 
@@ -200,27 +229,57 @@ genes_neg_wel <- timepoint_dat %>%
 genes_neg_loss <- intersect(genes_neg_wl, genes_neg_wel)
 genes_overlap <- intersect(genes_pos_wa, genes_neg_wl) %>% intersect(genes_neg_wel)
 
+genes_neg_loss_only <- genes_neg_loss[!(genes_neg_loss %in% genes_pos_wa)]
+
+genes_none <- genes_all[]
+
 library(UpSetR)
 upset_dat <- data.frame(genes = genes_all,
                         WA_positive = sapply(1:length(genes_all), function(i) as.numeric(genes_all[i] %in% genes_pos_wa)),
                         WL_negative = sapply(1:length(genes_all), function(i) as.numeric(genes_all[i] %in% genes_neg_wl)),
                         WEL_negative = sapply(1:length(genes_all), function(i) as.numeric(genes_all[i] %in% genes_neg_wel)))
-upset(upset_dat, order.by = "freq", text.scale = c(1.5, 1.5, 1.5, 1.2, 1.2), sets.bar.color = c("coral", "magenta", "seagreen1"))
+upset(upset_dat, order.by = "freq", 
+      text.scale = 1.2,
+      sets.bar.color = c("coral", "magenta", "seagreen1"))
 
 ## Time trend estimate by error
 plot(timepoint_dat$est_error, timepoint_dat$estimate, pch = ifelse(timepoint_dat$category == "zero", 1, 19), col = c("coral", "magenta", "seagreen1")[as.factor(timepoint_dat$assay)], 
      las = 1, ylab = "Trend with time", xlab = "Error on trend")
-plot(timepoint_dat$est_error, timepoint_dat$estimate, ylim = c(-7, 7), pch = ifelse(timepoint_dat$category == "zero", 1, 19), col = c("coral", "magenta", "seagreen1")[as.factor(timepoint_dat$assay)], 
+abline(h = 0, lty = 2)
+plot(timepoint_dat$est_error, timepoint_dat$estimate, ylim = c(-0.3, 0.3), xlim = c(0, 0.2), pch = ifelse(timepoint_dat$category == "zero", 1, 19), col = c("coral", "magenta", "seagreen1")[as.factor(timepoint_dat$assay)], 
      las = 1, ylab = "Trend with time", xlab = "Error on trend")
+abline(h = 0, lty = 2)
 
 time_alt_fit <- lm(estimate ~ 1 + assay, data = timepoint_dat, weights = 1/timepoint_dat$est_error)
 time_null_fit <- lm(estimate ~ 1, data = timepoint_dat, weights = 1/timepoint_dat$est_error)
 anova(time_alt_fit, time_null_fit)
 
+## Time trend for loss categories only
+weights <- 1/timepoint_dat %>% filter(assay %in% c("writer_loss", "writer_eraser_loss")) %>% pull(est_error)
+time_alt_fit <- lm(estimate ~ 1 + assay, data = timepoint_dat %>% filter(assay %in% c("writer_loss", "writer_eraser_loss")), weights = weights)
+time_null_fit <- lm(estimate ~ 1, data = timepoint_dat %>% filter(assay %in% c("writer_loss", "writer_eraser_loss")), weights = weights)
+anova(time_alt_fit, time_null_fit)
+
+
 ## Gene level
 gene_timepoint_dat <- timepoint_dat %>% 
   select(gene, assay, estimate) %>%
   spread(key = assay, value = estimate) 
+
+genes_all_zero <- timepoint_dat %>% 
+  select(gene, assay, category) %>%
+  spread(key = assay, value = category) %>%
+  filter(writer_add == "zero", 
+         writer_eraser_loss == "zero",
+         writer_loss == "zero") %>%
+  pull(gene)
+genes_all_nonzero <- timepoint_dat %>% 
+  select(gene, assay, category) %>%
+  spread(key = assay, value = category) %>%
+  filter(writer_add == "positive", 
+         writer_eraser_loss == "negative",
+         writer_loss == "negative") %>%
+  pull(gene)
 
 plot(gene_timepoint_dat$writer_eraser_loss, gene_timepoint_dat$writer_loss)
 plot(gene_timepoint_dat$writer_eraser_loss, gene_timepoint_dat$writer_loss, xlim = c(-5, 5), ylim = c(-5, 5))
@@ -259,7 +318,7 @@ compare_wl_to_wel_brms <- function(chipseq_dat,
 }
 
 practice <- compare_wl_to_wel_brms(chipseq_dat = gene_chip_dat,
-                                   this_gene = gene_chip_dat$gene[10])
+                                   this_gene = gene_chip_dat$gene[100])
 
 ## Assay specific plots
 mean_gene_chip_dat <- gene_chip_dat %>%
