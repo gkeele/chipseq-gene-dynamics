@@ -1,6 +1,7 @@
 library(lme4)
 library(tidyverse)
 library(brms)
+library(ggplot2)
 
 setwd("~/projects/chipseq-gene-dynamics/")
 #setwd("~/Documents/git_repositories/chipseq-gene-dynamics/")
@@ -28,6 +29,17 @@ gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$time
 
 
 
+
+## ggplot theme
+gg_theme <- theme(panel.grid.major = element_blank(), 
+                  panel.grid.minor = element_blank(),
+                  panel.background = element_blank(), 
+                  axis.line = element_line(colour = "black"),
+                  plot.title = element_text(hjust = 0.5), 
+                  axis.text = element_text(size = 12, face = "bold"),
+                  axis.title = element_text(size = 12, face = "bold"),
+                  axis.text.x = element_text(hjust = 1, face = "bold"))
+
 ###### Individual gene plots
 practice <- gene_chip_dat %>%
   filter(gene %in% unique(gene_chip_dat$gene)[1]) %>%
@@ -36,27 +48,13 @@ practice <- gene_chip_dat %>%
 ## Linear
 g <- ggplot(data = practice, aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
 g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
-g <- g + theme(panel.grid.major = element_blank(), 
-                    panel.grid.minor = element_blank(),
-                    panel.background = element_blank(), 
-                    axis.line = element_line(colour = "black"),
-                    plot.title = element_text(hjust = 0.5), 
-                    axis.text = element_text(size = 12, face = "bold"),
-                    axis.title = element_text(size = 12, face = "bold"),
-                    axis.text.x = element_text(hjust = 1, face = "bold"))
+g <- g + gg_theme
 g
 
 ## LOESS (curves)
 g <- ggplot(data = practice, aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
 g <- g + geom_smooth(aes(y = value, x = timepoint), method = "loess")
-g <- g + theme(panel.grid.major = element_blank(), 
-               panel.grid.minor = element_blank(),
-               panel.background = element_blank(), 
-               axis.line = element_line(colour = "black"),
-               plot.title = element_text(hjust = 0.5), 
-               axis.text = element_text(size = 12, face = "bold"),
-               axis.title = element_text(size = 12, face = "bold"),
-               axis.text.x = element_text(hjust = 1, face = "bold")) + guides(color = FALSE)
+g <- g + gg_theme + guides(color = FALSE)
 g
 
 
@@ -169,47 +167,19 @@ high_genes <- timepoint_dat %>%
 
 g <- ggplot(data = gene_chip_dat %>% filter(gene %in% high_genes[1:6]), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
 g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
-g <- g + theme(panel.grid.major = element_blank(), 
-               panel.grid.minor = element_blank(),
-               panel.background = element_blank(), 
-               axis.line = element_line(colour = "black"),
-               plot.title = element_text(hjust = 0.5), 
-               axis.text = element_text(size = 12, face = "bold"),
-               axis.title = element_text(size = 12, face = "bold"),
-               axis.text.x = element_text(hjust = 1, face = "bold")) + guides(color = FALSE)
+g <- g + gg_theme + guides(color = FALSE)
 g
 g <- ggplot(data = gene_chip_dat %>% filter(gene %in% high_genes[1:6]), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
 g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
-g <- g + theme(panel.grid.major = element_blank(), 
-               panel.grid.minor = element_blank(),
-               panel.background = element_blank(), 
-               axis.line = element_line(colour = "black"),
-               plot.title = element_text(hjust = 0.5), 
-               axis.text = element_text(size = 12, face = "bold"),
-               axis.title = element_text(size = 12, face = "bold"),
-               axis.text.x = element_text(hjust = 1, face = "bold")) + guides(color = FALSE)
+g <- g + gg_theme + guides(color = FALSE)
 g
 g <- ggplot(data = gene_chip_dat %>% filter(gene %in% genes_all_zero[1:6]), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
 #g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
-g <- g + theme(panel.grid.major = element_blank(), 
-               panel.grid.minor = element_blank(),
-               panel.background = element_blank(), 
-               axis.line = element_line(colour = "black"),
-               plot.title = element_text(hjust = 0.5), 
-               axis.text = element_text(size = 12, face = "bold"),
-               axis.title = element_text(size = 12, face = "bold"),
-               axis.text.x = element_text(hjust = 1, face = "bold")) + guides(color = FALSE)
+g <- g + gg_theme + guides(color = FALSE)
 g
 g <- ggplot(data = gene_chip_dat %>% filter(gene %in% genes_all_nonzero[1:6]), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
 #g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
-g <- g + theme(panel.grid.major = element_blank(), 
-               panel.grid.minor = element_blank(),
-               panel.background = element_blank(), 
-               axis.line = element_line(colour = "black"),
-               plot.title = element_text(hjust = 0.5), 
-               axis.text = element_text(size = 12, face = "bold"),
-               axis.title = element_text(size = 12, face = "bold"),
-               axis.text.x = element_text(hjust = 1, face = "bold")) + guides(color = FALSE)
+g <- g + gg_theme + guides(color = FALSE)
 g
 
 
@@ -320,7 +290,42 @@ compare_wl_to_wel_brms <- function(chipseq_dat,
 practice <- compare_wl_to_wel_brms(chipseq_dat = gene_chip_dat,
                                    this_gene = gene_chip_dat$gene[100])
 
-## Assay specific plots
+loss_compare_path <- "individual_gene_Stan_models_alpha_0.8_iter_10000/"
+loss_compare_files <- list.files(loss_compare_path, full.names = TRUE)
+loss_compare_remove <- "individual_gene_Stan_models_alpha_0.8_iter_10000//sacCer3_nonOverlappingGenes_noChrMGenes_"
+for (i in 1:length(loss_compare_files)) {
+  this_fit <- readRDS(loss_compare_files[i])
+  
+  this_gene <- gsub(x = loss_compare_files[i], pattern = loss_compare_remove, replacement = "", fixed = TRUE) %>%
+    gsub(x = ., replacement = "", pattern = "_WL_vs_WEL_Stan.rds", fixed = TRUE)
+  
+  
+  if (i == 1) {
+    loss_compare_dat <- data.frame(gene = rep(this_gene, 8), this_fit)
+  }
+  else {
+    loss_compare_dat <- bind_rows(loss_compare_dat,
+                                  data.frame(gene = rep(this_gene, 8), this_fit))
+  }
+}
+
+temp <- loss_compare_dat %>%
+  filter(grepl(x = parameter, pattern = "assay")) %>%
+  mutate(parameter = recode(parameter, 
+                            'assaywriter_eraser_loss' = "0",
+                            'timepoint_cat1:assaywriter_eraser_loss' = "1",
+                            'timepoint_cat2:assaywriter_eraser_loss' = "2",
+                            'timepoint_cat3:assaywriter_eraser_loss' = "3"))
+g <- ggplot(data = temp, aes(x = parameter, y = Estimate, color = gene)) + geom_point() + geom_line(aes(group = gene)) + scale_color_grey()
+g <- g + gg_theme
+g
+
+
+##############################################
+##
+## Assay specific raw data plots
+##
+##############################################
 mean_gene_chip_dat <- gene_chip_dat %>%
   group_by(gene, assay, timepoint, sample_unit, rep_id) %>%
   summarise(value = mean(value)) %>%
