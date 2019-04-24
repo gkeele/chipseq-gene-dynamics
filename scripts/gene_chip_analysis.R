@@ -376,8 +376,6 @@ loss_compare_dat %>%
   pull(check) %>%
   mean # 0.8782495
 
-  
-
 loss_compare_dat %>%
   select(gene, parameter, Estimate) %>%
   filter(parameter %in% c("assaywriter_eraser_loss", "timepoint_cat1:assaywriter_eraser_loss")) %>%
