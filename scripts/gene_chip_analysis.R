@@ -201,8 +201,6 @@ genes_overlap <- intersect(genes_pos_wa, genes_neg_wl) %>% intersect(genes_neg_w
 
 genes_neg_loss_only <- genes_neg_loss[!(genes_neg_loss %in% genes_pos_wa)]
 
-genes_none <- genes_all[]
-
 library(UpSetR)
 upset_dat <- data.frame(genes = genes_all,
                         WA_positive = sapply(1:length(genes_all), function(i) as.numeric(genes_all[i] %in% genes_pos_wa)),
@@ -319,6 +317,13 @@ temp <- loss_compare_dat %>%
 g <- ggplot(data = temp, aes(x = parameter, y = Estimate, color = gene)) + geom_point() + geom_line(aes(group = gene)) + scale_color_grey()
 g <- g + gg_theme
 g
+
+## Multi-gene model
+multigene_fit <- brms::brm(value ~ 1 + timepoint_cat + assay + timepoint_cat:assay + (1 + timepoint_cat + assay + timepoint_cat:assay | sample_unit + gene), 
+                         data = gene_chip_dat %>% filter(assay %in% c("writer_loss", "writer_eraser_loss")), 
+                         family = "beta",
+                         iter = 2000,
+                         control = list(adapt_delta = 0.8))
 
 
 ##############################################
