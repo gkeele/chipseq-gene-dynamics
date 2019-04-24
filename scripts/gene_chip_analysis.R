@@ -305,6 +305,74 @@ for (i in 1:length(loss_compare_files)) {
                                   data.frame(gene = rep(this_gene, 8), this_fit))
   }
 }
+#####################################
+##
+## Characterizing lag in trend
+##
+#####################################
+#### At timepoints
+## timepoint 0
+loss_compare_dat %>% 
+  filter(parameter == "assaywriter_eraser_loss") %>%
+  mutate(check = Estimate > 0) %>%
+  pull(check) %>%
+  mean # 0.6255844
+
+## timepoint 1
+loss_compare_dat %>% 
+  filter(parameter == "timepoint_cat1:assaywriter_eraser_loss") %>%
+  mutate(check = Estimate > 0) %>%
+  pull(check) %>%
+  mean # 0.9130353
+
+## timepoint 2
+loss_compare_dat %>% 
+  filter(parameter == "timepoint_cat2:assaywriter_eraser_loss") %>%
+  mutate(check = Estimate > 0) %>%
+  pull(check) %>%
+  mean # 0.9762484
+
+## timepoint 3
+loss_compare_dat %>% 
+  filter(parameter == "timepoint_cat3:assaywriter_eraser_loss") %>%
+  mutate(check = Estimate > 0) %>%
+  pull(check) %>%
+  mean # 0.9064896
+
+#### Transitions
+## timepoint 0 to timepoint 1
+loss_compare_dat %>%
+  select(gene, parameter, Estimate) %>%
+  filter(parameter %in% c("assaywriter_eraser_loss", "timepoint_cat1:assaywriter_eraser_loss")) %>%
+  spread(key = parameter, value = Estimate) %>%
+  mutate(check = `timepoint_cat1:assaywriter_eraser_loss` > assaywriter_eraser_loss) %>%
+  pull(check) %>%
+  mean # 0.8913409
+
+## timepoint 1 to timepoint 2
+loss_compare_dat %>%
+  select(gene, parameter, Estimate) %>%
+  filter(parameter %in% c("timepoint_cat2:assaywriter_eraser_loss", "timepoint_cat1:assaywriter_eraser_loss")) %>%
+  spread(key = parameter, value = Estimate) %>%
+  mutate(check = `timepoint_cat2:assaywriter_eraser_loss` > `timepoint_cat1:assaywriter_eraser_loss`) %>%
+  pull(check) %>%
+  mean # 0.7637928
+
+## timepoint 2 to timepoint 3
+loss_compare_dat %>%
+  select(gene, parameter, Estimate) %>%
+  filter(parameter %in% c("timepoint_cat3:assaywriter_eraser_loss", "timepoint_cat2:assaywriter_eraser_loss")) %>%
+  spread(key = parameter, value = Estimate) %>%
+  mutate(check = `timepoint_cat2:assaywriter_eraser_loss` > `timepoint_cat3:assaywriter_eraser_loss`) %>%
+  pull(check) %>%
+  mean # 0.9452029
+
+  
+
+loss_compare_dat %>%
+  select(gene, parameter, Estimate) %>%
+  filter(parameter %in% c("assaywriter_eraser_loss", "timepoint_cat1:assaywriter_eraser_loss")) %>%
+  spread(key = parameter, value = Estimate)
 
 ## Attempt to grab genes with "significant" lag
 total_lag <- loss_compare_dat %>%
