@@ -353,6 +353,14 @@ g <- g + geom_boxplot(aes(x = timepoint, y = Estimate), color = "cadetblue") + s
 g <- g + geom_hline(yintercept = 0, linetype = "dashed", color = "red", size = 1.5) + gg_theme
 g
 
+## Multi-gene model
+multigene_fit <- brms::brm(value ~ 1 + timepoint_cat + assay + timepoint_cat:assay + (1 + timepoint_cat + assay + timepoint_cat:assay | sample_unit + gene), 
+                           data = gene_chip_dat %>% filter(assay %in% c("writer_loss", "writer_eraser_loss")), 
+                           family = "beta",
+                           iter = 2000,
+                           control = list(adapt_delta = 0.8))
+
+
 ##############################################
 ##
 ## Additional gene information
@@ -400,7 +408,6 @@ plot(wl_full_dat$estimate, wl_full_dat$est_error)
 par(mfrow = c(1, 2))
 plot(wa_full_dat$transcript, wa_full_dat$estimate)
 plot(wl_full_dat$transcript, wl_full_dat$estimate)
-
 
 
 ##############################################
