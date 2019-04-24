@@ -28,8 +28,6 @@ gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$time
 gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$timepoint_cat == 3] <- 60/60
 
 
-
-
 ## ggplot theme
 gg_theme <- theme(panel.grid.major = element_blank(), 
                   panel.grid.minor = element_blank(),
@@ -109,10 +107,14 @@ yal041w_models <- run_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "
 
 
 ## Parsing full set of Stan results
-stan_fit_paths <- list.files("individual_gene_Stan_models/", full.names = TRUE)
+#stan_fit_paths <- list.files("individual_gene_Stan_models/", full.names = TRUE)
 #stan_fit_paths <- list.files("individual_gene_Stan_models_alpha_0.99_iter_5000//", full.names = TRUE)
-file_path <- "individual_gene_Stan_models//sacCer3_nonOverlappingGenes_noChrMGenes_"
+stan_fit_paths <- list.files("individual_gene_Stan_models_alpha_0.8_iter_10000/", full.names = TRUE)
+stan_fit_paths <- stan_fit_paths[!(grepl(x = stan_fit_paths, pattern = "WL_vs_WEL"))]
+#file_path <- "individual_gene_Stan_models//sacCer3_nonOverlappingGenes_noChrMGenes_"
 #file_path <- "individual_gene_Stan_models_alpha_0.99_iter_5000///sacCer3_nonOverlappingGenes_noChrMGenes_"
+file_path <- "individual_gene_Stan_models_alpha_0.8_iter_10000//sacCer3_nonOverlappingGenes_noChrMGenes_"
+
 for (i in 1:length(stan_fit_paths)) {
   this_fit <- readRDS(stan_fit_paths[i])
 
@@ -142,9 +144,6 @@ timepoint_dat$category[timepoint_dat$lower_95 < 0 & timepoint_dat$upper_95 > 0] 
 
   
 ggplot(data = timepoint_dat, aes(x = estimate)) + geom_histogram() + facet_grid(assay~.)
-ggplot(data = timepoint_dat %>% filter(category %in% c("positive", "negative"),
-                                       estimate > -10), 
-       aes(x = estimate)) + geom_histogram() + facet_grid(assay~.)
 
 ## Grabbing extreme negative genes
 low_genes <- timepoint_dat %>% 
@@ -214,9 +213,6 @@ upset(upset_dat, order.by = "freq",
 plot(timepoint_dat$est_error, timepoint_dat$estimate, pch = ifelse(timepoint_dat$category == "zero", 1, 19), col = c("coral", "magenta", "seagreen1")[as.factor(timepoint_dat$assay)], 
      las = 1, ylab = "Trend with time", xlab = "Error on trend")
 abline(h = 0, lty = 2)
-plot(timepoint_dat$est_error, timepoint_dat$estimate, ylim = c(-0.3, 0.3), xlim = c(0, 0.2), pch = ifelse(timepoint_dat$category == "zero", 1, 19), col = c("coral", "magenta", "seagreen1")[as.factor(timepoint_dat$assay)], 
-     las = 1, ylab = "Trend with time", xlab = "Error on trend")
-abline(h = 0, lty = 2)
 
 time_alt_fit <- lm(estimate ~ 1 + assay, data = timepoint_dat, weights = 1/timepoint_dat$est_error)
 time_null_fit <- lm(estimate ~ 1, data = timepoint_dat, weights = 1/timepoint_dat$est_error)
@@ -248,11 +244,14 @@ genes_all_nonzero <- timepoint_dat %>%
          writer_eraser_loss == "negative",
          writer_loss == "negative") %>%
   pull(gene)
+genes_all_negative <- timepoint_dat %>% 
+  select(gene, assay, category) %>%
+  spread(key = assay, value = category) %>%
+  filter(writer_eraser_loss == "negative",
+         writer_loss == "negative") %>%
+  pull(gene)
 
 plot(gene_timepoint_dat$writer_eraser_loss, gene_timepoint_dat$writer_loss)
-plot(gene_timepoint_dat$writer_eraser_loss, gene_timepoint_dat$writer_loss, xlim = c(-5, 5), ylim = c(-5, 5))
-
-plot(gene_timepoint_dat$writer_add, gene_timepoint_dat$writer_loss, xlim = c(-5, 5), ylim = c(-5, 5))
 abline(h = 0, lty = 2)
 abline(v = 0, lty = 2)
 
@@ -288,15 +287,15 @@ compare_wl_to_wel_brms <- function(chipseq_dat,
 practice <- compare_wl_to_wel_brms(chipseq_dat = gene_chip_dat,
                                    this_gene = gene_chip_dat$gene[100])
 
-loss_compare_path <- "individual_gene_Stan_models_alpha_0.8_iter_10000/"
+loss_compare_path <- "individual_gene_Stan_models_alpha_0.8_iter_10000//"
 loss_compare_files <- list.files(loss_compare_path, full.names = TRUE)
-loss_compare_remove <- "individual_gene_Stan_models_alpha_0.8_iter_10000//sacCer3_nonOverlappingGenes_noChrMGenes_"
+loss_compare_files <- grep(x = loss_compare_files, pattern = "WL_vs_WEL", value = TRUE)
+loss_compare_remove <- "individual_gene_Stan_models_alpha_0.8_iter_10000///sacCer3_nonOverlappingGenes_noChrMGenes_"
 for (i in 1:length(loss_compare_files)) {
   this_fit <- readRDS(loss_compare_files[i])
   
   this_gene <- gsub(x = loss_compare_files[i], pattern = loss_compare_remove, replacement = "", fixed = TRUE) %>%
     gsub(x = ., replacement = "", pattern = "_WL_vs_WEL_Stan.rds", fixed = TRUE)
-  
   
   if (i == 1) {
     loss_compare_dat <- data.frame(gene = rep(this_gene, 8), this_fit)
@@ -313,9 +312,12 @@ temp <- loss_compare_dat %>%
                             'assaywriter_eraser_loss' = "0",
                             'timepoint_cat1:assaywriter_eraser_loss' = "1",
                             'timepoint_cat2:assaywriter_eraser_loss' = "2",
-                            'timepoint_cat3:assaywriter_eraser_loss' = "3"))
-g <- ggplot(data = temp, aes(x = parameter, y = Estimate, color = gene)) + geom_point() + geom_line(aes(group = gene)) + scale_color_grey()
-g <- g + gg_theme
+                            'timepoint_cat3:assaywriter_eraser_loss' = "3")) %>%
+  rename(timepoint = parameter)
+g <- ggplot(data = temp, aes(x = timepoint, y = Estimate)) + geom_point(col = "gray") + geom_line(aes(group = gene), col = "gray")
+g <- g + scale_color_grey()
+g <- g + geom_boxplot(aes(x = timepoint, y = Estimate), color = "tomato")
+g <- g + geom_hline(yintercept = 0, linetype = "dashed", color = "red") + gg_theme
 g
 
 ## Multi-gene model
@@ -325,6 +327,60 @@ multigene_fit <- brms::brm(value ~ 1 + timepoint_cat + assay + timepoint_cat:ass
                          iter = 2000,
                          control = list(adapt_delta = 0.8))
 
+g <- ggplot(data = temp %>% filter(gene %in% genes_all_negative), aes(x = timepoint, y = Estimate)) + geom_point(col = "gray") + geom_line(aes(group = gene), col = "gray")
+g <- g + scale_color_grey()
+g <- g + geom_boxplot(aes(x = timepoint, y = Estimate), color = "cadetblue") + stat_summary(fun.y=mean, geom="line", aes(group=1), col = "black", size = 1.5) + ylab("WEL - WL timepoint effects")
+g <- g + geom_hline(yintercept = 0, linetype = "dashed", color = "red", size = 1.5) + gg_theme
+g
+
+##############################################
+##
+## Additional gene information
+##
+##############################################
+wa_covar_raw_dat <- data.table::fread("~/projects/chipseq-gene-dynamics/data/DtL_setd2_RNA_combined_sf.txt", data.table = FALSE)
+wa_covar_dat <- wa_covar_raw_dat %>%
+  select(GENE, DtL_0min_set2d_RNA_Rep1, DtL_0min_set2d_RNA_Rep2, DtL_0min_set2d_RNA_Rep3) %>%
+  rename(rep1 = DtL_0min_set2d_RNA_Rep1,
+         rep2 = DtL_0min_set2d_RNA_Rep2,
+         rep3 = DtL_0min_set2d_RNA_Rep3) %>%
+  gather(key = rep, value = transcript, -GENE) %>%
+  group_by(GENE) %>%
+  summarize(transcript = mean(log(transcript))) %>%
+  ungroup %>%
+  rename(gene = GENE)
+
+wl_covar_raw_dat <- data.table::fread("~/projects/chipseq-gene-dynamics/data/LtD_setd2_RNA_combined_sf.txt", data.table = FALSE)
+wl_covar_dat <- wl_covar_raw_dat %>%
+  select(GENE, LtD_0min_set2d_RNA_Rep1, LtD_0min_set2d_RNA_Rep2, LtD_0min_set2d_RNA_Rep3) %>%
+  rename(rep1 = LtD_0min_set2d_RNA_Rep1,
+         rep2 = LtD_0min_set2d_RNA_Rep2,
+         rep3 = LtD_0min_set2d_RNA_Rep3) %>%
+  gather(key = rep, value = transcript, -GENE) %>%
+  group_by(GENE) %>%
+  summarize(transcript = mean(log(transcript))) %>%
+  ungroup %>%
+  rename(gene = GENE)
+
+
+wa_full_dat <- timepoint_dat %>%
+  filter(assay == "writer_add") %>%
+  left_join(wa_covar_dat)
+
+wl_full_dat <- timepoint_dat %>%
+  filter(assay == "writer_loss") %>%
+  left_join(wl_covar_dat)
+
+plot(wa_full_dat$transcript, wa_full_dat$est_error)
+plot(wa_full_dat$estimate, wa_full_dat$est_error)
+
+plot(wl_full_dat$transcript, wl_full_dat$est_error)
+plot(wl_full_dat$estimate, wl_full_dat$est_error)
+
+par(mfrow = c(1, 2))
+plot(wa_full_dat$transcript, wa_full_dat$estimate)
+plot(wl_full_dat$transcript, wl_full_dat$estimate)
+
 
 ##############################################
 ##
@@ -332,11 +388,11 @@ multigene_fit <- brms::brm(value ~ 1 + timepoint_cat + assay + timepoint_cat:ass
 ##
 ##############################################
 mean_gene_chip_dat <- gene_chip_dat %>%
-  group_by(gene, assay, timepoint, sample_unit, rep_id) %>%
+  group_by(gene, assay, timepoint) %>%
   summarise(value = mean(value)) %>%
   ungroup
 # Writer loss
-writer_loss <- ggplot(data = mean_gene_chip_dat %>% filter(assay == "writer_loss"), aes(x = timepoint, y = value, color = sample_unit)) + geom_point() + geom_line()
+writer_loss <- ggplot(data = mean_gene_chip_dat %>% filter(assay == "writer_loss"), aes(x = timepoint, y = value, color = gene)) + geom_point() + geom_line()
 writer_loss <- writer_loss + scale_color_grey()
 writer_loss <- writer_loss + geom_smooth(aes(y = value, x = timepoint), method = "lm", col = "magenta") + ggtitle("Writer loss")
 writer_loss <- writer_loss + theme(panel.grid.major = element_blank(), 
