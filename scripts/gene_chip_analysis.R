@@ -306,7 +306,34 @@ for (i in 1:length(loss_compare_files)) {
   }
 }
 
-temp <- loss_compare_dat %>%
+## Attempt to grab genes with "significant" lag
+total_lag <- loss_compare_dat %>%
+  filter(grepl(x = parameter, pattern = "assay")) %>%
+  mutate(parameter = recode(parameter, 
+                            'assaywriter_eraser_loss' = "0",
+                            'timepoint_cat1:assaywriter_eraser_loss' = "1",
+                            'timepoint_cat2:assaywriter_eraser_loss' = "2",
+                            'timepoint_cat3:assaywriter_eraser_loss' = "3")) %>%
+  rename(timepoint = parameter) %>%
+  mutate(lag = l.95..CI > 0)
+
+total_lag <- lag_dat %>%
+  group_by(gene) %>%
+  summarize(lag_count = sum(lag)) %>%
+  ungroup
+
+lagged_genes <- total_lag %>%
+  filter(lag_count > 0) %>%
+  pull(gene)
+
+g <- ggplot(data = gene_chip_dat %>% filter(assay != "writer_add", gene %in% lagged_genes), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
+#g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
+g <- g + gg_theme + guides(color = FALSE)
+g
+# Mostly detect ugly things, don't have power at the single gene level
+
+## Overall picture of lag
+plot_loss_compare_dat <- loss_compare_dat %>%
   filter(grepl(x = parameter, pattern = "assay")) %>%
   mutate(parameter = recode(parameter, 
                             'assaywriter_eraser_loss' = "0",
@@ -314,13 +341,13 @@ temp <- loss_compare_dat %>%
                             'timepoint_cat2:assaywriter_eraser_loss' = "2",
                             'timepoint_cat3:assaywriter_eraser_loss' = "3")) %>%
   rename(timepoint = parameter)
-g <- ggplot(data = temp, aes(x = timepoint, y = Estimate)) + geom_point(col = "gray") + geom_line(aes(group = gene), col = "gray")
+g <- ggplot(data = plot_loss_compare_dat, aes(x = timepoint, y = Estimate)) + geom_point(col = "gray") + geom_line(aes(group = gene), col = "gray")
 g <- g + scale_color_grey()
 g <- g + geom_boxplot(aes(x = timepoint, y = Estimate), color = "tomato")
 g <- g + geom_hline(yintercept = 0, linetype = "dashed", color = "red") + gg_theme
 g
 
-g <- ggplot(data = temp %>% filter(gene %in% genes_all_negative), aes(x = timepoint, y = Estimate)) + geom_point(col = "gray") + geom_line(aes(group = gene), col = "gray")
+g <- ggplot(data = plot_loss_compare_dat %>% filter(gene %in% genes_all_negative), aes(x = timepoint, y = Estimate)) + geom_point(col = "gray") + geom_line(aes(group = gene), col = "gray")
 g <- g + scale_color_grey()
 g <- g + geom_boxplot(aes(x = timepoint, y = Estimate), color = "cadetblue") + stat_summary(fun.y=mean, geom="line", aes(group=1), col = "black", size = 1.5) + ylab("WEL - WL timepoint effects")
 g <- g + geom_hline(yintercept = 0, linetype = "dashed", color = "red", size = 1.5) + gg_theme
