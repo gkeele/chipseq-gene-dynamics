@@ -145,13 +145,6 @@ timepoint_dat$category[timepoint_dat$lower_95 < 0 & timepoint_dat$upper_95 > 0] 
   
 ggplot(data = timepoint_dat, aes(x = estimate)) + geom_histogram() + facet_grid(assay~.)
 
-## Grabbing extreme negative genes
-low_genes <- timepoint_dat %>% 
-  filter(estimate < -10,
-         category == "negative") %>%
-  pull(gene) %>%
-  unique
-
 ## Grabbing high genes
 high_genes <- timepoint_dat %>% 
   filter(category == "positive") %>%
@@ -159,10 +152,42 @@ high_genes <- timepoint_dat %>%
   unique
 
 ## Grabbing low genes
-high_genes <- timepoint_dat %>% 
-  filter(category == "positive") %>%
+low_genes <- timepoint_dat %>% 
+  filter(category == "negative") %>%
   pull(gene) %>%
   unique
+
+
+####################################
+##
+## Permutations
+##
+####################################
+all_perms <- gtools::permutations(n = 4, r = 4) - 1
+perm_wl_effects <- perm_wel_effects <- perm_wa_effects <- rep(NA, nrow(all_perms) - 1)
+for (i in 2:nrow(all_perms)) {
+  perm_dat <- gene_chip_dat
+  perm_dat$timepoint = all_perms[i, gene_chip_dat$timepoint + 1]
+  
+  perm_fit <- run_brms_on_chipseq(chipseq_dat = perm_dat, this_gene = high_genes[1])
+  perm_wl_effects[i - 1] <- perm_fit$writer_loss %>% 
+    filter(parameter == "timepoint") %>%
+    pull(estimate)
+  perm_wel_effects[i - 1] <- perm_fit$writer_eraser_loss %>% 
+    filter(parameter == "timepoint") %>%
+    pull(estimate)
+  perm_wa_effects[i - 1] <- perm_fit$writer_add %>% 
+    filter(parameter == "timepoint") %>%
+    pull(estimate)
+}
+actual_fit <- run_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = high_genes[1])
+mean(actual_fit$writer_add %>% filter(parameter == "timepoint") %>% pull(estimate) <= c(perm_wa_effects,
+                                                                                      actual_fit$writer_add %>% filter(parameter == "timepoint") %>% pull(estimate)))
+mean(actual_fit$writer_loss %>% filter(parameter == "timepoint") %>% pull(estimate) >= c(perm_wl_effects,
+                                                                                        actual_fit$writer_add %>% filter(parameter == "timepoint") %>% pull(estimate)))
+mean(actual_fit$writer_eraser_loss %>% filter(parameter == "timepoint") %>% pull(estimate) >= c(perm_wel_effects,
+                                                                                         actual_fit$writer_add %>% filter(parameter == "timepoint") %>% pull(estimate)))
+
 
 g <- ggplot(data = gene_chip_dat %>% filter(gene %in% high_genes[1:6]), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
 g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
