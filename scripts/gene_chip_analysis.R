@@ -473,30 +473,32 @@ multigene_fit <- brms::brm(value ~ 1 + timepoint_cat + assay + timepoint_cat:ass
 ## Additional gene information
 ##
 ##############################################
-wa_covar_raw_dat <- data.table::fread("~/projects/chipseq-gene-dynamics/data/DtL_setd2_RNA_combined_sf.txt", data.table = FALSE)
+## Transcript levels and gene length
+wa_covar_raw_dat <- data.table::fread("~/projects/chipseq-gene-dynamics/data/DtL_setd2_RNA_combined_sf.txt", data.table = FALSE) %>%
+  rename(gene_length = "Gene Length",
+         gene = GENE)
 wa_covar_dat <- wa_covar_raw_dat %>%
-  select(GENE, DtL_0min_set2d_RNA_Rep1, DtL_0min_set2d_RNA_Rep2, DtL_0min_set2d_RNA_Rep3) %>%
+  select(gene, gene_length, DtL_0min_set2d_RNA_Rep1, DtL_0min_set2d_RNA_Rep2, DtL_0min_set2d_RNA_Rep3) %>%
   rename(rep1 = DtL_0min_set2d_RNA_Rep1,
          rep2 = DtL_0min_set2d_RNA_Rep2,
          rep3 = DtL_0min_set2d_RNA_Rep3) %>%
-  gather(key = rep, value = transcript, -GENE) %>%
-  group_by(GENE) %>%
+  gather(key = rep, value = transcript, -c(gene, gene_length)) %>%
+  group_by(gene, gene_length) %>%
   summarize(transcript = mean(log(transcript))) %>%
-  ungroup %>%
-  rename(gene = GENE)
+  ungroup
 
-wl_covar_raw_dat <- data.table::fread("~/projects/chipseq-gene-dynamics/data/LtD_setd2_RNA_combined_sf.txt", data.table = FALSE)
+wl_covar_raw_dat <- data.table::fread("~/projects/chipseq-gene-dynamics/data/LtD_setd2_RNA_combined_sf.txt", data.table = FALSE) %>%
+  rename(gene_length = "Gene Length",
+         gene = GENE)
 wl_covar_dat <- wl_covar_raw_dat %>%
-  select(GENE, LtD_0min_set2d_RNA_Rep1, LtD_0min_set2d_RNA_Rep2, LtD_0min_set2d_RNA_Rep3) %>%
+  select(gene, gene_length, LtD_0min_set2d_RNA_Rep1, LtD_0min_set2d_RNA_Rep2, LtD_0min_set2d_RNA_Rep3) %>%
   rename(rep1 = LtD_0min_set2d_RNA_Rep1,
          rep2 = LtD_0min_set2d_RNA_Rep2,
          rep3 = LtD_0min_set2d_RNA_Rep3) %>%
-  gather(key = rep, value = transcript, -GENE) %>%
-  group_by(GENE) %>%
+  gather(key = rep, value = transcript, -c(gene, gene_length)) %>%
+  group_by(gene, gene_length) %>%
   summarize(transcript = mean(log(transcript))) %>%
-  ungroup %>%
-  rename(gene = GENE)
-
+  ungroup
 
 wa_full_dat <- timepoint_dat %>%
   filter(assay == "writer_add") %>%
@@ -516,6 +518,16 @@ par(mfrow = c(1, 2))
 plot(wa_full_dat$transcript, wa_full_dat$estimate)
 plot(wl_full_dat$transcript, wl_full_dat$estimate)
 
+par(mfrow = c(1, 2))
+plot(wa_full_dat$gene_length, wa_full_dat$estimate, xlab = "Gene length", ylab = "Trend with time", main = "Writer add")
+plot(wl_full_dat$gene_length, wl_full_dat$estimate, xlab = "Gene length", ylab = "Trend with time", main = "Writer loss")
+
+par(mfrow = c(1, 2))
+plot(wa_full_dat$gene_length, wa_full_dat$est_error, xlab = "Gene length", ylab = "Error on trend with time", main = "Writer add")
+plot(wl_full_dat$gene_length, wl_full_dat$est_error, xlab = "Gene length", ylab = "Error on trend with time", main = "Writer loss")
+
+## Absolute H3K36me3 levels
+temp <- data.table::fread("~/projects/chipseq-gene-dynamics/data/absolute_matrix_for_LMM_model_nonOverlappingGenes_noChrMGenes.txt", data.table = FALSE)
 
 ##############################################
 ##
