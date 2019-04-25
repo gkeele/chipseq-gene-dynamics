@@ -6,8 +6,26 @@ library(ggplot2)
 setwd("~/projects/chipseq-gene-dynamics/")
 #setwd("~/Documents/git_repositories/chipseq-gene-dynamics/")
 
+## ggplot theme
+gg_theme <- theme(panel.grid.major = element_blank(), 
+                  panel.grid.minor = element_blank(),
+                  panel.background = element_blank(), 
+                  axis.line = element_line(colour = "black"),
+                  plot.title = element_text(hjust = 0.5), 
+                  axis.text = element_text(size = 12, face = "bold"),
+                  axis.title = element_text(size = 12, face = "bold"),
+                  axis.text.x = element_text(hjust = 1, face = "bold"))
 
-## Read in the data
+
+
+
+
+
+###################################################
+##
+## Read in and process the data
+##
+###################################################
 gene_chip_dat <- read.table("data/scaled_matrix_for_LMM_model_nonOverlappingGenes.txt") # path to data
 names(gene_chip_dat) <- c("gene", "assay", "replicate", "timepoint", "value")
 
@@ -26,17 +44,6 @@ gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$time
 gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$timepoint_cat == 1] <- 20/60
 gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$timepoint_cat == 2] <- 40/60
 gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$timepoint_cat == 3] <- 60/60
-
-
-## ggplot theme
-gg_theme <- theme(panel.grid.major = element_blank(), 
-                  panel.grid.minor = element_blank(),
-                  panel.background = element_blank(), 
-                  axis.line = element_line(colour = "black"),
-                  plot.title = element_text(hjust = 0.5), 
-                  axis.text = element_text(size = 12, face = "bold"),
-                  axis.title = element_text(size = 12, face = "bold"),
-                  axis.text.x = element_text(hjust = 1, face = "bold"))
 
 ###### Individual gene plots
 practice <- gene_chip_dat %>%
