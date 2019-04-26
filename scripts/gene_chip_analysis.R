@@ -2,6 +2,7 @@ library(lme4)
 library(tidyverse)
 library(brms)
 library(ggplot2)
+library(gridExtra)
 
 setwd("~/projects/chipseq-gene-dynamics/")
 #setwd("~/Documents/git_repositories/chipseq-gene-dynamics/")
@@ -646,7 +647,7 @@ writer_loss <- writer_loss + theme(panel.grid.major = element_blank(),
                                    axis.text.x = element_text(hjust = 1, face = "bold")) + guides(color = FALSE)
 writer_loss
 # Writer and eraser loss
-writer_eraser_loss <- ggplot(data = mean_gene_chip_dat %>% filter(assay == "writer_eraser_loss"), aes(x = timepoint, y = value, color = sample_unit)) + geom_point() + geom_line()
+writer_eraser_loss <- ggplot(data = mean_gene_chip_dat %>% filter(assay == "writer_eraser_loss"), aes(x = timepoint, y = value, color = gene)) + geom_point() + geom_line()
 writer_eraser_loss <- writer_eraser_loss + scale_color_grey()
 writer_eraser_loss <- writer_eraser_loss + geom_smooth(aes(y = value, x = timepoint), method = "lm", col = "seagreen1") + ggtitle("Writer and eraser loss")
 writer_eraser_loss <- writer_eraser_loss + theme(panel.grid.major = element_blank(), 
@@ -659,7 +660,7 @@ writer_eraser_loss <- writer_eraser_loss + theme(panel.grid.major = element_blan
                                                  axis.text.x = element_text(hjust = 1, face = "bold")) + guides(color = FALSE)
 writer_eraser_loss
 # Writer add
-writer_add <- ggplot(data = mean_gene_chip_dat %>% filter(assay == "writer_add"), aes(x = timepoint, y = value, color = sample_unit)) + geom_point() + geom_line()
+writer_add <- ggplot(data = mean_gene_chip_dat %>% filter(assay == "writer_add"), aes(x = timepoint, y = value, color = gene)) + geom_point() + geom_line()
 writer_add <- writer_add + scale_color_grey()
 writer_add <- writer_add + geom_smooth(aes(y = value, x = timepoint), method = "lm", col = "coral") + ggtitle("Writer add")
 writer_add <- writer_add + theme(panel.grid.major = element_blank(), 
