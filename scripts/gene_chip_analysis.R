@@ -282,6 +282,22 @@ genes_all_negative <- timepoint_dat %>%
   filter(writer_eraser_loss == "negative",
          writer_loss == "negative") %>%
   pull(gene)
+genes_wa_positive <- timepoint_dat %>% 
+  select(gene, assay, category) %>%
+  spread(key = assay, value = category) %>%
+  filter(writer_add == "positive") %>%
+  pull(gene)
+genes_wl_negative <- timepoint_dat %>% 
+  select(gene, assay, category) %>%
+  spread(key = assay, value = category) %>%
+  filter(writer_loss == "negative") %>%
+  pull(gene)
+genes_wel_negative <- timepoint_dat %>% 
+  select(gene, assay, category) %>%
+  spread(key = assay, value = category) %>%
+  filter(writer_eraser_loss == "negative") %>%
+  pull(gene)
+
 
 plot(gene_timepoint_dat$writer_eraser_loss, gene_timepoint_dat$writer_loss)
 abline(h = 0, lty = 2)
@@ -466,6 +482,7 @@ multigene_fit <- brms::brm(value ~ 1 + timepoint_cat + assay + timepoint_cat:ass
                            family = "beta",
                            iter = 2000,
                            control = list(adapt_delta = 0.8))
+# Seems intractible for running
 
 
 ##############################################
@@ -500,18 +517,43 @@ wl_covar_dat <- wl_covar_raw_dat %>%
   summarize(transcript = mean(log(transcript))) %>%
   ungroup
 
+## Absolute H3K36me3 levels
+wa_histone_covar <- data.table::fread("~/projects/chipseq-gene-dynamics/data/absolute_matrix_for_LMM_model_nonOverlappingGenes_noChrMGenes.txt", data.table = FALSE) %>%
+  filter(V4 == 0,
+         V2 == 3) %>%
+  select(V1, V5) %>%
+  group_by(V1) %>%
+  summarize(V5 = mean(V5)) %>%
+  ungroup %>%
+  rename(gene = V1,
+         histone = V5)
+wl_histone_covar <- data.table::fread("~/projects/chipseq-gene-dynamics/data/absolute_matrix_for_LMM_model_nonOverlappingGenes_noChrMGenes.txt", data.table = FALSE) %>%
+  filter(V4 == 0,
+         V2 == 1) %>%
+  select(V1, V5) %>%
+  group_by(V1) %>%
+  summarize(V5 = mean(V5)) %>%
+  ungroup %>%
+  rename(gene = V1,
+         histone = V5)
+
+
 wa_full_dat <- timepoint_dat %>%
   filter(assay == "writer_add") %>%
-  left_join(wa_covar_dat)
+  left_join(wa_covar_dat) %>%
+  left_join(wa_histone_covar)
 
 wl_full_dat <- timepoint_dat %>%
   filter(assay == "writer_loss") %>%
-  left_join(wl_covar_dat)
+  left_join(wl_covar_dat) %>%
+  left_join(wl_histone_covar)
 
 plot(wa_full_dat$transcript, wa_full_dat$est_error)
+plot(wa_full_dat$transcript, wa_full_dat$estimate)
 plot(wa_full_dat$estimate, wa_full_dat$est_error)
 
 plot(wl_full_dat$transcript, wl_full_dat$est_error)
+plot(wl_full_dat$transcript, wl_full_dat$estimate)
 plot(wl_full_dat$estimate, wl_full_dat$est_error)
 
 par(mfrow = c(1, 2))
@@ -526,8 +568,60 @@ par(mfrow = c(1, 2))
 plot(wa_full_dat$gene_length, wa_full_dat$est_error, xlab = "Gene length", ylab = "Error on trend with time", main = "Writer add")
 plot(wl_full_dat$gene_length, wl_full_dat$est_error, xlab = "Gene length", ylab = "Error on trend with time", main = "Writer loss")
 
-## Absolute H3K36me3 levels
-temp <- data.table::fread("~/projects/chipseq-gene-dynamics/data/absolute_matrix_for_LMM_model_nonOverlappingGenes_noChrMGenes.txt", data.table = FALSE)
+par(mfrow = c(1, 2))
+plot(wa_full_dat$histone, wa_full_dat$estimate, xlab = "Mean H3K36me3 at time 0", ylab = "Trend with time", main = "Writer add")
+plot(wl_full_dat$histone, wl_full_dat$estimate, xlab = "Mean H3K36me3 at time 0", ylab = "Trend with time", main = "Writer loss")
+
+par(mfrow = c(1, 2))
+plot(wa_full_dat$histone, wa_full_dat$est_error, xlab = "Mean H3K36me3 at time 0", ylab = "Error on trend with time", main = "Writer add")
+plot(wl_full_dat$histone, wl_full_dat$est_error, xlab = "Mean H3K36me3 at time 0", ylab = "Error on trend with time", main = "Writer loss")
+
+par(mfrow = c(1, 2))
+plot(wa_full_dat$histone, wa_full_dat$gene_length, xlab = "Mean H3K36me3 at time 0", ylab = "Gene length", main = "Writer add")
+plot(wl_full_dat$histone, wl_full_dat$gene_length, xlab = "Mean H3K36me3 at time 0", ylab = "Gene length", main = "Writer loss")
+
+par(mfrow = c(2, 2))
+plot(wa_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(histone),
+     wa_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(estimate), xlab = "Mean H3K36me3 at time 0", ylab = "Trend with time", main = "Writer add (Trend genes)")
+plot(wl_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(histone),
+     wl_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(estimate), xlab = "Mean H3K36me3 at time 0", ylab = "Trend with time", main = "Writer loss (Trend genes)")
+
+plot(wa_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(gene_length),
+     wa_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(estimate), xlab = "Gene length", ylab = "Trend with time", main = "Writer add (Trend genes)")
+plot(wl_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(gene_length),
+     wl_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(estimate), xlab = "Gene length", ylab = "Trend with time", main = "Writer loss (Trend genes)")
+
+
+plot(wa_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(histone),
+     wa_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(est_error), xlab = "Mean H3K36me3 at time 0", ylab = "Error on trend with time", main = "Writer add")
+plot(wl_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(histone),
+     wl_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(est_error), xlab = "Mean H3K36me3 at time 0", ylab = "Error on trend with time", main = "Writer loss")
+
+
+plot(wa_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(gene_length),
+     wa_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(est_error), xlab = "Gene length", ylab = "Error on trend with time", main = "Writer add")
+plot(wl_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(gene_length),
+     wl_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(est_error), xlab = "Gene length", ylab = "Error on trend with time", main = "Writer loss")
+
+
+fit1 <- summary(lm(histone ~ category, data = wa_full_dat))
+fit2 <- summary(lm(gene_length ~ category, data = wa_full_dat))
+
+g1 <- wa_full_dat %>%
+  ggplot(data = ., aes(y = histone, x = category)) + geom_boxplot() + annotate("text", x = 1.5, y = 0.75, label = paste("logP =", round(-log10(fit1$coefficients[2, 4]), 3))) + ggtitle("Writer add") + gg_theme
+g2 <- wa_full_dat %>%
+  ggplot(data = ., aes(y = gene_length, x = category)) + geom_boxplot() + annotate("text", x = 1.5, y = 15000, label = paste("logP =", round(-log10(fit2$coefficients[2, 4]), 3))) + ggtitle("Writer add") + gg_theme
+
+fit3 <- summary(lm(histone ~ category, data = wl_full_dat))
+fit4 <- summary(lm(gene_length ~ category, data = wl_full_dat))
+
+
+g3 <- wl_full_dat %>%
+  ggplot(data = ., aes(y = histone, x = category)) + geom_boxplot() + annotate("text", x = 1.5, y = 0.8, label = paste("logP =", round(-log10(fit3$coefficients[2, 4]), 3))) + ggtitle("Writer loss") + gg_theme
+g4 <- wl_full_dat %>%
+  ggplot(data = ., aes(y = gene_length, x = category)) + geom_boxplot() + annotate("text", x = 1.5, y = 15000, label = paste("logP =", round(-log10(fit4$coefficients[2, 4]), 3))) + ggtitle("Writer loss") + gg_theme
+
+gridExtra::grid.arrange(g1, g2, g3, g4)
 
 ##############################################
 ##
