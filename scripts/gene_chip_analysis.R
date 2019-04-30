@@ -150,7 +150,7 @@ timepoint_dat$category[timepoint_dat$lower_95 > 0] <- "positive"
 timepoint_dat$category[timepoint_dat$upper_95 < 0] <- "negative"
 timepoint_dat$category[timepoint_dat$lower_95 < 0 & timepoint_dat$upper_95 > 0] <- "zero"
 
-  
+## Histogram
 ggplot(data = timepoint_dat, aes(x = estimate)) + geom_histogram() + facet_grid(assay~.)
 
 ## Grabbing high genes
@@ -492,7 +492,7 @@ multigene_fit <- brms::brm(value ~ 1 + timepoint_cat + assay + timepoint_cat:ass
 ##
 ##############################################
 ## Transcript levels and gene length
-wa_covar_raw_dat <- data.table::fread("~/projects/chipseq-gene-dynamics/data/DtL_setd2_RNA_combined_sf.txt", data.table = FALSE) %>%
+wa_covar_raw_dat <- data.table::fread("data/DtL_setd2_RNA_combined_sf.txt", data.table = FALSE) %>%
   rename(gene_length = "Gene Length",
          gene = GENE)
 wa_covar_dat <- wa_covar_raw_dat %>%
@@ -505,7 +505,7 @@ wa_covar_dat <- wa_covar_raw_dat %>%
   summarize(transcript = mean(log(transcript))) %>%
   ungroup
 
-wl_covar_raw_dat <- data.table::fread("~/projects/chipseq-gene-dynamics/data/LtD_setd2_RNA_combined_sf.txt", data.table = FALSE) %>%
+wl_covar_raw_dat <- data.table::fread("data/LtD_setd2_RNA_combined_sf.txt", data.table = FALSE) %>%
   rename(gene_length = "Gene Length",
          gene = GENE)
 wl_covar_dat <- wl_covar_raw_dat %>%
@@ -519,7 +519,7 @@ wl_covar_dat <- wl_covar_raw_dat %>%
   ungroup
 
 ## Absolute H3K36me3 levels
-wa_histone_covar <- data.table::fread("~/projects/chipseq-gene-dynamics/data/absolute_matrix_for_LMM_model_nonOverlappingGenes_noChrMGenes.txt", data.table = FALSE) %>%
+wa_histone_covar <- data.table::fread("data/absolute_matrix_for_LMM_model_nonOverlappingGenes_noChrMGenes.txt", data.table = FALSE) %>%
   filter(V4 == 0,
          V2 == 3) %>%
   select(V1, V5) %>%
@@ -528,7 +528,7 @@ wa_histone_covar <- data.table::fread("~/projects/chipseq-gene-dynamics/data/abs
   ungroup %>%
   rename(gene = V1,
          histone = V5)
-wl_histone_covar <- data.table::fread("~/projects/chipseq-gene-dynamics/data/absolute_matrix_for_LMM_model_nonOverlappingGenes_noChrMGenes.txt", data.table = FALSE) %>%
+wl_histone_covar <- data.table::fread("data/absolute_matrix_for_LMM_model_nonOverlappingGenes_noChrMGenes.txt", data.table = FALSE) %>%
   filter(V4 == 0,
          V2 == 1) %>%
   select(V1, V5) %>%
@@ -543,7 +543,6 @@ wa_full_dat <- timepoint_dat %>%
   filter(assay == "writer_add") %>%
   left_join(wa_covar_dat) %>%
   left_join(wa_histone_covar)
-
 wl_full_dat <- timepoint_dat %>%
   filter(assay == "writer_loss") %>%
   left_join(wl_covar_dat) %>%
@@ -604,6 +603,8 @@ plot(wa_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(gene_length),
 plot(wl_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(gene_length),
      wl_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(est_error), xlab = "Gene length", ylab = "Error on trend with time", main = "Writer loss")
 
+
+ggplot(data = wa_full_dat, aes(x = gene_length, y = estimate)) + geom_point()
 
 fit1 <- summary(lm(histone ~ category, data = wa_full_dat))
 fit2 <- summary(lm(gene_length ~ category, data = wa_full_dat))
