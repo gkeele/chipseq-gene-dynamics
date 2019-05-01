@@ -502,7 +502,7 @@ wa_covar_dat <- wa_covar_raw_dat %>%
          rep3 = DtL_0min_set2d_RNA_Rep3) %>%
   gather(key = rep, value = transcript, -c(gene, gene_length)) %>%
   group_by(gene, gene_length) %>%
-  summarize(transcript = mean(log(transcript))) %>%
+  summarize(transcript = mean(log(transcript + 1))) %>%
   ungroup
 
 wl_covar_raw_dat <- data.table::fread("data/LtD_setd2_RNA_combined_sf.txt", data.table = FALSE) %>%
@@ -515,7 +515,7 @@ wl_covar_dat <- wl_covar_raw_dat %>%
          rep3 = LtD_0min_set2d_RNA_Rep3) %>%
   gather(key = rep, value = transcript, -c(gene, gene_length)) %>%
   group_by(gene, gene_length) %>%
-  summarize(transcript = mean(log(transcript))) %>%
+  summarize(transcript = mean(log(transcript + 1))) %>%
   ungroup
 
 ## Absolute H3K36me3 levels
@@ -557,8 +557,8 @@ plot(wl_full_dat$transcript, wl_full_dat$estimate)
 plot(wl_full_dat$estimate, wl_full_dat$est_error)
 
 par(mfrow = c(1, 2))
-plot(wa_full_dat$transcript, wa_full_dat$estimate)
-plot(wl_full_dat$transcript, wl_full_dat$estimate)
+plot(y = wa_full_dat$transcript, x = wa_full_dat$estimate, ylab = "Mean log(time0 transcript)", xlab = "Histone gain estimate", main = "Writer add")
+plot(y = wl_full_dat$transcript, x = abs(wl_full_dat$estimate), ylab = "Mean log(time0 transcript)", xlab = "Histone loss estimate", main = "Writer add")
 
 par(mfrow = c(1, 2))
 plot(wa_full_dat$gene_length, wa_full_dat$estimate, xlab = "Gene length", ylab = "Trend with time", main = "Writer add")
@@ -569,8 +569,67 @@ plot(wa_full_dat$gene_length, wa_full_dat$est_error, xlab = "Gene length", ylab 
 plot(wl_full_dat$gene_length, wl_full_dat$est_error, xlab = "Gene length", ylab = "Error on trend with time", main = "Writer loss")
 
 par(mfrow = c(1, 2))
-plot(wa_full_dat$histone, wa_full_dat$estimate, xlab = "Mean H3K36me3 at time 0", ylab = "Trend with time", main = "Writer add")
-plot(wl_full_dat$histone, wl_full_dat$estimate, xlab = "Mean H3K36me3 at time 0", ylab = "Trend with time", main = "Writer loss")
+plot(y = wa_full_dat$histone, x = wa_full_dat$estimate, ylab = "Mean H3K36me3 at time 0", xlab = "Histone gain estimate", main = "Writer add")
+plot(y = wl_full_dat$histone, x = abs(wl_full_dat$estimate), ylab = "Mean H3K36me3 at time 0", xlab = "Histone loss estimate", main = "Writer loss")
+
+
+par(mfrow = c(2, 2))
+plot(x = wa_full_dat$transcript, y = wa_full_dat$estimate, 
+     xlab = "Mean log(time0 transcript)", ylab = "Histone gain estimate", 
+     main = "Writer add", las = 1, 
+     pch = 20, col = scales::alpha("black", 0.3))
+abline(lm(estimate ~ transcript, data = wa_full_dat), col = "red")
+plot(x = wl_full_dat$transcript, y = abs(wl_full_dat$estimate), 
+     xlab = "Mean log(time0 transcript)", ylab = "Histone loss estimate", 
+     main = "Writer loss", las = 1,
+     pch = 20, col = scales::alpha("black", 0.3))
+abline(lm(abs(estimate) ~ transcript, data = wl_full_dat), col = "blue")
+plot(x = wa_full_dat$histone, y = wa_full_dat$estimate, 
+     xlab = "Mean time0 H3K36me3", ylab = "Histone gain estimate", 
+     main = "Writer add", las = 1,
+     pch = 20, col = scales::alpha("black", 0.3))
+abline(lm(estimate ~ histone, data = wa_full_dat), col = "red")
+plot(x = wl_full_dat$histone, y = abs(wl_full_dat$estimate), 
+     xlab = "Mean time0 H3K36me3", ylab = "Histone loss estimate", 
+     main = "Writer loss", las = 1,
+     pch = 20, col = scales::alpha("black", 0.3))
+abline(lm(abs(estimate) ~ histone, data = wl_full_dat), col = "blue")
+
+cor.test(x = wa_full_dat$transcript, y = wa_full_dat$estimate)
+cor.test(x = wl_full_dat$transcript, y = wl_full_dat$estimate)
+
+wa_reduced_dat <- wa_full_dat %>%
+  filter(transcript != 0)
+wl_reduced_dat <- wl_full_dat %>%
+  filter(transcript != 0)
+
+cor.test(x = wa_reduced_dat$transcript, y = wa_reduced_dat$estimate)
+cor.test(x = wl_reduced_dat$transcript, y = wl_reduced_dat$estimate)
+
+par(mfrow = c(2, 2))
+plot(x = wa_reduced_dat$transcript, y = wa_reduced_dat$estimate, 
+     xlab = "Mean log(time0 transcript)", ylab = "Histone gain estimate", 
+     main = "Writer add", las = 1, 
+     pch = 20, col = scales::alpha("black", 0.3))
+abline(lm(estimate ~ transcript, data = wa_reduced_dat), col = "red")
+plot(x = wl_reduced_dat$transcript, y = abs(wl_reduced_dat$estimate), 
+     xlab = "Mean log(time0 transcript)", ylab = "Histone loss estimate", 
+     main = "Writer loss", las = 1,
+     pch = 20, col = scales::alpha("black", 0.3))
+abline(lm(abs(estimate) ~ transcript, data = wl_reduced_dat), col = "blue")
+plot(x = wa_reduced_dat$histone, y = wa_reduced_dat$estimate, 
+     xlab = "Mean time0 H3K36me3", ylab = "Histone gain estimate", 
+     main = "Writer add", las = 1,
+     pch = 20, col = scales::alpha("black", 0.3))
+abline(lm(estimate ~ histone, data = wa_reduced_dat), col = "red")
+plot(x = wl_reduced_dat$histone, y = abs(wl_reduced_dat$estimate), 
+     xlab = "Mean time0 H3K36me3", ylab = "Histone loss estimate", 
+     main = "Writer loss", las = 1,
+     pch = 20, col = scales::alpha("black", 0.3))
+abline(lm(abs(estimate) ~ histone, data = wl_reduced_dat), col = "blue")
+
+
+
 
 par(mfrow = c(1, 2))
 plot(wa_full_dat$histone, wa_full_dat$est_error, xlab = "Mean H3K36me3 at time 0", ylab = "Error on trend with time", main = "Writer add")
@@ -604,7 +663,26 @@ plot(wl_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(gene_length),
      wl_full_dat %>% filter(gene %in% genes_all_nonzero) %>% pull(est_error), xlab = "Gene length", ylab = "Error on trend with time", main = "Writer loss")
 
 
-ggplot(data = wa_full_dat, aes(x = gene_length, y = estimate)) + geom_point()
+g1 <- ggplot(data = wa_full_dat, aes(x = gene_length, y = estimate)) + geom_point(aes(color = transcript)) + ggtitle("Writer add") + gg_theme
+g2 <- ggplot(data = wl_full_dat, aes(x = gene_length, y = estimate)) + geom_point(aes(color = transcript)) + ggtitle("Writer loss") + gg_theme
+grid.arrange(g1, g2)
+
+g1 <- ggplot(data = wa_full_dat, aes(x = gene_length, y = est_error)) + geom_point(aes(color = transcript)) + ggtitle("Writer add") + gg_theme
+g2 <- ggplot(data = wl_full_dat, aes(x = gene_length, y = est_error)) + geom_point(aes(color = transcript)) + ggtitle("Writer loss") + gg_theme
+grid.arrange(g1, g2)
+
+g1 <- ggplot(data = wa_full_dat, aes(x = histone, y = estimate)) + geom_point(aes(color = transcript)) + ggtitle("Writer add") + gg_theme
+g2 <- ggplot(data = wl_full_dat, aes(x = histone, y = estimate)) + geom_point(aes(color = transcript)) + ggtitle("Writer loss") + gg_theme
+grid.arrange(g1, g2)
+
+g1 <- ggplot(data = wa_full_dat, aes(x = histone, y = est_error)) + geom_point(aes(color = transcript)) + ggtitle("Writer add") + gg_theme
+g2 <- ggplot(data = wl_full_dat, aes(x = histone, y = est_error)) + geom_point(aes(color = transcript)) + ggtitle("Writer loss") + gg_theme
+grid.arrange(g1, g2)
+
+par(mfrow = c(1, 2))
+plot(wl_full_dat$hist, wl_full_dat$transcript, main = "Writer loss")
+plot(wa_full_dat$hist, wa_full_dat$transcript, main = "Writer add")
+
 
 fit1 <- summary(lm(histone ~ category, data = wa_full_dat))
 fit2 <- summary(lm(gene_length ~ category, data = wa_full_dat))
@@ -675,5 +753,138 @@ writer_add <- writer_add + theme(panel.grid.major = element_blank(),
 writer_add
 
 gridExtra::grid.arrange(writer_loss, writer_eraser_loss, writer_add, nrow = 1)
+
+
+
+
+
+
+## Transcription dynamics
+wa_tx_raw_dat <- data.table::fread("data/DtL_setd2_RNA_combined_sf.txt", data.table = FALSE) %>%
+  rename(gene_length = "Gene Length",
+         gene = GENE) %>%
+  gather(key = "category", value = "transcript", -c(gene, gene_length)) %>%
+  separate(category, c("V1", "timepoint", "V2", "V3", "replicate")) %>%
+  select(-c(V1, V2, V3)) %>%
+  mutate(timepoint = as.numeric(gsub(x = timepoint, pattern = "min", replacement = ""))/60,
+         replicate = as.numeric(gsub(x = replicate, pattern = "Rep", replacement = "")),
+         assay = 2) %>%
+  arrange(gene, timepoint, replicate)
+
+wl_tx_raw_dat <- data.table::fread("data/LtD_setd2_RNA_combined_sf.txt", data.table = FALSE) %>%
+  rename(gene_length = "Gene Length",
+         gene = GENE) %>%
+  gather(key = "category", value = "transcript", -c(gene, gene_length)) %>%
+  separate(category, c("V1", "timepoint", "V2", "V3", "replicate")) %>%
+  select(-c(V1, V2, V3)) %>%
+  mutate(timepoint = as.numeric(gsub(x = timepoint, pattern = "min", replacement = ""))/60,
+         replicate = as.numeric(gsub(x = replicate, pattern = "Rep", replacement = "")),
+         assay = 1) %>%
+  arrange(gene, timepoint, replicate)
+
+tx_raw_dat <- bind_rows(wa_tx_raw_dat,
+                        wl_tx_raw_dat) %>%
+  mutate(assay = factor(assay),
+         assay = recode(assay, "1" = "writer_loss", "2" = "writer_add"),
+         sample_unit = paste(gene, assay, replicate, sep = "_"))
+  
+
+
+overlap_genes <- intersect(unique(gene_chip_dat$gene), unique(tx_raw_dat$gene))
+## Linear
+g_transcript <- ggplot(data = tx_raw_dat %>% filter(gene %in% overlap_genes[5:10]), aes(x = timepoint, y = log(transcript + 1), col = assay)) + scale_color_manual(values = c("magenta", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g_transcript <- g_transcript + geom_smooth(aes(y = log(transcript + 1), x = timepoint), method = "lm", size = 2)
+g_transcript <- g_transcript + gg_theme + facet_wrap(~gene)
+g_transcript
+
+de_genes <- c("YAL037W", "YAL012W", "YBL106C", "YBL098W", "YBL078C")
+
+g_transcript <- ggplot(data = tx_raw_dat %>% filter(gene %in% de_genes), aes(x = timepoint, y = log(transcript + 1), col = assay)) + scale_color_manual(values = c("magenta", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g_transcript <- g_transcript + geom_smooth(aes(y = log(transcript + 1), x = timepoint), method = "lm", size = 2)
+g_transcript <- g_transcript + gg_theme + facet_wrap(~gene)
+g_transcript
+
+g_histone <- ggplot(data = gene_chip_dat %>% filter(gene %in% overlap_genes[5:10]), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g_histone <- g_histone + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
+g_histone <- g_histone + gg_theme + facet_wrap(~gene)
+g_histone
+
+gridExtra::grid.arrange(g_transcript, g_histone)
+
+
+g <- ggplot(data = tx_raw_dat %>% filter(gene %in% "YFR044C"), aes(x = timepoint, y = log(transcript + 1), col = assay)) + scale_color_manual(values = c("magenta", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g <- g + geom_smooth(aes(y = log(transcript + 1), x = timepoint), method = "lm", size = 2)
+g <- g + gg_theme + facet_wrap(~gene)
+g
+g <- ggplot(data = tx_raw_dat %>% filter(gene %in% "YAL037W"), aes(x = timepoint, y = log(transcript + 1), col = assay)) + scale_color_manual(values = c("magenta", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g <- g + geom_smooth(aes(y = log(transcript + 1), x = timepoint), method = "lm", size = 2)
+g <- g + gg_theme + facet_wrap(~gene)
+g
+g <- ggplot(data = tx_raw_dat %>% filter(gene %in% "YPR191W"), aes(x = timepoint, y = log(transcript + 1), col = assay)) + scale_color_manual(values = c("magenta", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g <- g + geom_smooth(aes(y = log(transcript + 1), x = timepoint), method = "lm", size = 2)
+g <- g + gg_theme + facet_wrap(~gene)
+g
+
+
+histone_raw_dat <- data.table::fread("data/absolute_matrix_for_LMM_model_nonOverlappingGenes_noChrMGenes.txt", data.table = FALSE) %>%
+  rename(gene = V1,
+         assay = V2,
+         replicate = V3,
+         timepoint = V4,
+         histone = V5) %>%
+  mutate(assay = factor(assay),
+         assay = recode(assay, "1" = "writer_loss", "2" = "writer_eraser_loss", "3" = "writer_add"),
+         timepoint_cat = factor(timepoint),
+         timepoint = 0,
+         sample_unit = paste(gene, assay, replicate, sep = "_")) 
+histone_raw_dat$timepoint[histone_raw_dat$assay %in% c("writer_loss", "writer_eraser_loss") & histone_raw_dat$timepoint_cat == 0] <- 0
+histone_raw_dat$timepoint[histone_raw_dat$assay %in% c("writer_loss", "writer_eraser_loss") & histone_raw_dat$timepoint_cat == 1] <- 30/60
+histone_raw_dat$timepoint[histone_raw_dat$assay %in% c("writer_loss", "writer_eraser_loss") & histone_raw_dat$timepoint_cat == 2] <- 60/60
+histone_raw_dat$timepoint[histone_raw_dat$assay %in% c("writer_loss", "writer_eraser_loss") & histone_raw_dat$timepoint_cat == 3] <- 90/60
+histone_raw_dat$timepoint[histone_raw_dat$assay == "writer_add" & histone_raw_dat$timepoint_cat == 0] <- 0
+histone_raw_dat$timepoint[histone_raw_dat$assay == "writer_add" & histone_raw_dat$timepoint_cat == 1] <- 20/60
+histone_raw_dat$timepoint[histone_raw_dat$assay == "writer_add" & histone_raw_dat$timepoint_cat == 2] <- 40/60
+histone_raw_dat$timepoint[histone_raw_dat$assay == "writer_add" & histone_raw_dat$timepoint_cat == 3] <- 60/60
+
+
+merge_dat <- tx_raw_dat %>% 
+  select(gene, assay, replicate, timepoint, sample_unit, transcript) %>%
+  inner_join(histone_raw_dat %>%
+               select(sample_unit, timepoint, histone))
+
+## Function to run brms
+run_brms_on_transcript <- function(transcript_dat, 
+                                   this_gene, 
+                                   adapt_delta = 0.8,
+                                   iter = 2000) {
+  use_dat <- transcript_dat %>% filter(gene == this_gene)#,
+  # writer loss
+  wl_fit <- brms::brm(transcript ~ 1 + timepoint + histone + (1 + timepoint + histone | sample_unit), 
+                      data = use_dat %>% filter(assay == "writer_loss"), 
+                      family = "hurdle_lognormal",
+                      iter = iter,
+                      control = list(adapt_delta = adapt_delta))
+  wl_fixed <- summary(wl_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
+  wl_random <- summary(wl_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
+  # writer add
+  wa_fit <- brms::brm(transcript ~ 1 + timepoint + histone + (1 + timepoint + histone | sample_unit), 
+                      data = use_dat %>% filter(assay == "writer_add"), 
+                      family = "hurdle_lognormal",
+                      iter = iter,
+                      control = list(adapt_delta = adapt_delta))
+  wa_fixed <- summary(wa_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
+  wa_random <- summary(wa_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
+  
+  names(wl_fixed) <- names(wl_random) <- names(wa_fixed) <- names(wa_random) <- c("parameter", "estimate", "est_error", "lower_95", "upper_95", "eff_sample", "rhat")
+  results <- list(writer_loss = bind_rows(wl_fixed, wl_random),
+                  writer_add = bind_rows(wa_fixed, wa_random))
+  results
+}
+
+practice = run_brms_on_transcript(transcript_dat = merge_dat,
+                                  this_gene = "YPR191W",
+                                  iter = 10000)
+
+
 
 
