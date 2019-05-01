@@ -612,22 +612,33 @@ plot(x = wa_reduced_dat$transcript, y = wa_reduced_dat$estimate,
      main = "Writer add", las = 1, 
      pch = 20, col = scales::alpha("black", 0.3))
 abline(lm(estimate ~ transcript, data = wa_reduced_dat), col = "red")
+text(x = 4, y = 4, paste("r = ", 
+                         round(cor(wa_reduced_dat$transcript, wa_reduced_dat$estimate), 3)),
+     col = "goldenrod", font = 2, cex = 2)
 plot(x = wl_reduced_dat$transcript, y = abs(wl_reduced_dat$estimate), 
      xlab = "Mean log(time0 transcript)", ylab = "Histone loss estimate", 
      main = "Writer loss", las = 1,
      pch = 20, col = scales::alpha("black", 0.3))
 abline(lm(abs(estimate) ~ transcript, data = wl_reduced_dat), col = "blue")
+text(x = 4, y = 3, paste("r = ", 
+                         round(cor(wl_reduced_dat$transcript, abs(wl_reduced_dat$estimate)), 3)),
+     col = "goldenrod", font = 2, cex =2)
 plot(x = wa_reduced_dat$histone, y = wa_reduced_dat$estimate, 
      xlab = "Mean time0 H3K36me3", ylab = "Histone gain estimate", 
      main = "Writer add", las = 1,
      pch = 20, col = scales::alpha("black", 0.3))
 abline(lm(estimate ~ histone, data = wa_reduced_dat), col = "red")
+text(x = 0.25, y = 3, paste("r = ", 
+                         round(cor(wa_reduced_dat$histone, abs(wa_reduced_dat$estimate)), 3)),
+     col = "goldenrod", font = 2, cex = 2)
 plot(x = wl_reduced_dat$histone, y = abs(wl_reduced_dat$estimate), 
      xlab = "Mean time0 H3K36me3", ylab = "Histone loss estimate", 
      main = "Writer loss", las = 1,
      pch = 20, col = scales::alpha("black", 0.3))
 abline(lm(abs(estimate) ~ histone, data = wl_reduced_dat), col = "blue")
-
+text(x = 0.4, y = 3, paste("r = ", 
+                         round(cor(wl_reduced_dat$histone, abs(wl_reduced_dat$estimate)), 3)),
+     col = "goldenrod", font = 2, cex = 2)
 
 
 
