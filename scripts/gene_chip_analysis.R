@@ -537,6 +537,15 @@ wl_histone_covar <- data.table::fread("data/absolute_matrix_for_LMM_model_nonOve
   ungroup %>%
   rename(gene = V1,
          histone = V5)
+wel_histone_covar <- data.table::fread("data/absolute_matrix_for_LMM_model_nonOverlappingGenes_noChrMGenes.txt", data.table = FALSE) %>%
+  filter(V4 == 0,
+         V2 == 1) %>%
+  select(V1, V5) %>%
+  group_by(V1) %>%
+  summarize(V5 = mean(V5)) %>%
+  ungroup %>%
+  rename(gene = V1,
+         histone = V5)
 
 
 wa_full_dat <- timepoint_dat %>%
@@ -639,8 +648,6 @@ abline(lm(abs(estimate) ~ histone, data = wl_reduced_dat), col = "blue")
 text(x = 0.4, y = 3, paste("r = ", 
                          round(cor(wl_reduced_dat$histone, abs(wl_reduced_dat$estimate)), 3)),
      col = "goldenrod", font = 2, cex = 2)
-
-
 
 par(mfrow = c(1, 2))
 plot(wa_full_dat$histone, wa_full_dat$est_error, xlab = "Mean H3K36me3 at time 0", ylab = "Error on trend with time", main = "Writer add")
@@ -898,4 +905,92 @@ practice = run_brms_on_transcript(transcript_dat = merge_dat,
 
 
 
+## Un-scaled histone
+unscaled_gene_chip_dat <- read.table("data/absolute_matrix_for_LMM_model_nonOverlappingGenes.txt", header = TRUE) # path to data
+
+unscaled_gene_chip_dat <- unscaled_gene_chip_dat %>%
+  mutate(assay = factor(assay),
+         assay = recode(assay, "1" = "writer_loss", "2" = "writer_eraser_loss", "3" = "writer_add"),
+         sample_unit = paste(gene, assay, replicate, sep = "_"),
+         timepoint_cat = factor(timepoint),
+         timepoint = 0,
+         transformed_value = round(value * 1000))
+unscaled_gene_chip_dat$timepoint[unscaled_gene_chip_dat$assay %in% c("writer_loss", "writer_eraser_loss") & unscaled_gene_chip_dat$timepoint_cat == 0] <- 0
+unscaled_gene_chip_dat$timepoint[unscaled_gene_chip_dat$assay %in% c("writer_loss", "writer_eraser_loss") & unscaled_gene_chip_dat$timepoint_cat == 1] <- 30/60
+unscaled_gene_chip_dat$timepoint[unscaled_gene_chip_dat$assay %in% c("writer_loss", "writer_eraser_loss") & unscaled_gene_chip_dat$timepoint_cat == 2] <- 60/60
+unscaled_gene_chip_dat$timepoint[unscaled_gene_chip_dat$assay %in% c("writer_loss", "writer_eraser_loss") & unscaled_gene_chip_dat$timepoint_cat == 3] <- 90/60
+unscaled_gene_chip_dat$timepoint[unscaled_gene_chip_dat$assay == "writer_add" & unscaled_gene_chip_dat$timepoint_cat == 0] <- 0
+unscaled_gene_chip_dat$timepoint[unscaled_gene_chip_dat$assay == "writer_add" & unscaled_gene_chip_dat$timepoint_cat == 1] <- 20/60
+unscaled_gene_chip_dat$timepoint[unscaled_gene_chip_dat$assay == "writer_add" & unscaled_gene_chip_dat$timepoint_cat == 2] <- 40/60
+unscaled_gene_chip_dat$timepoint[unscaled_gene_chip_dat$assay == "writer_add" & unscaled_gene_chip_dat$timepoint_cat == 3] <- 60/60
+
+unscaled_gene_chip_dat %>% filter(assay == "writer_add",
+                                  gene == unscaled_gene_chip_dat$gene[1])
+
+g <- ggplot(data = unscaled_gene_chip_dat %>% filter(gene == unscaled_gene_chip_dat$gene[1]), aes(x = timepoint, y = value * 1000, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
+g <- g + gg_theme
+g
+
+g <- ggplot(data = gene_chip_dat %>% filter(gene == unscaled_gene_chip_dat$gene[1]), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
+g <- g + gg_theme
+g
+
+hist(unscaled_gene_chip_dat$value * 1000)
+hist(unscaled_gene_chip_dat$transformed_value)
+
+MASS::boxcox(value+1 ~ 1, data = unscaled_gene_chip_dat)
+hist(sqrt(unscaled_gene_chip_dat$value))
+
+## Arbitrary, but use transformed_value = round(value * 1000)
+run_brms_on_raw_chipseq <- function(chipseq_dat, 
+                                    this_gene, 
+                                    adapt_delta = 0.8,
+                                    iter = 2000) {
+  use_dat <- chipseq_dat %>% filter(gene == this_gene)#,
+  #!(value %in% c(0, 1)))
+  # writer loss
+  wl_fit <- brms::brm(transformed_value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
+                      data = use_dat %>% filter(assay == "writer_loss"), 
+                      family = "zero_inflated_negbinomial",
+                      iter = iter,
+                      control = list(adapt_delta = adapt_delta))
+  wl_fixed <- summary(wl_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
+  wl_random <- summary(wl_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
+  # writer-eraser loss
+  wel_fit <- brms::brm(transformed_value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
+                       data = use_dat %>% filter(assay == "writer_eraser_loss"), 
+                       family = "zero_inflated_negbinomial",
+                       iter = iter,
+                       control = list(adapt_delta = adapt_delta))
+  wel_fixed <- summary(wel_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
+  wel_random <- summary(wel_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
+  # writer add
+  wa_fit <- brms::brm(transformed_value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
+                      data = use_dat %>% filter(assay == "writer_add"), 
+                      family = "zero_inflated_negbinomial",
+                      iter = iter,
+                      control = list(adapt_delta = adapt_delta))
+  wa_fixed <- summary(wa_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
+  wa_random <- summary(wa_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
+  
+  names(wl_fixed) <- names(wl_random) <- names(wel_fixed) <- names(wel_random) <- names(wa_fixed) <- names(wa_random) <- c("parameter", "estimate", "est_error", "lower_95", "upper_95", "eff_sample", "rhat")
+  results <- list(writer_loss = bind_rows(wl_fixed, wl_random),
+                  writer_eraser_loss = bind_rows(wel_fixed, wel_random),
+                  writer_add = bind_rows(wa_fixed, wa_random))
+  results
+}
+
+g <- ggplot(data = unscaled_gene_chip_dat %>% filter(gene == "YAL012W"), aes(x = timepoint, y = transformed_value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g <- g + geom_smooth(aes(y = transformed_value, x = timepoint), method = "lm", size = 2)
+g <- g + gg_theme
+g
+
+g <- ggplot(data = gene_chip_dat %>% filter(gene == "YAL012W"), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
+g <- g + gg_theme
+g
+
+raw_yal012w_models <- run_brms_on_chipseq(chipseq_dat = unscaled_gene_chip_dat, this_gene = "YAL012W", iter = 10000)
 
