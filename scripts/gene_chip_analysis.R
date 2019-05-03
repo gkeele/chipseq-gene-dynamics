@@ -906,9 +906,9 @@ practice = run_brms_on_transcript(transcript_dat = merge_dat,
 
 
 ## Un-scaled histone
-unscaled_gene_chip_dat <- read.table("data/absolute_matrix_for_LMM_model_nonOverlappingGenes.txt", header = TRUE) # path to data
+raw_unscaled_gene_chip_dat <- read.table("data/absolute_matrix_for_LMM_model_nonOverlappingGenes.txt", header = TRUE) # path to data
 
-unscaled_gene_chip_dat <- unscaled_gene_chip_dat %>%
+unscaled_gene_chip_dat <- raw_unscaled_gene_chip_dat %>%
   mutate(assay = factor(assay),
          assay = recode(assay, "1" = "writer_loss", "2" = "writer_eraser_loss", "3" = "writer_add"),
          sample_unit = paste(gene, assay, replicate, sep = "_"),
@@ -994,3 +994,30 @@ g
 
 raw_yal012w_models <- run_brms_on_chipseq(chipseq_dat = unscaled_gene_chip_dat, this_gene = "YAL012W", iter = 10000)
 
+
+g <- ggplot(data = unscaled_gene_chip_dat %>% filter(gene == "YAL066W"), aes(x = timepoint, y = transformed_value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g <- g + geom_smooth(aes(y = transformed_value, x = timepoint), method = "lm", size = 2)
+g <- g + gg_theme
+g
+
+g <- ggplot(data = gene_chip_dat %>% filter(gene == "YAL066W"), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
+g <- g + gg_theme
+g
+
+g1 <- ggplot(data = unscaled_gene_chip_dat %>% filter(gene == "YAL041W"), aes(x = timepoint, y = transformed_value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g1 <- g1 + geom_smooth(aes(y = transformed_value, x = timepoint), method = "lm", size = 2)
+g1 <- g1 + gg_theme
+g1
+
+g2 <- ggplot(data = gene_chip_dat %>% filter(gene == "YAL041W"), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1", "coral")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g2 <- g2 + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
+g2 <- g2 + gg_theme
+g2
+
+gene_chip_dat %>% filter(gene == "YAL041W", 
+                         assay == "writer_eraser_loss")
+raw_unscaled_gene_chip_dat %>% filter(gene == "YAL041W", 
+                         assay == "2")
+
+grid.arrange(g1, g2)
