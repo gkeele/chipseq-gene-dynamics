@@ -229,7 +229,7 @@ genes_neg_wel <- timepoint_dat %>%
          category == "negative") %>%
   pull(gene)
 genes_neg_loss <- intersect(genes_neg_wl, genes_neg_wel)
-genes_overlap <- intersect(genes_pos_wa, genes_neg_wl) %>% intersect(genes_neg_wel)
+trend_genes <- intersect(genes_pos_wa, genes_neg_wl) %>% intersect(genes_neg_wel)
 
 genes_neg_loss_only <- genes_neg_loss[!(genes_neg_loss %in% genes_pos_wa)]
 
@@ -578,8 +578,22 @@ plot(wa_full_dat$gene_length, wa_full_dat$est_error, xlab = "Gene length", ylab 
 plot(wl_full_dat$gene_length, wl_full_dat$est_error, xlab = "Gene length", ylab = "Error on trend with time", main = "Writer loss")
 
 par(mfrow = c(1, 2))
-plot(y = wa_full_dat$histone, x = wa_full_dat$estimate, ylab = "Mean H3K36me3 at time 0", xlab = "Histone gain estimate", main = "Writer add")
-plot(y = wl_full_dat$histone, x = abs(wl_full_dat$estimate), ylab = "Mean H3K36me3 at time 0", xlab = "Histone loss estimate", main = "Writer loss")
+plot(x = wa_full_dat$histone, y = wa_full_dat$estimate, xlab = "Mean H3K36me3 at time 0", ylab = "Histone gain estimate", main = "Writer add")
+plot(x = wl_full_dat$histone, y = abs(wl_full_dat$estimate), xlab = "Mean H3K36me3 at time 0", ylab = "Histone loss estimate", main = "Writer loss")
+
+par(mfrow = c(1, 2))
+plot(x = wa_full_dat$histone, y = wa_full_dat$est_error, xlab = "Mean H3K36me3 at time 0", ylab = "Error on histone gain estimate", main = "Writer add")
+plot(x = wl_full_dat$histone, y = abs(wl_full_dat$est_error), xlab = "Mean H3K36me3 at time 0", ylab = "Error on histone loss estimate", main = "Writer loss")
+
+wa_reduced_dat <- wa_full_dat %>% filter(gene %in% trend_genes)
+wl_reduced_dat <- wl_full_dat %>% filter(gene %in% trend_genes)
+
+par(mfrow = c(2, 2))
+plot(x = wa_reduced_dat$histone, y = wa_reduced_dat$estimate, xlab = "Mean H3K36me3 at time 0", ylab = "Histone gain estimate", main = "Writer add")
+plot(x = wl_reduced_dat$histone, y = abs(wl_reduced_dat$estimate), xlab = "Mean H3K36me3 at time 0", ylab = "Histone loss estimate", main = "Writer loss")
+plot(x = wa_reduced_dat$histone, y = wa_reduced_dat$est_error, xlab = "Mean H3K36me3 at time 0", ylab = "Error on histone gain estimate", main = "Writer add")
+plot(x = wl_reduced_dat$histone, y = abs(wl_reduced_dat$est_error), xlab = "Mean H3K36me3 at time 0", ylab = "Error on histone loss estimate", main = "Writer loss")
+
 
 
 par(mfrow = c(2, 2))
@@ -906,9 +920,14 @@ practice = run_brms_on_transcript(transcript_dat = merge_dat,
 
 
 ## Un-scaled histone
-raw_unscaled_gene_chip_dat <- read.table("data/absolute_matrix_for_LMM_model_nonOverlappingGenes.txt", header = TRUE) # path to data
+raw_unscaled_gene_chip_dat <- read.table("data/absolute_matrix_for_LMM_model_nonOverlappingGenes.txt") # path to data
 
 unscaled_gene_chip_dat <- raw_unscaled_gene_chip_dat %>%
+  rename(gene = V1,
+         assay = V2,
+         replicate = V3,
+         timepoint = V4,
+         value = V5) %>%
   mutate(assay = factor(assay),
          assay = recode(assay, "1" = "writer_loss", "2" = "writer_eraser_loss", "3" = "writer_add"),
          sample_unit = paste(gene, assay, replicate, sep = "_"),
@@ -1017,7 +1036,7 @@ g2
 
 gene_chip_dat %>% filter(gene == "YAL041W", 
                          assay == "writer_eraser_loss")
-raw_unscaled_gene_chip_dat %>% filter(gene == "YAL041W", 
-                         assay == "2")
+unscaled_gene_chip_dat %>% filter(gene == "YAL041W", 
+                         assay == "writer_eraser_loss")
 
 grid.arrange(g1, g2)
