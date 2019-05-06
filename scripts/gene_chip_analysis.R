@@ -289,6 +289,7 @@ upset(upset_dat, order.by = "freq",
 ##  Beta regression: Trend estimate by error
 ##
 ##############################################
+#color circle if non-zero estimate within each assay
 plot(timepoint_dat$est_error, timepoint_dat$estimate, pch = ifelse(timepoint_dat$category == "zero", 1, 19), col = c(wa_col, wl_col, wel_col)[as.factor(timepoint_dat$assay)], 
      las = 1, ylab = "Histone trend with time", xlab = "Error on trend", frame.plot = FALSE)
 abline(h = 0, lty = 2)
@@ -297,6 +298,17 @@ legend("bottomright",
        col = c(wa_col, wl_col, wel_col),
        fill = c(wa_col, wl_col, wel_col),
        bty = "n")
+
+#color circle if non-zero across all assays
+plot(timepoint_dat$est_error, timepoint_dat$estimate, pch = ifelse(timepoint_dat$gene %in% trend_genes, 19, 1), col = c(wa_col, wl_col, wel_col)[as.factor(timepoint_dat$assay)], 
+     las = 1, ylab = "Histone trend with time", xlab = "Error on trend", frame.plot = FALSE)
+abline(h = 0, lty = 2)
+legend("bottomright", 
+       legend = c("writer add", "writer loss", "writer eraser loss"),
+       col = c(wa_col, wl_col, wel_col),
+       fill = c(wa_col, wl_col, wel_col),
+       bty = "n")
+
 ##############################################
 ##
 ##  Beta regression: Formal test of assay 
