@@ -237,6 +237,10 @@ genes_neg_wel <- timepoint_dat %>%
   filter(assay == "writer_eraser_loss",
          category == "negative") %>%
   pull(gene)
+genes_pos_wa <- timepoint_dat %>% 
+  filter(assay == "writer_add",
+         category == "positive") %>%
+  pull(gene)
 trend_genes <- intersect(positive_genes, genes_neg_wl) %>% intersect(genes_neg_wel)
 genes_neg_loss_only <- negative_genes[!(negative_genes %in% genes_pos_wa)]
 ## Grabbing genes with no trends
