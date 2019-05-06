@@ -980,6 +980,22 @@ negative_histone_genes <- histone_transcript_dat %>%
   pull(gene) %>%
   unique
 
+##############################################
+##
+##  Transcription regression: Trend estimate by error
+##
+##############################################
+plot(transcript_timepoint_dat$est_error, transcript_timepoint_dat$estimate, pch = ifelse(transcript_timepoint_dat$category == "zero", 1, 19), col = c(wa_col, wl_col)[as.factor(timepoint_dat$assay)], 
+     las = 1, ylab = "Transcription trend with time", xlab = "Error on trend", frame.plot = FALSE, xlim = c(0, 10), ylim = c(-7, 7))
+abline(h = 0, lty = 2)
+legend("bottomright", 
+       legend = c("writer add", "writer loss"),
+       col = c(wa_col, wl_col),
+       fill = c(wa_col, wl_col),
+       bty = "n")
+
+
+
 g <- ggplot(data = tx_raw_dat %>% filter(gene %in% positive_transcript_genes[8]), aes(x = timepoint, y = log(transcript + 1), col = assay)) + scale_color_manual(values = c(wl_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
 g <- g + geom_smooth(aes(y = log(transcript + 1), x = timepoint), method = "lm", size = 2)
 g <- g + gg_theme
