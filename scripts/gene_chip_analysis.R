@@ -507,7 +507,7 @@ plot_loss_compare_dat <- loss_compare_dat %>%
                             'timepoint_cat2:assaywriter_eraser_loss' = "2",
                             'timepoint_cat3:assaywriter_eraser_loss' = "3")) %>%
   rename(timepoint = parameter)
-## Plot
+## Plot all negative trend genes
 g <- ggplot(data = plot_loss_compare_dat %>% filter(gene %in% negative_genes), aes(x = timepoint, y = Estimate)) + geom_line(aes(group = gene, col = gene), alpha = 0.2) + scale_color_grey(guide = FALSE)
 g <- g + geom_boxplot(aes(x = timepoint, y = Estimate), outlier.alpha = 0, color = wel_col, size = 0.7, alpha = 0.3) + ylab("WEL - WL timepoint effects")
 g <- g + stat_summary(fun.y = mean, geom="line", aes(group=1), col = wel_col, size = 1)
@@ -515,7 +515,13 @@ g <- g + gg_theme# + guides(fill=FALSE)
 g <- g + geom_hline(yintercept = 0, linetype = "dashed", color = "black", size = 1)
 g
 
-
+## Plot all high confident genes (confident/non-zero across all assays)
+g <- ggplot(data = plot_loss_compare_dat %>% filter(gene %in% negative_genes & gene %in% trend_genes), aes(x = timepoint, y = Estimate)) + geom_line(aes(group = gene, col = gene), alpha = 0.2) + scale_color_grey(guide = FALSE)
+g <- g + geom_boxplot(aes(x = timepoint, y = Estimate), outlier.alpha = 0, color = wel_col, size = 0.7, alpha = 0.3) + ylab("WEL - WL timepoint effects")
+g <- g + stat_summary(fun.y = mean, geom="line", aes(group=1), col = wel_col, size = 1)
+g <- g + gg_theme# + guides(fill=FALSE)
+g <- g + geom_hline(yintercept = 0, linetype = "dashed", color = "black", size = 1)
+g
 
 ##############################################
 ##
