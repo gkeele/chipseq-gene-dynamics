@@ -294,9 +294,9 @@ plot(timepoint_dat$est_error, timepoint_dat$estimate, pch = ifelse(timepoint_dat
      las = 1, ylab = "Histone trend with time", xlab = "Error on trend", frame.plot = FALSE)
 abline(h = 0, lty = 2)
 legend("bottomright", 
-       legend = c("writer add", "writer loss", "writer eraser loss"),
-       col = c(wa_col, wl_col, wel_col),
-       fill = c(wa_col, wl_col, wel_col),
+       legend = c("writer add", "writer loss", "writer eraser loss", "confident within assay", "not confident within assay"),
+       col = c(wa_col, wl_col, wel_col, "gray", "gray"),
+	   pch=c(15, 15, 15, 19, 1),
        bty = "n")
 
 #color circle if non-zero across all assays
@@ -304,9 +304,9 @@ plot(timepoint_dat$est_error, timepoint_dat$estimate, pch = ifelse(timepoint_dat
      las = 1, ylab = "Histone trend with time", xlab = "Error on trend", frame.plot = FALSE)
 abline(h = 0, lty = 2)
 legend("bottomright", 
-       legend = c("writer add", "writer loss", "writer eraser loss"),
-       col = c(wa_col, wl_col, wel_col),
-       fill = c(wa_col, wl_col, wel_col),
+       legend = c("writer add", "writer loss", "writer eraser loss", "confident within assay", "not confident within assay"),
+       col = c(wa_col, wl_col, wel_col, "gray", "gray"),
+	   pch=c(15, 15, 15, 19, 1),
        bty = "n")
 
 ##############################################
