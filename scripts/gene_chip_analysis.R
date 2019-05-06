@@ -69,7 +69,7 @@ gene_chip_dat$timepoint[gene_chip_dat$assay == "writer_add" & gene_chip_dat$time
 ##
 ##############################################
 single_gene_dat <- gene_chip_dat %>%
-  filter(gene %in% unique(gene_chip_dat$gene)[1]) %>%
+  filter(gene %in% gene_chip_dat$gene[1]) %>%
   group_by(sample_unit)
 
 ## Linear
@@ -185,12 +185,8 @@ yal041w_models <- run_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "
 ##
 ##############################################
 ## Parsing full set of Stan results
-#stan_fit_paths <- list.files("individual_gene_Stan_models/", full.names = TRUE)
-#stan_fit_paths <- list.files("individual_gene_Stan_models_alpha_0.99_iter_5000//", full.names = TRUE)
 stan_fit_paths <- list.files("individual_gene_Stan_models_alpha_0.8_iter_10000/", full.names = TRUE)
 stan_fit_paths <- stan_fit_paths[!(grepl(x = stan_fit_paths, pattern = "WL_vs_WEL"))]
-#file_path <- "individual_gene_Stan_models//sacCer3_nonOverlappingGenes_noChrMGenes_"
-#file_path <- "individual_gene_Stan_models_alpha_0.99_iter_5000///sacCer3_nonOverlappingGenes_noChrMGenes_"
 file_path <- "individual_gene_Stan_models_alpha_0.8_iter_10000//sacCer3_nonOverlappingGenes_noChrMGenes_"
 for (i in 1:length(stan_fit_paths)) {
   this_fit <- readRDS(stan_fit_paths[i])
@@ -219,7 +215,7 @@ timepoint_dat$category[timepoint_dat$lower_95 > 0] <- "positive"
 timepoint_dat$category[timepoint_dat$upper_95 < 0] <- "negative"
 timepoint_dat$category[timepoint_dat$lower_95 < 0 & timepoint_dat$upper_95 > 0] <- "zero"
 ## Histogram
-ggplot(data = timepoint_dat, aes(x = estimate)) + geom_histogram() + facet_grid(assay~.)
+ggplot(data = timepoint_dat, aes(x = estimate)) + geom_histogram() + gg_theme + facet_grid(assay~.)
 ## All genes
 all_genes <- unique(gene_chip_dat$gene)
 ## Grabbing high genes
@@ -334,6 +330,13 @@ anova(time_loss_alt_fit, time_loss_null_fit)
 gene_timepoint_dat <- timepoint_dat %>% 
   select(gene, assay, estimate) %>%
   spread(key = assay, value = estimate) 
+gene_error_data <- timepoint_dat %>%
+  select(gene, assay, est_error) %>%
+  spread(key = assay, value = est_error) %>%
+  rename(writer_loss_error = writer_loss,
+         writer_eraser_loss_error = writer_eraser_loss,
+         writer_add_error = writer_add)
+gene_timepoint_dat <- bind_cols(gene_timepoint_dat, gene_error_data)
 
 ##################################################################
 ##
@@ -709,6 +712,33 @@ plot(wl_reduced_dat$gene_length, wl_reduced_dat$est_error,
      xlab = "Gene length", ylab = "Error on trend with time", main = "Writer loss",
      pch = 20, col = alpha(wl_col, 0.3), las = 1)
 
+## Histone mark trend comparisons (WA vs WL)
+par(mfrow = c(1,2))
+plot(x = gene_timepoint_dat$writer_add, y = gene_timepoint_dat$writer_loss*-1, 
+     xlab = "Gain in WA", ylab = "Loss in WL", main = "WL loss vs WA gain",
+     pch = 20, col = alpha("gray", 0.5), las = 1)
+abline(lm(writer_loss*-1 ~ writer_add, data = gene_timepoint_dat), col = "blue")
+reduced_gene_timepoint_dat <- gene_timepoint_dat %>% filter(gene %in% trend_genes)
+plot(x = reduced_gene_timepoint_dat$writer_add, y = reduced_gene_timepoint_dat$writer_loss*-1, 
+     xlab = "Gain in WA", ylab = "Loss in WL", main = "WL loss vs WA gain in trend genes",
+     pch = 20, col = alpha("gray", 0.5), las = 1)
+abline(lm(writer_loss*-1 ~ writer_add, data = reduced_gene_timepoint_dat), col = "blue")
+# Error coloring
+compare_dat <- gene_timepoint_dat 
+compare_dat$combined_error <- as.numeric(apply(compare_dat, 1, function(x) max(x["writer_add_error"], x["writer_loss_error"])))
+g1 <- ggplot(data = compare_dat, aes(x = writer_add, y = writer_loss, col = combined_error)) + geom_point() + ggtitle("Writer add") + gg_theme
+g2 <- ggplot(data = compare_dat %>% filter(gene %in% trend_genes), aes(x = writer_add, y = writer_loss, col = combined_error)) + geom_point() + ggtitle("Writer loss") + gg_theme
+grid.arrange(g1, g2)
+
+## Histone mark trend error comparisons (WA vs WL)
+par(mfrow = c(1,2))
+plot(x = gene_timepoint_dat$writer_add_error, y = gene_timepoint_dat$writer_loss_error, 
+     xlab = "Error on gain in WA", ylab = "Error on loss in WL", main = "Errors on WL loss vs WA gain",
+     pch = 20, col = alpha("gray", 0.5), las = 1)
+plot(x = reduced_gene_timepoint_dat$writer_add_error, y = reduced_gene_timepoint_dat$writer_loss_error, 
+     xlab = "Error on gain in WA", ylab = "Error on loss in WL", main = "Errors on WL loss vs WA gain in trend genes",
+     pch = 20, col = alpha("gray", 0.5), las = 1)
+
 ## Gene length by Time 0 transcript
 par(mfrow = c(2, 2))
 plot(wa_full_dat$histone, wa_full_dat$gene_length, 
@@ -816,7 +846,7 @@ g
 ##
 ##  Read in and process the data
 ##
-##  Raw histones data
+##  Raw histones data for time 0 covariate
 ##
 ###################################################
 histone_raw_dat <- data.table::fread("data/absolute_matrix_for_LMM_model_nonOverlappingGenes_noChrMGenes.txt", data.table = FALSE) %>%
@@ -879,7 +909,6 @@ run_brms_on_transcript <- function(transcript_dat,
                   writer_add = bind_rows(wa_fixed, wa_random))
   results
 }
-
 ypr191w_models = run_brms_on_transcript(transcript_dat = tx_histone_merge_dat,
                                         this_gene = "YPR191W",
                                         iter = 10000)
@@ -890,46 +919,126 @@ ypr191w_models = run_brms_on_transcript(transcript_dat = tx_histone_merge_dat,
 ##
 ################################################
 ## Parsing full set of Stan results
-#stan_fit_paths <- list.files("individual_gene_Stan_models/", full.names = TRUE)
-#stan_fit_paths <- list.files("individual_gene_Stan_models_alpha_0.99_iter_5000//", full.names = TRUE)
-stan_fit_paths <- list.files("individual_gene_Stan_models_alpha_0.8_iter_10000/", full.names = TRUE)
-stan_fit_paths <- stan_fit_paths[!(grepl(x = stan_fit_paths, pattern = "WL_vs_WEL"))]
-#file_path <- "individual_gene_Stan_models//sacCer3_nonOverlappingGenes_noChrMGenes_"
-#file_path <- "individual_gene_Stan_models_alpha_0.99_iter_5000///sacCer3_nonOverlappingGenes_noChrMGenes_"
-file_path <- "individual_gene_Stan_models_alpha_0.8_iter_10000//sacCer3_nonOverlappingGenes_noChrMGenes_"
-for (i in 1:length(stan_fit_paths)) {
-  this_fit <- readRDS(stan_fit_paths[i])
+transcription_stan_fit_paths <- list.files("transcription_Stan_models", full.names = TRUE)
+file_path <- "transcription_Stan_models/sacCer3_nonOverlappingGenes_noChrMGenes_"
+for (i in 1:length(transcription_stan_fit_paths)) {
+  this_fit <- readRDS(transcription_stan_fit_paths[i])
   
-  this_gene <- gsub(x = stan_fit_paths[i], pattern = file_path, replacement = "", fixed = TRUE) %>%
-    gsub(x = ., replacement = "", pattern = "_Stan.rds", fixed = TRUE)
+  this_gene <- gsub(x = transcription_stan_fit_paths[i], pattern = file_path, replacement = "", fixed = TRUE) %>%
+    gsub(x = ., replacement = "", pattern = "_transcription_Stan.rds", fixed = TRUE)
   
   
   if (i == 1) {
-    timepoint_dat <- bind_rows(data.frame(gene = this_gene, assay = "writer_loss", this_fit$writer_loss %>% filter(parameter == "timepoint")),
-                               data.frame(gene = this_gene, assay = "writer_eraser_loss", this_fit$writer_eraser_loss %>% filter(parameter == "timepoint")),
-                               data.frame(gene = this_gene, assay = "writer_add", this_fit$writer_add %>% filter(parameter == "timepoint")))
+    transcript_timepoint_dat <- bind_rows(data.frame(gene = this_gene, assay = "writer_loss", this_fit$writer_loss %>% filter(parameter == "timepoint")),
+                                          data.frame(gene = this_gene, assay = "writer_add", this_fit$writer_add %>% filter(parameter == "timepoint")))
+    histone_transcript_dat <- bind_rows(data.frame(gene = this_gene, assay = "writer_loss", this_fit$writer_loss %>% filter(parameter == "histone")),
+                                        data.frame(gene = this_gene, assay = "writer_add", this_fit$writer_add %>% filter(parameter == "histone")))
   }
   else {
-    timepoint_dat <- bind_rows(timepoint_dat,
-                               data.frame(gene = this_gene, assay = "writer_loss", this_fit$writer_loss %>% filter(parameter == "timepoint")),
-                               data.frame(gene = this_gene, assay = "writer_eraser_loss", this_fit$writer_eraser_loss %>% filter(parameter == "timepoint")),
-                               data.frame(gene = this_gene, assay = "writer_add", this_fit$writer_add %>% filter(parameter == "timepoint")))
+    transcript_timepoint_dat <- bind_rows(transcript_timepoint_dat,
+                                          data.frame(gene = this_gene, assay = "writer_loss", this_fit$writer_loss %>% filter(parameter == "timepoint")),
+                                          data.frame(gene = this_gene, assay = "writer_add", this_fit$writer_add %>% filter(parameter == "timepoint")))
+    histone_transcript_dat <- bind_rows(histone_transcript_dat,
+                                        data.frame(gene = this_gene, assay = "writer_loss", this_fit$writer_loss %>% filter(parameter == "histone")),
+                                        data.frame(gene = this_gene, assay = "writer_add", this_fit$writer_add %>% filter(parameter == "histone")))
   }
 }
-timepoint_dat <- timepoint_dat %>% 
+transcript_timepoint_dat <- transcript_timepoint_dat %>% 
   select(-parameter) %>%
   mutate(is_pos = ifelse(lower_95 > 0, TRUE, FALSE),
          is_neg = ifelse(upper_95 < 0, TRUE, FALSE))
-timepoint_dat$category[timepoint_dat$lower_95 > 0] <- "positive"
-timepoint_dat$category[timepoint_dat$upper_95 < 0] <- "negative"
-timepoint_dat$category[timepoint_dat$lower_95 < 0 & timepoint_dat$upper_95 > 0] <- "zero"
+transcript_timepoint_dat$category[transcript_timepoint_dat$lower_95 > 0] <- "positive"
+transcript_timepoint_dat$category[transcript_timepoint_dat$upper_95 < 0] <- "negative"
+transcript_timepoint_dat$category[transcript_timepoint_dat$lower_95 < 0 & transcript_timepoint_dat$upper_95 > 0] <- "zero"
+
+histone_transcript_dat <- histone_transcript_dat %>% 
+  select(-parameter) %>%
+  mutate(is_pos = ifelse(lower_95 > 0, TRUE, FALSE),
+         is_neg = ifelse(upper_95 < 0, TRUE, FALSE))
+histone_transcript_dat$category[histone_transcript_dat$lower_95 > 0] <- "positive"
+histone_transcript_dat$category[histone_transcript_dat$upper_95 < 0] <- "negative"
+histone_transcript_dat$category[histone_transcript_dat$lower_95 < 0 & histone_transcript_dat$upper_95 > 0] <- "zero"
+
+## Grabbing genes with positive transcription
+positive_transcript_genes <- transcript_timepoint_dat %>% 
+  filter(category == "positive") %>%
+  pull(gene) %>%
+  unique
+## Grabbing genes with positive histone
+positive_histone_genes <- histone_transcript_dat %>% 
+  filter(category == "positive") %>%
+  pull(gene) %>%
+  unique
+## Grabbing genes with negative transcription
+negative_transcript_genes <- transcript_timepoint_dat %>% 
+  filter(category == "negative") %>%
+  pull(gene) %>%
+  unique
+## Grabbing genes with negative histone
+negative_histone_genes <- histone_transcript_dat %>% 
+  filter(category == "negative") %>%
+  pull(gene) %>%
+  unique
+
+g <- ggplot(data = tx_raw_dat %>% filter(gene %in% positive_transcript_genes[8]), aes(x = timepoint, y = log(transcript + 1), col = assay)) + scale_color_manual(values = c(wl_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g <- g + geom_smooth(aes(y = log(transcript + 1), x = timepoint), method = "lm", size = 2)
+g <- g + gg_theme
+g
+
+g <- ggplot(data = tx_raw_dat %>% filter(gene %in% negative_transcript_genes[6]), aes(x = timepoint, y = log(transcript + 1), col = assay)) + scale_color_manual(values = c(wl_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g <- g + geom_smooth(aes(y = log(transcript + 1), x = timepoint), method = "lm", size = 2)
+g <- g + gg_theme
+g
+
+table(transcript_timepoint_dat$category, transcript_timepoint_dat$assay)
+table(histone_transcript_dat$category, histone_transcript_dat$assay)
+
+combined_dat <- inner_join(transcript_timepoint_dat %>%
+                             select(gene, assay, category) %>%
+                             rename(transcript_category = category),
+                           histone_transcript_dat %>%
+                             select(gene, assay, category) %>%
+                             rename(histone_category = category))
+
+table(combined_dat$transcript_category, combined_dat$histone_category, dnn = c("transcript", "histone"))
+chisq.test(combined_dat$transcript_category, combined_dat$histone_category)
+
+shared_positive_genes <- combined_dat %>%
+  filter(transcript_category == "positive" & histone_category == "positive") %>%
+  pull(gene)
+combined_dat %>% filter(gene == shared_positive_genes[1])
+
+g_tx <- ggplot(data = tx_raw_dat %>% filter(gene %in% shared_positive_genes[1],
+                                         assay == "writer_loss"), 
+            aes(x = timepoint, y = log(transcript + 1), col = assay)) + scale_color_manual(values = c(wl_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g_tx <- g_tx + geom_smooth(aes(y = log(transcript + 1), x = timepoint), method = "lm", size = 2)
+g_tx <- g_tx + gg_theme
+g_tx
+g_h <- ggplot(data = histone_raw_dat %>% filter(gene %in% shared_positive_genes[1],
+                                         assay == "writer_loss"), 
+            aes(x = timepoint, y = histone, col = assay)) + scale_color_manual(values = c(wl_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g_h <- g_h + geom_smooth(aes(y = histone, x = timepoint), method = "lm", size = 2)
+g_h <- g_h + gg_theme
+g_h
+grid.arrange(g_tx, g_h)
+
+
+
+## Wide transcription data
+wide_transcript_timepoint_dat <- transcript_timepoint_dat %>%
+  select(gene, assay, estimate) %>%
+  spread(key = assay, value = estimate)
+plot(wide_transcript_timepoint_dat$writer_add, wide_transcript_timepoint_dat$writer_loss, xlim = c(-10, 10), ylim = c(-10, 10))
+wide_reduced_transcript_timepoint_dat  <- wide_transcript_timepoint_dat %>%
+  filter(gene %in% unique(c(positive_transcript_genes, negative_transcript_genes)))
+plot(wide_reduced_transcript_timepoint_dat$writer_add, wide_reduced_transcript_timepoint_dat$writer_loss, xlim = c(-2, 2), ylim = c(-2, 2))
 
 
 
 
 
 
-## Un-scaled histone
+## Modeling unscaled histone marks
 raw_unscaled_gene_chip_dat <- read.table("data/absolute_matrix_for_LMM_model_nonOverlappingGenes.txt") # path to data
 
 unscaled_gene_chip_dat <- raw_unscaled_gene_chip_dat %>%
