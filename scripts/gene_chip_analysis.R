@@ -1105,18 +1105,15 @@ grid.arrange(g_tx, g_h)
 wide_transcript_timepoint_dat <- transcript_timepoint_dat %>%
   select(gene, assay, estimate) %>%
   spread(key = assay, value = estimate)
-plot(wide_transcript_timepoint_dat$writer_add, wide_transcript_timepoint_dat$writer_loss, xlim = c(-10, 10), ylim = c(-10, 10))
+par(mfrow=c(1,2))
+plot(wide_transcript_timepoint_dat$writer_add, wide_transcript_timepoint_dat$writer_loss, xlim = c(-10, 10), ylim = c(-10, 10), main="WA vs WL Transcription GLMM (All genes)", xlab="WA Estimate", ylab="WL Estimate")
 wide_reduced_transcript_timepoint_dat  <- wide_transcript_timepoint_dat %>%
   filter(gene %in% unique(c(positive_transcript_genes, negative_transcript_genes)))
-plot(wide_reduced_transcript_timepoint_dat$writer_add, wide_reduced_transcript_timepoint_dat$writer_loss, xlim = c(-2, 2), ylim = c(-2, 2))
-
-
-
-
+plot(wide_reduced_transcript_timepoint_dat$writer_add, wide_reduced_transcript_timepoint_dat$writer_loss, xlim = c(-10, 10), ylim = c(-10, 10), main="WA vs WL Transcription GLMM (High confidence transcription genes)", xlab="WA Estimate", ylab="WL Estimate")
 
 
 ## Modeling unscaled histone marks
-raw_unscaled_gene_chip_dat <- read.table("data/absolute_matrix_for_LMM_model_nonOverlappingGenes.txt") # path to data
+raw_unscaled_gene_chip_dat <- read.table("data/absolute_matrix_for_LMM_model_nonOverlappingGenes_noChrMGenes.txt") # path to data
 
 unscaled_gene_chip_dat <- raw_unscaled_gene_chip_dat %>%
   rename(gene = V1,
@@ -1142,15 +1139,18 @@ unscaled_gene_chip_dat$timepoint[unscaled_gene_chip_dat$assay == "writer_add" & 
 unscaled_gene_chip_dat %>% filter(assay == "writer_add",
                                   gene == unscaled_gene_chip_dat$gene[1])
 
-g <- ggplot(data = unscaled_gene_chip_dat %>% filter(gene == unscaled_gene_chip_dat$gene[1]), aes(x = timepoint, y = value * 1000, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
-g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
-g <- g + gg_theme
-g
+#YAL001C
+g1 <- ggplot(data = unscaled_gene_chip_dat %>% filter(gene == unscaled_gene_chip_dat$gene[1]), aes(x = timepoint, y = value * 1000, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g1 <- g + geom_smooth(aes(y = value*1000, x = timepoint), method = "lm", size = 2)
+g1 <- g + gg_theme
+g1
 
-g <- ggplot(data = gene_chip_dat %>% filter(gene == unscaled_gene_chip_dat$gene[1]), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
-g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
-g <- g + gg_theme
-g
+#YAL001C
+g2 <- ggplot(data = gene_chip_dat %>% filter(gene == unscaled_gene_chip_dat$gene[1]), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g2 <- g + geom_smooth(aes(y = value*1000, x = timepoint), method = "lm", size = 2)
+g2 <- g + gg_theme
+g2
+grid.arrange(g1,g2)
 
 hist(unscaled_gene_chip_dat$value * 1000)
 hist(unscaled_gene_chip_dat$transformed_value)
