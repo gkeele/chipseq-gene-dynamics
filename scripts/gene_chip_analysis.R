@@ -488,7 +488,7 @@ lagged_genes <- total_lag_dat %>%
   filter(lag_count > 0) %>%
   pull(gene)
 ## Plot genes with significant lags between WL and WEL
-g <- ggplot(data = gene_chip_dat %>% filter(assay != "writer_add", gene %in% lagged_genes), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("magenta", "seagreen1")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
+g <- ggplot(data = gene_chip_dat %>% filter(assay != "writer_add", gene %in% lagged_genes), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c("black", "red")) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
 #g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
 g <- g + gg_theme + guides(color = FALSE)
 g
@@ -724,7 +724,7 @@ par(mfrow = c(2, 2))
 plot(wa_full_dat$gene_length, wa_full_dat$estimate, 
      xlab = "Gene length", ylab = "Trend with time", main = "Writer add",
      pch = 20, col = alpha(wa_col, 0.3), las = 1)
-plot(wl_full_dat$gene_length, wl_full_dat$estimate, 
+plot(wl_full_dat$gene_length, wl_full_dat$estimate*-1, 
      xlab = "Gene length", ylab = "Trend with time", main = "Writer loss",
      pch = 20, col = alpha(wl_col, 0.3), las = 1)
 plot(wa_full_dat$gene_length, wa_full_dat$est_error,
@@ -738,7 +738,7 @@ par(mfrow = c(2, 2))
 plot(wa_reduced_dat$gene_length, wa_reduced_dat$estimate, 
      xlab = "Gene length", ylab = "Trend with time", main = "Writer add",
      pch = 20, col = alpha(wa_col, 0.3), las = 1)
-plot(wl_reduced_dat$gene_length, wl_reduced_dat$estimate, 
+plot(wl_reduced_dat$gene_length, wl_reduced_dat$estimate*-1, 
      xlab = "Gene length", ylab = "Trend with time", main = "Writer loss",
      pch = 20, col = alpha(wl_col, 0.3), las = 1)
 plot(wa_reduced_dat$gene_length, wa_reduced_dat$est_error,
