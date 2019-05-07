@@ -634,37 +634,37 @@ plot(wa_reduced_dat$hist, wa_reduced_dat$transcript,
 ### Full data
 par(mfrow = c(2, 2))
 plot(x = wa_full_dat$histone, y = wa_full_dat$estimate, 
-     xlab = "Mean transcription at time 0", ylab = "Histone gain estimate", main = "Writer add",
+     xlab = "Mean H3K36me3 at 0min", ylab = "Histone gain estimate", main = "Writer add",
      pch = 20, col = alpha(wa_col, 0.5), las = 1)
 plot(x = wl_full_dat$histone, y = abs(wl_full_dat$estimate), 
-     xlab = "Mean transcription at time 0", ylab = "Histone loss estimate", main = "Writer loss",
+     xlab = "Mean H3K36me3 at 0min", ylab = "Histone loss estimate", main = "Writer loss",
      pch = 20, col = alpha(wl_col, 0.5), las = 1)
 plot(x = wa_full_dat$histone, y = wa_full_dat$est_error, 
-     xlab = "Mean transcription at time 0", ylab = "Error on histone gain estimate", main = "Writer add",
+     xlab = "Mean H3K36me3 at 0min", ylab = "Error on histone gain estimate", main = "Writer add",
      pch = 20, col = alpha(wa_col, 0.5), las = 1)
 plot(x = wl_full_dat$histone, y = abs(wl_full_dat$est_error), 
-     xlab = "Mean transcription at time 0", ylab = "Error on histone loss estimate", main = "Writer loss",
+     xlab = "Mean H3K36me3 at 0min", ylab = "Error on histone loss estimate", main = "Writer loss",
      pch = 20, col = alpha(wl_col, 0.5), las = 1)
 ### Trend genes only
 par(mfrow = c(2, 2))
 plot(x = wa_reduced_dat$histone, y = wa_reduced_dat$estimate, 
-     xlab = "Mean transcription at time 0", ylab = "Histone gain estimate", main = "Writer add",
+     xlab = "Mean H3K36me3 at 0min", ylab = "Histone gain estimate", main = "Writer add",
      pch = 20, col = alpha(wa_col, 0.5), las = 1)
 plot(x = wl_reduced_dat$histone, y = abs(wl_reduced_dat$estimate), 
-     xlab = "Mean transcription at time 0", ylab = "Histone loss estimate", main = "Writer loss",
+     xlab = "Mean H3K36me3 at 0min", ylab = "Histone loss estimate", main = "Writer loss",
      pch = 20, col = alpha(wl_col, 0.5), las = 1)
 plot(x = wa_reduced_dat$histone, y = wa_reduced_dat$est_error, 
-     xlab = "Mean transcription at time 0", ylab = "Error on histone gain estimate", main = "Writer add",
+     xlab = "Mean H3K36me3 at 0min", ylab = "Error on histone gain estimate", main = "Writer add",
      pch = 20, col = alpha(wa_col, 0.5), las = 1)
 plot(x = wl_reduced_dat$histone, y = abs(wl_reduced_dat$est_error), 
-     xlab = "Mean transcription at time 0", ylab = "Error on histone loss estimate", main = "Writer loss",
+     xlab = "Mean H3K36me3 at 0min", ylab = "Error on histone loss estimate", main = "Writer loss",
      pch = 20, col = alpha(wl_col, 0.5), las = 1)
 
 ## Histone mark trends by time 0 transcripts
 ### Full data
 par(mfrow = c(2, 2))
 plot(x = wa_full_dat$transcript, y = wa_full_dat$estimate, 
-     xlab = "Mean time 0 transcript", ylab = "Histone gain estimate", 
+     xlab = "Mean 0min transcript", ylab = "Histone gain estimate", 
      main = "Writer add", las = 1, 
      pch = 20, col = alpha(wa_col, 0.3))
 abline(lm(estimate ~ transcript, data = wa_full_dat), col = "gray")
@@ -672,19 +672,19 @@ text(x = 4, y = 4, paste("r = ",
                          round(cor(wa_full_dat$transcript, wa_full_dat$estimate), 3)),
      col = "goldenrod", font = 2, cex = 2)
 plot(x = wl_full_dat$transcript, y = abs(wl_full_dat$estimate), 
-     xlab = "Mean time 0 transcript", ylab = "Histone loss estimate", 
+     xlab = "Mean 0min transcript", ylab = "Histone loss estimate", 
      main = "Writer loss", las = 1,
      pch = 20, col = alpha(wl_col, 0.3))
 abline(lm(abs(estimate) ~ transcript, data = wl_full_dat), col = "gray")
 text(x = 4, y = 3, paste("r = ", 
                          round(cor(wl_full_dat$transcript, abs(wl_full_dat$estimate)), 3)),
      col = "goldenrod", font = 2, cex =2)
-plot(x = wa_full_dat$histone, y = wa_full_dat$est_error, 
-     xlab = "Mean time 0 transcript", ylab = "Error on histone loss estimate", 
+plot(x = wa_full_dat$transcript, y = wa_full_dat$est_error, 
+     xlab = "Mean 0min transcript", ylab = "Error on histone loss estimate", 
      main = "Writer add", las = 1,
      pch = 20, col = alpha(wa_col, 0.3))
-plot(x = wl_full_dat$histone, y = abs(wl_full_dat$est_error), 
-     xlab = "Mean time0 H3K36me3", ylab = "Error on histone loss estimate", 
+plot(x = wl_full_dat$transcript, y = abs(wl_full_dat$est_error), 
+     xlab = "Mean 0min transcript", ylab = "Error on histone loss estimate", 
      main = "Writer loss", las = 1,
      pch = 20, col = alpha(wl_col, 0.3))
 cor.test(x = wa_full_dat$transcript, y = wa_full_dat$estimate)
@@ -692,7 +692,7 @@ cor.test(x = wl_full_dat$transcript, y = wl_full_dat$estimate)
 ### Trend genes only
 par(mfrow = c(2, 2))
 plot(x = wa_reduced_dat$transcript, y = wa_reduced_dat$estimate, 
-     xlab = "Mean time 0 transcript", ylab = "Histone gain estimate", 
+     xlab = "Mean 0min transcript", ylab = "Histone gain estimate", 
      main = "Writer add", las = 1, 
      pch = 20, col = alpha(wa_col, 0.3))
 abline(lm(estimate ~ transcript, data = wa_reduced_dat), col = "gray")
@@ -700,19 +700,19 @@ text(x = 4, y = 4, paste("r = ",
                          round(cor(wa_reduced_dat$transcript, wa_reduced_dat$estimate), 3)),
      col = "goldenrod", font = 2, cex = 2)
 plot(x = wl_reduced_dat$transcript, y = abs(wl_reduced_dat$estimate), 
-     xlab = "Mean time 0 transcript", ylab = "Histone loss estimate", 
+     xlab = "Mean 0min transcript", ylab = "Histone loss estimate", 
      main = "Writer loss", las = 1,
      pch = 20, col = alpha(wl_col, 0.3))
 abline(lm(abs(estimate) ~ transcript, data = wl_reduced_dat), col = "gray")
 text(x = 4, y = 3, paste("r = ", 
                          round(cor(wl_reduced_dat$transcript, abs(wl_reduced_dat$estimate)), 3)),
      col = "goldenrod", font = 2, cex =2)
-plot(x = wa_reduced_dat$histone, y = wa_reduced_dat$est_error, 
-     xlab = "Mean time 0 transcript", ylab = "Error on histone loss estimate", 
+plot(x = wa_reduced_dat$transcript, y = wa_reduced_dat$est_error, 
+     xlab = "Mean 0min transcript", ylab = "Error on histone loss estimate", 
      main = "Writer add", las = 1,
      pch = 20, col = alpha(wa_col, 0.3))
-plot(x = wl_reduced_dat$histone, y = abs(wl_reduced_dat$est_error), 
-     xlab = "Mean time0 H3K36me3", ylab = "Error on histone loss estimate", 
+plot(x = wl_reduced_dat$transcript, y = abs(wl_reduced_dat$est_error), 
+     xlab = "Mean 0min transcript", ylab = "Error on histone loss estimate", 
      main = "Writer loss", las = 1,
      pch = 20, col = alpha(wl_col, 0.3))
 cor.test(x = wa_reduced_dat$transcript, y = wa_reduced_dat$estimate)
@@ -754,16 +754,27 @@ plot(x = gene_timepoint_dat$writer_add, y = gene_timepoint_dat$writer_loss*-1,
      xlab = "Gain in WA", ylab = "Loss in WL", main = "WL loss vs WA gain",
      pch = 20, col = alpha("gray", 0.5), las = 1)
 abline(lm(writer_loss*-1 ~ writer_add, data = gene_timepoint_dat), col = "blue")
+text(x = 4, y = 4, paste("r = ", 
+                        round(cor(gene_timepoint_dat$writer_add, gene_timepoint_dat$writer_loss*-1), 3)),
+    col = "goldenrod", font = 2, cex = 2)
 reduced_gene_timepoint_dat <- gene_timepoint_dat %>% filter(gene %in% trend_genes)
 plot(x = reduced_gene_timepoint_dat$writer_add, y = reduced_gene_timepoint_dat$writer_loss*-1, 
-     xlab = "Gain in WA", ylab = "Loss in WL", main = "WL loss vs WA gain in trend genes",
+     xlab = "Gain in WA", ylab = "Loss in WL", main = "WL loss vs WA gain in high confidence genes",
      pch = 20, col = alpha("gray", 0.5), las = 1)
 abline(lm(writer_loss*-1 ~ writer_add, data = reduced_gene_timepoint_dat), col = "blue")
+text(x = 4, y = 4, paste("r = ", 
+                        round(cor(reduced_gene_timepoint_dat$writer_add, reduced_gene_timepoint_dat$writer_loss*-1), 3)),
+    col = "goldenrod", font = 2, cex = 2)
+cor.test(x = gene_timepoint_dat$writer_add, y = gene_timepoint_dat$writer_loss*-1)
+#0.387814
+cor.test(x = reduced_gene_timepoint_dat$writer_add, y = reduced_gene_timepoint_dat$writer_loss*-1)
+#0.284447
+
 # Error coloring
 compare_dat <- gene_timepoint_dat 
 compare_dat$combined_error <- as.numeric(apply(compare_dat, 1, function(x) max(x["writer_add_error"], x["writer_loss_error"])))
-g1 <- ggplot(data = compare_dat, aes(x = writer_add, y = writer_loss, col = combined_error)) + geom_point() + ggtitle("Writer add") + gg_theme
-g2 <- ggplot(data = compare_dat %>% filter(gene %in% trend_genes), aes(x = writer_add, y = writer_loss, col = combined_error)) + geom_point() + ggtitle("Writer loss") + gg_theme
+g1 <- ggplot(data = compare_dat, aes(x = writer_add, y = writer_loss*-1, col = combined_error)) + geom_point() + ggtitle("All Genes") + gg_theme + scale_colour_gradient(low="yellow",high="red") + xlab("Gain in WA") + ylab("Loss in WL") + ylim(-0.5,5) + xlim(-1,10)
+g2 <- ggplot(data = compare_dat %>% filter(gene %in% trend_genes), aes(x = writer_add, y = writer_loss*-1, col = combined_error)) + geom_point() + ggtitle("High Confidence Genes") + gg_theme + scale_colour_gradient(low="yellow",high="red") + xlab("Gain in WA") + ylab("Loss in WL") + ylim(-0.5,5) + xlim(-1,10)
 grid.arrange(g1, g2)
 
 ## Histone mark trend error comparisons (WA vs WL)
@@ -772,39 +783,51 @@ plot(x = gene_timepoint_dat$writer_add_error, y = gene_timepoint_dat$writer_loss
      xlab = "Error on gain in WA", ylab = "Error on loss in WL", main = "Errors on WL loss vs WA gain",
      pch = 20, col = alpha("gray", 0.5), las = 1)
 plot(x = reduced_gene_timepoint_dat$writer_add_error, y = reduced_gene_timepoint_dat$writer_loss_error, 
-     xlab = "Error on gain in WA", ylab = "Error on loss in WL", main = "Errors on WL loss vs WA gain in trend genes",
+     xlab = "Error on gain in WA", ylab = "Error on loss in WL", main = "Errors on WL loss vs WA gain in high confidence genes",
      pch = 20, col = alpha("gray", 0.5), las = 1)
 
-## Gene length by Time 0 transcript
+## Gene length by initial H3K36me3 levels
 par(mfrow = c(2, 2))
 plot(wa_full_dat$histone, wa_full_dat$gene_length, 
-     xlab = "Mean H3K36me3 at time 0", ylab = "Gene length", main = "Writer add",
+     xlab = "Mean H3K36me3 at time 0", ylab = "Gene length", main = "Writer add (All Genes)",
      pch = 20, col = alpha(wa_col, 0.3), las = 1)
 plot(wl_full_dat$histone, wl_full_dat$gene_length, 
-     xlab = "Mean H3K36me3 at time 0", ylab = "Gene length", main = "Writer loss",
+     xlab = "Mean H3K36me3 at time 0", ylab = "Gene length", main = "Writer loss (All Genes)",
      pch = 20, col = alpha(wl_col, 0.3), las = 1)
 plot(wa_reduced_dat$histone, wa_reduced_dat$gene_length, 
-     xlab = "Mean H3K36me3 at time 0", ylab = "Gene length", main = "Writer add",
+     xlab = "Mean H3K36me3 at time 0", ylab = "Gene length", main = "Writer add (High Confidence Genes)",
      pch = 20, col = alpha(wa_col, 0.3), las = 1)
 plot(wl_reduced_dat$histone, wl_reduced_dat$gene_length, 
-     xlab = "Mean H3K36me3 at time 0", ylab = "Gene length", main = "Writer loss",
+     xlab = "Mean H3K36me3 at time 0", ylab = "Gene length", main = "Writer loss (High Confidence Genes)",
      pch = 20, col = alpha(wl_col, 0.3), las = 1)
 
-## Gene length, histone mark trend, and time 0 transcript
-g1 <- ggplot(data = wa_full_dat, aes(x = gene_length, y = estimate)) + geom_point(aes(color = transcript)) + ggtitle("Writer add") + gg_theme
-g2 <- ggplot(data = wl_full_dat, aes(x = gene_length, y = estimate)) + geom_point(aes(color = transcript)) + ggtitle("Writer loss") + gg_theme
-grid.arrange(g1, g2)
-g1 <- ggplot(data = wa_full_dat, aes(x = gene_length, y = est_error)) + geom_point(aes(color = transcript)) + ggtitle("Writer add") + gg_theme
-g2 <- ggplot(data = wl_full_dat, aes(x = gene_length, y = est_error)) + geom_point(aes(color = transcript)) + ggtitle("Writer loss") + gg_theme
-grid.arrange(g1, g2)
+## Gene length, histone estimate, and time 0 transcript
+g1 <- ggplot(data = wa_full_dat, aes(x = gene_length, y = estimate)) + geom_point(aes(color = transcript)) + ggtitle("Writer add (all genes)") + gg_theme + scale_colour_gradient(low="yellow",high="red") + ylab("WA Gain Estimate") + ylim(-1, 10) + xlim(0,15000)
+g2 <- ggplot(data = wl_full_dat, aes(x = gene_length, y = estimate*-1)) + geom_point(aes(color = transcript)) + ggtitle("Writer loss (all genes)") + gg_theme + scale_colour_gradient(low="yellow",high="red") + ylab("WL Loss Estimate") + ylim(-.5, 8) + xlim(0,15000)
+g3 <- ggplot(data = wa_reduced_dat, aes(x = gene_length, y = estimate)) + geom_point(aes(color = transcript)) + ggtitle("Writer add (high confidence genes)") + gg_theme + scale_colour_gradient(low="yellow",high="red") + ylab("WA Gain Estimate") + ylim(-1, 10) + xlim(0,15000)
+g4 <- ggplot(data = wl_reduced_dat, aes(x = gene_length, y = estimate*-1)) + geom_point(aes(color = transcript)) + ggtitle("Writer loss (high confidence genes)") + gg_theme + scale_colour_gradient(low="yellow",high="red") + ylab("WL Loss Estimate") + ylim(-.5, 8) + xlim(0,15000)
+grid.arrange(g1, g2, g3, g4)
 
-## Time 0 histone, histone mark trend, and time 0 transcript
-g1 <- ggplot(data = wa_full_dat, aes(x = histone, y = estimate)) + geom_point(aes(color = transcript)) + ggtitle("Writer add") + gg_theme
-g2 <- ggplot(data = wl_full_dat, aes(x = histone, y = estimate)) + geom_point(aes(color = transcript)) + ggtitle("Writer loss") + gg_theme
-grid.arrange(g1, g2)
-g1 <- ggplot(data = wa_full_dat, aes(x = histone, y = est_error)) + geom_point(aes(color = transcript)) + ggtitle("Writer add") + gg_theme
-g2 <- ggplot(data = wl_full_dat, aes(x = histone, y = est_error)) + geom_point(aes(color = transcript)) + ggtitle("Writer loss") + gg_theme
-grid.arrange(g1, g2)
+g1 <- ggplot(data = wa_full_dat, aes(x = gene_length, y = est_error)) + geom_point(aes(color = transcript)) + ggtitle("Writer add (all genes)") + gg_theme + scale_colour_gradient(low="yellow",high="red") + ylab("WA Gain Error") + ylim(0, 6) + xlim(0,15000)
+g2 <- ggplot(data = wl_full_dat, aes(x = gene_length, y = est_error)) + geom_point(aes(color = transcript)) + ggtitle("Writer loss (all genes)") + gg_theme + scale_colour_gradient(low="yellow",high="red") + ylab("WL Loss Error") + ylim(0, 5) + xlim(0,15000)
+g3 <- ggplot(data = wa_reduced_dat, aes(x = gene_length, y = est_error)) + geom_point(aes(color = transcript)) + ggtitle("Writer add (high confidence genes)") + gg_theme + scale_colour_gradient(low="yellow",high="red") + ylab("WA Gain Error") + ylim(0, 6) + xlim(0,15000)
+g4 <- ggplot(data = wl_reduced_dat, aes(x = gene_length, y = est_error)) + geom_point(aes(color = transcript)) + ggtitle("Writer loss (high confidence genes)") + gg_theme + scale_colour_gradient(low="yellow",high="red") + ylab("WL Loss Error") + ylim(0, 5) + xlim(0,15000)
+grid.arrange(g1, g2, g3, g4)
+
+
+## Time 0 histone, histone estimate, and time 0 transcript
+g1 <- ggplot(data = wa_full_dat, aes(x = histone, y = estimate)) + geom_point(aes(color = transcript)) + ggtitle("Writer add (all genes)") + gg_theme + scale_colour_gradient(low="yellow",high="red") + ylab("WA Gain Estimate") + ylim(-1, 10) + xlim(0,0.3)
+g2 <- ggplot(data = wl_full_dat, aes(x = histone, y = estimate*-1)) + geom_point(aes(color = transcript)) + ggtitle("Writer loss (all genes)") + gg_theme + scale_colour_gradient(low="yellow",high="red") + ylab("WL Loss Estimate") + ylim(-0.5, 5) + xlim(0,1)
+g3 <- ggplot(data = wa_full_dat, aes(x = histone, y = est_error)) + geom_point(aes(color = transcript)) + ggtitle("Writer add (all genes)") + gg_theme + scale_colour_gradient(low="yellow",high="red") + ylab("WA Gain Error") + ylim(0, 6) + xlim(0,0.3)
+g4 <- ggplot(data = wl_full_dat, aes(x = histone, y = est_error)) + geom_point(aes(color = transcript)) + ggtitle("Writer loss (all genes)") + gg_theme + scale_colour_gradient(low="yellow",high="red") + ylab("WL Loss Error") + ylim(-0.5, 5.5) + xlim(0,1)
+grid.arrange(g1, g2, g3, g4)
+
+g1 <- ggplot(data = wa_reduced_dat, aes(x = histone, y = estimate)) + geom_point(aes(color = transcript)) + ggtitle("Writer add (high confidence genes)") + gg_theme + scale_colour_gradient(low="yellow",high="red") + ylab("WA Gain Estimate") + ylim(-1, 10) + xlim(0,0.3)
+g2 <- ggplot(data = wl_reduced_dat, aes(x = histone, y = estimate*-1)) + geom_point(aes(color = transcript)) + ggtitle("Writer loss (high confidence genes)") + gg_theme + scale_colour_gradient(low="yellow",high="red") + ylab("WL Loss Estimate") + ylim(-0.5, 5) + xlim(0,1)
+g3 <- ggplot(data = wa_reduced_dat, aes(x = histone, y = est_error)) + geom_point(aes(color = transcript)) + ggtitle("Writer add (high confgenes genes)") + gg_theme + scale_colour_gradient(low="yellow",high="red") + ylab("WA Gain Error") + ylim(0, 6) + xlim(0,0.3)
+g4 <- ggplot(data = wl_reduced_dat, aes(x = histone, y = est_error)) + geom_point(aes(color = transcript)) + ggtitle("Writer loss (high confgenes genes)") + gg_theme + scale_colour_gradient(low="yellow",high="red") + ylab("WL Loss Error") + ylim(-0.5, 5.5) + xlim(0,1)
+grid.arrange(g1, g2, g3, g4)
+
 
 ###################################################
 ##
@@ -1022,7 +1045,7 @@ negative_histone_genes <- histone_transcript_dat %>%
 ##
 ##############################################
 plot(transcript_timepoint_dat$est_error, transcript_timepoint_dat$estimate, pch = ifelse(transcript_timepoint_dat$category == "zero", 1, 19), col = c(wa_col, wl_col)[as.factor(timepoint_dat$assay)], 
-     las = 1, ylab = "Transcription trend with time", xlab = "Error on trend", frame.plot = FALSE, xlim = c(0, 10), ylim = c(-7, 7))
+     las = 1, ylab = "Transcription estimate with time", xlab = "Error on estimate", frame.plot = FALSE, xlim = c(0, 10), ylim = c(-7, 7))
 abline(h = 0, lty = 2)
 legend("bottomright", 
        legend = c("writer add", "writer loss"),
@@ -1031,12 +1054,13 @@ legend("bottomright",
        bty = "n")
 
 
-
+#YFR044C
 g <- ggplot(data = tx_raw_dat %>% filter(gene %in% positive_transcript_genes[8]), aes(x = timepoint, y = log(transcript + 1), col = assay)) + scale_color_manual(values = c(wl_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
 g <- g + geom_smooth(aes(y = log(transcript + 1), x = timepoint), method = "lm", size = 2)
 g <- g + gg_theme
 g
 
+#YCL002C
 g <- ggplot(data = tx_raw_dat %>% filter(gene %in% negative_transcript_genes[6]), aes(x = timepoint, y = log(transcript + 1), col = assay)) + scale_color_manual(values = c(wl_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
 g <- g + geom_smooth(aes(y = log(transcript + 1), x = timepoint), method = "lm", size = 2)
 g <- g + gg_theme
@@ -1060,18 +1084,19 @@ shared_positive_genes <- combined_dat %>%
   pull(gene)
 combined_dat %>% filter(gene == shared_positive_genes[1])
 
+#YDL216C
 g_tx <- ggplot(data = tx_raw_dat %>% filter(gene %in% shared_positive_genes[1],
                                          assay == "writer_loss"), 
             aes(x = timepoint, y = log(transcript + 1), col = assay)) + scale_color_manual(values = c(wl_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
 g_tx <- g_tx + geom_smooth(aes(y = log(transcript + 1), x = timepoint), method = "lm", size = 2)
 g_tx <- g_tx + gg_theme
-g_tx
+#g_tx
 g_h <- ggplot(data = histone_raw_dat %>% filter(gene %in% shared_positive_genes[1],
                                          assay == "writer_loss"), 
             aes(x = timepoint, y = histone, col = assay)) + scale_color_manual(values = c(wl_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
 g_h <- g_h + geom_smooth(aes(y = histone, x = timepoint), method = "lm", size = 2)
 g_h <- g_h + gg_theme
-g_h
+#g_h
 grid.arrange(g_tx, g_h)
 
 
