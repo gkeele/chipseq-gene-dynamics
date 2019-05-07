@@ -509,7 +509,7 @@ plot_loss_compare_dat <- loss_compare_dat %>%
   rename(timepoint = parameter)
 ## Plot all negative trend genes
 g <- ggplot(data = plot_loss_compare_dat %>% filter(gene %in% negative_genes), aes(x = timepoint, y = Estimate)) + geom_line(aes(group = gene, col = gene), alpha = 0.2) + scale_color_grey(guide = FALSE)
-g <- g + geom_boxplot(aes(x = timepoint, y = Estimate), outlier.alpha = 0, color = wel_col, size = 0.7, alpha = 0.3) + ylab("WEL - WL timepoint effects")
+g <- g + geom_boxplot(aes(x = timepoint, y = Estimate), outlier.alpha = 0, color = wel_col, size = 0.7, alpha = 0.3) + ylab("WEL - WL timepoint effects") + ylim(-7,10)
 g <- g + stat_summary(fun.y = mean, geom="line", aes(group=1), col = wel_col, size = 1)
 g <- g + gg_theme# + guides(fill=FALSE)
 g <- g + geom_hline(yintercept = 0, linetype = "dashed", color = "black", size = 1)
@@ -517,7 +517,7 @@ g
 
 ## Plot all high confident genes (confident/non-zero across all assays)
 g <- ggplot(data = plot_loss_compare_dat %>% filter(gene %in% negative_genes & gene %in% trend_genes), aes(x = timepoint, y = Estimate)) + geom_line(aes(group = gene, col = gene), alpha = 0.2) + scale_color_grey(guide = FALSE)
-g <- g + geom_boxplot(aes(x = timepoint, y = Estimate), outlier.alpha = 0, color = wel_col, size = 0.7, alpha = 0.3) + ylab("WEL - WL timepoint effects")
+g <- g + geom_boxplot(aes(x = timepoint, y = Estimate), outlier.alpha = 0, color = wel_col, size = 0.7, alpha = 0.3) + ylab("WEL - WL timepoint effects") +  ylim(-7,10)
 g <- g + stat_summary(fun.y = mean, geom="line", aes(group=1), col = wel_col, size = 1)
 g <- g + gg_theme# + guides(fill=FALSE)
 g <- g + geom_hline(yintercept = 0, linetype = "dashed", color = "black", size = 1)
@@ -529,7 +529,7 @@ g
 ## with additional factors (covariates)
 ##
 ##############################################
-## Transcript levels and gene length
+## Transcript levels at 0min and gene length
 wa_covar_raw_dat <- data.table::fread("data/DtL_setd2_RNA_combined_sf.txt", data.table = FALSE) 
 wa_covar_dat <- wa_covar_raw_dat %>%
   rename(gene_length = "Gene Length",
@@ -543,6 +543,20 @@ wa_covar_dat <- wa_covar_raw_dat %>%
   summarize(transcript = mean(log(transcript + 1))) %>%
   ungroup
 
+## Transcript levels at 60min and gene length
+wa_covar_raw_dat <- data.table::fread("data/DtL_setd2_RNA_combined_sf.txt", data.table = FALSE) 
+wa_covar_dat <- wa_covar_raw_dat %>%
+  rename(gene_length = "Gene Length",
+         gene = GENE) %>%
+  select(gene, gene_length, DtL_60min_set2d_RNA_Rep1, DtL_60min_set2d_RNA_Rep2) %>%
+  rename(rep1 = DtL_60min_set2d_RNA_Rep1,
+         rep2 = DtL_60min_set2d_RNA_Rep2) %>%
+  gather(key = rep, value = transcript, -c(gene, gene_length)) %>%
+  group_by(gene, gene_length) %>%
+  summarize(transcript = mean(log(transcript + 1))) %>%
+  ungroup
+  
+## Transcript levels at 0min and gene length
 wl_covar_raw_dat <- data.table::fread("data/LtD_setd2_RNA_combined_sf.txt", data.table = FALSE)
 wl_covar_dat <- wl_covar_raw_dat %>%
   rename(gene_length = "Gene Length",
