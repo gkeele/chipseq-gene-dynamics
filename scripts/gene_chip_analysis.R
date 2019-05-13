@@ -180,7 +180,7 @@ yal066w_models <- run_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "
 ## Gene with extreme low effect
 yal041w_models <- run_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "YAL041W", adapt_delta = 0.99, iter = 5000)
 
-run_zibeta_brms_on_chipseq <- function(chipseq_dat, 
+run_zoibeta_brms_on_chipseq <- function(chipseq_dat, 
                                 this_gene, 
                                 adapt_delta = 0.8,
                                 iter = 2000) {
@@ -219,7 +219,7 @@ run_zibeta_brms_on_chipseq <- function(chipseq_dat,
 
 practice_beta <- run_brms_on_chipseq(chipseq_dat = gene_chip_dat, 
                                      this_gene = gene_chip_dat$gene[1])
-practice_zoi_beta <- run_zibeta_brms_on_chipseq(chipseq_dat = gene_chip_dat, 
+practice_zoi_beta <- run_zoibeta_brms_on_chipseq(chipseq_dat = gene_chip_dat, 
                                                 this_gene = gene_chip_dat$gene[1])
 
 ##############################################
@@ -1361,6 +1361,15 @@ upset(absolute_upset_dat,
 
 plot(absolute_dat$est_error, absolute_dat$estimate, pch = ifelse(absolute_dat$category == "zero", 1, 19), col = c(wa_col, wl_col, wel_col)[as.factor(absolute_dat$assay)], 
      las = 1, ylab = "Histone trend with time", xlab = "Error on trend", frame.plot = FALSE)
+abline(h = 0, lty = 2)
+legend("bottomright", 
+       legend = c("writer add", "writer loss", "writer eraser loss", "confident within assay", "not confident within assay"),
+       col = c(wa_col, wl_col, wel_col, "gray", "gray"),
+       pch=c(15, 15, 15, 19, 1),
+       bty = "n")
+
+plot(absolute_dat$est_error, absolute_dat$eff_sample, pch = ifelse(absolute_dat$category == "zero", 1, 19), col = c(wa_col, wl_col, wel_col)[as.factor(absolute_dat$assay)], 
+     las = 1, ylab = "Histone trend with time", xlab = "Effective sample size", frame.plot = FALSE)
 abline(h = 0, lty = 2)
 legend("bottomright", 
        legend = c("writer add", "writer loss", "writer eraser loss", "confident within assay", "not confident within assay"),
