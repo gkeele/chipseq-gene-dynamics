@@ -51,6 +51,7 @@ gene_chip_dat <- raw_gene_chip_dat %>%
   mutate(assay = factor(assay),
          assay = recode(assay, "1" = "writer_loss", "2" = "writer_eraser_loss", "3" = "writer_add"),
          sample_unit = paste(gene, assay, replicate, sep = "_"),
+         raw_value = value,
          value = ifelse(value == 0, value + 0.0001, value),
          value = ifelse(value == 1, value - 0.0001, value),
          timepoint_cat = factor(timepoint))
@@ -178,6 +179,48 @@ yal012w_models <- run_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "
 yal066w_models <- run_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "YAL066W")
 ## Gene with extreme low effect
 yal041w_models <- run_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "YAL041W", adapt_delta = 0.99, iter = 5000)
+
+run_zibeta_brms_on_chipseq <- function(chipseq_dat, 
+                                this_gene, 
+                                adapt_delta = 0.8,
+                                iter = 2000) {
+  use_dat <- chipseq_dat %>% filter(gene == this_gene)#,
+  # writer loss
+  wl_fit <- brms::brm(raw_value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
+                      data = use_dat %>% filter(assay == "writer_loss"), 
+                      family = "zero_one_inflated_beta",
+                      iter = iter,
+                      control = list(adapt_delta = adapt_delta))
+  wl_fixed <- summary(wl_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
+  wl_random <- summary(wl_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
+  # writer-eraser loss
+  wel_fit <- brms::brm(raw_value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
+                       data = use_dat %>% filter(assay == "writer_eraser_loss"), 
+                       family = "zero_one_inflated_beta",
+                       iter = iter,
+                       control = list(adapt_delta = adapt_delta))
+  wel_fixed <- summary(wel_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
+  wel_random <- summary(wel_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
+  # writer add
+  wa_fit <- brms::brm(raw_value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
+                      data = use_dat %>% filter(assay == "writer_add"), 
+                      family = "zero_one_inflated_beta",
+                      iter = iter,
+                      control = list(adapt_delta = adapt_delta))
+  wa_fixed <- summary(wa_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
+  wa_random <- summary(wa_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
+  
+  names(wl_fixed) <- names(wl_random) <- names(wel_fixed) <- names(wel_random) <- names(wa_fixed) <- names(wa_random) <- c("parameter", "estimate", "est_error", "lower_95", "upper_95", "eff_sample", "rhat")
+  results <- list(writer_loss = bind_rows(wl_fixed, wl_random),
+                  writer_eraser_loss = bind_rows(wel_fixed, wel_random),
+                  writer_add = bind_rows(wa_fixed, wa_random))
+  results
+}
+
+practice_beta <- run_brms_on_chipseq(chipseq_dat = gene_chip_dat, 
+                                     this_gene = gene_chip_dat$gene[1])
+practice_zoi_beta <- run_zibeta_brms_on_chipseq(chipseq_dat = gene_chip_dat, 
+                                                this_gene = gene_chip_dat$gene[1])
 
 ##############################################
 ##
@@ -1237,9 +1280,132 @@ grid.arrange(g1, g2)
 
 
 
+########################################################
+##
+##  ZI Negative Binomial regression: aggregate results
+##
+########################################################
+## Parsing full set of Stan results
+stan_negbin_paths <- list.files("individual_gene_Stan_models_absolute_signal_seed_123_alpha_0.8_iter_100000/", full.names = TRUE)
+file_path <- "individual_gene_Stan_models_absolute_signal_seed_123_alpha_0.8_iter_100000//sacCer3_nonOverlappingGenes_noChrMGenes_"
+for (i in 1:length(stan_negbin_paths)) {
+  this_fit <- readRDS(stan_negbin_paths[i])
+  
+  this_gene <- gsub(x = stan_negbin_paths[i], pattern = file_path, replacement = "", fixed = TRUE) %>%
+    gsub(x = ., replacement = "", pattern = "_absolute_signal_Stan.rds", fixed = TRUE)
+  
+  
+  if (i == 1) {
+    absolute_dat <- bind_rows(data.frame(gene = this_gene, assay = "writer_loss", this_fit$writer_loss %>% filter(parameter == "timepoint")),
+                               data.frame(gene = this_gene, assay = "writer_eraser_loss", this_fit$writer_eraser_loss %>% filter(parameter == "timepoint")),
+                               data.frame(gene = this_gene, assay = "writer_add", this_fit$writer_add %>% filter(parameter == "timepoint")))
+  }
+  else {
+    absolute_dat <- bind_rows(absolute_dat,
+                              data.frame(gene = this_gene, assay = "writer_loss", this_fit$writer_loss %>% filter(parameter == "timepoint")),
+                              data.frame(gene = this_gene, assay = "writer_eraser_loss", this_fit$writer_eraser_loss %>% filter(parameter == "timepoint")),
+                              data.frame(gene = this_gene, assay = "writer_add", this_fit$writer_add %>% filter(parameter == "timepoint")))
+  }
+}
+absolute_dat <- absolute_dat %>% 
+  select(-parameter) %>%
+  mutate(is_pos = ifelse(lower_95 > 0, TRUE, FALSE),
+         is_neg = ifelse(upper_95 < 0, TRUE, FALSE))
+absolute_dat$category[absolute_dat$lower_95 > 0] <- "positive"
+absolute_dat$category[absolute_dat$upper_95 < 0] <- "negative"
+absolute_dat$category[absolute_dat$lower_95 < 0 & absolute_dat$upper_95 > 0] <- "zero"
+
+## Grabbing high genes
+absolute_positive_genes <- absolute_dat %>% 
+  filter(category == "positive") %>%
+  pull(gene) %>%
+  unique
+## Grabbing low genes
+absolute_negative_genes <- absolute_dat %>% 
+  filter(category == "negative") %>%
+  pull(gene) %>%
+  unique
+## Grabbing more categories of genes
+absolute_genes_neg_wl <- absolute_dat %>% 
+  filter(assay == "writer_loss",
+         category == "negative") %>%
+  pull(gene)
+absolute_genes_neg_wel <- absolute_dat %>% 
+  filter(assay == "writer_eraser_loss",
+         category == "negative") %>%
+  pull(gene)
+absolute_genes_pos_wa <- absolute_dat %>% 
+  filter(assay == "writer_add",
+         category == "positive") %>%
+  pull(gene)
+absolute_trend_genes <- intersect(absolute_positive_genes, absolute_genes_neg_wl) %>% intersect(absolute_genes_neg_wel)
+absolute_genes_neg_loss_only <- absolute_negative_genes[!(absolute_negative_genes %in% absolute_genes_pos_wa)]
+## Grabbing genes with no trends
+absolute_genes_all_zero <- absolute_dat %>% 
+  select(gene, assay, category) %>%
+  spread(key = assay, value = category) %>%
+  filter(writer_add == "zero", 
+         writer_eraser_loss == "zero",
+         writer_loss == "zero") %>%
+  pull(gene)
 
 
+absolute_upset_dat <- data.frame(genes = all_genes,
+                        WA_positive = sapply(1:length(all_genes), function(i) as.numeric(all_genes[i] %in% absolute_genes_pos_wa)),
+                        WL_negative = sapply(1:length(all_genes), function(i) as.numeric(all_genes[i] %in% absolute_genes_neg_wl)),
+                        WEL_negative = sapply(1:length(all_genes), function(i) as.numeric(all_genes[i] %in% absolute_genes_neg_wel)))
+upset(absolute_upset_dat, 
+      order.by = "freq", 
+      text.scale = 1.2,
+      sets.bar.color = c(wa_col, wl_col, wel_col))
 
+plot(absolute_dat$est_error, absolute_dat$estimate, pch = ifelse(absolute_dat$category == "zero", 1, 19), col = c(wa_col, wl_col, wel_col)[as.factor(absolute_dat$assay)], 
+     las = 1, ylab = "Histone trend with time", xlab = "Error on trend", frame.plot = FALSE)
+abline(h = 0, lty = 2)
+legend("bottomright", 
+       legend = c("writer add", "writer loss", "writer eraser loss", "confident within assay", "not confident within assay"),
+       col = c(wa_col, wl_col, wel_col, "gray", "gray"),
+       pch=c(15, 15, 15, 19, 1),
+       bty = "n")
+
+plot(absolute_dat$est_error, absolute_dat$estimate, pch = ifelse(absolute_dat$category == "zero", 1, 19), col = c(wa_col, wl_col, wel_col)[as.factor(absolute_dat$assay)], 
+     las = 1, ylab = "Histone trend with time", xlab = "Error on trend", frame.plot = FALSE, ylim = c(-1.5, 1.5), xlim = c(0, 10))
+abline(h = 0, lty = 2)
+legend("bottomright", 
+       legend = c("writer add", "writer loss", "writer eraser loss", "confident within assay", "not confident within assay"),
+       col = c(wa_col, wl_col, wel_col, "gray", "gray"),
+       pch=c(15, 15, 15, 19, 1),
+       bty = "n")
+
+high_wa <- absolute_dat %>%
+  filter(assay == "writer_add",
+         estimate > 100) %>%
+  pull(gene)
+
+g1 <- ggplot(data = unscaled_gene_chip_dat %>% filter(gene == high_wa[1]), aes(x = timepoint, y = transformed_value, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g1 <- g1 + geom_smooth(aes(y = transformed_value, x = timepoint), method = "lm", size = 2)
+g1 <- g1 + gg_theme
+g1
+
+set.seed(123)
+practice_absolute <- run_brms_on_raw_chipseq(chipseq_dat = unscaled_gene_chip_dat,
+                                             this_gene = "YAL001C",
+                                             iter = 100000)
+# YAL001C        writer_loss -0.6041361 930.8848
+set.seed(10)
+practice_absolute2 <- run_brms_on_raw_chipseq(chipseq_dat = unscaled_gene_chip_dat,
+                                             this_gene = high_wa[1])
+
+
+high_wel <- absolute_dat %>%
+  filter(assay == "writer_eraser_loss") %>%
+  filter(estimate == max(estimate)) %>%
+  pull(gene)
+
+absolute_dat %>%
+  filter(assay == "writer_add",
+         estimate > 5) %>%
+  head
 
 
 
