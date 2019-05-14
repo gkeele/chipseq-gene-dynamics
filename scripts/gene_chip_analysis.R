@@ -143,10 +143,12 @@ run_beta_brms_on_chipseq <- function(chipseq_dat,
                                      adapt_delta = 0.8,
                                      iter = 2000,
                                      seed = 123,
-                                     rhat_cutoff = 1.1) {
+                                     rhat_cutoff = 1.1,
+                                     run_limit = 10) {
   use_dat <- chipseq_dat %>% filter(gene == this_gene)#,
   
   stop_now <- FALSE
+  num_runs <- 0
   while(!stop_now) {
     # writer loss
     wl_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
@@ -176,7 +178,8 @@ run_beta_brms_on_chipseq <- function(chipseq_dat,
     wa_fixed <- summary(wa_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
     wa_random <- summary(wa_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
     
-    if (any(wl_fixed$Rhat < rhat_cutoff) | any(wel_fixed$Rhat < rhat_cutoff) | any(wa_fixed$Rhat < rhat_cutoff)) {
+    num_runs <- num_runs + 1
+    if (any(wl_fixed$Rhat < rhat_cutoff) | any(wel_fixed$Rhat < rhat_cutoff) | any(wa_fixed$Rhat < rhat_cutoff) | num_runs == run_limit) {
       stop_now <- TRUE
     }
     else {
@@ -188,7 +191,8 @@ run_beta_brms_on_chipseq <- function(chipseq_dat,
   results <- list(writer_loss = bind_rows(wl_fixed, wl_random),
                   writer_eraser_loss = bind_rows(wel_fixed, wel_random),
                   writer_add = bind_rows(wa_fixed, wa_random),
-                  seed = seed)
+                  seed = seed,
+                  run_limit_stop = ifelse(num_runs == run_limit, TRUE, FALSE))
   results
 }
 ## Try YAL012W and YAL066W
@@ -202,10 +206,12 @@ run_zoibeta_brms_on_chipseq <- function(chipseq_dat,
                                 adapt_delta = 0.8,
                                 iter = 2000,
                                 seed = 123,
-                                rhat_cutoff = 1.1) {
+                                rhat_cutoff = 1.1,
+                                run_limit = 10) {
   use_dat <- chipseq_dat %>% filter(gene == this_gene)#,
   
   stop_now <- FALSE
+  num_runs <- 0
   while(!stop_now) {
     # writer loss
     wl_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
@@ -235,7 +241,8 @@ run_zoibeta_brms_on_chipseq <- function(chipseq_dat,
     wa_fixed <- summary(wa_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
     wa_random <- summary(wa_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
     
-    if (any(wl_fixed$Rhat < rhat_cutoff) | any(wel_fixed$Rhat < rhat_cutoff) | any(wa_fixed$Rhat < rhat_cutoff)) {
+    num_runs <- num_runs + 1
+    if (any(wl_fixed$Rhat < rhat_cutoff) | any(wel_fixed$Rhat < rhat_cutoff) | any(wa_fixed$Rhat < rhat_cutoff) | num_runs == run_limit) {
       stop_now <- TRUE
     }
     else {
@@ -247,7 +254,8 @@ run_zoibeta_brms_on_chipseq <- function(chipseq_dat,
   results <- list(writer_loss = bind_rows(wl_fixed, wl_random),
                   writer_eraser_loss = bind_rows(wel_fixed, wel_random),
                   writer_add = bind_rows(wa_fixed, wa_random),
-                  seed = seed)
+                  seed = seed,
+                  run_limit_stop = ifelse(num_runs == run_limit, TRUE, FALSE))
   results
 }
 
@@ -1239,9 +1247,11 @@ run_zinegbin_brms_on_chipseq <- function(chipseq_dat,
                                          adapt_delta = 0.8,
                                          iter = 2000,
                                          seed = 123,
-                                         rhat_cutoff = 1.1) {
+                                         rhat_cutoff = 1.1,
+                                         run_limit = 10) {
   use_dat <- chipseq_dat %>% filter(gene == this_gene)#,
 
+  num_runs <- 0
   stop_now <- FALSE
   while(!stop_now) {
     # writer loss
@@ -1269,7 +1279,8 @@ run_zinegbin_brms_on_chipseq <- function(chipseq_dat,
     wa_fixed <- summary(wa_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
     wa_random <- summary(wa_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
     
-    if (any(wl_fixed$Rhat < rhat_cutoff) | any(wel_fixed$Rhat < rhat_cutoff) | any(wa_fixed$Rhat < rhat_cutoff)) {
+    num_runs <- num_runs + 1
+    if (any(wl_fixed$Rhat < rhat_cutoff) | any(wel_fixed$Rhat < rhat_cutoff) | any(wa_fixed$Rhat < rhat_cutoff) | num_runs == run_limit) {
       stop_now <- TRUE
     }
     else {
@@ -1280,7 +1291,8 @@ run_zinegbin_brms_on_chipseq <- function(chipseq_dat,
   results <- list(writer_loss = bind_rows(wl_fixed, wl_random),
                   writer_eraser_loss = bind_rows(wel_fixed, wel_random),
                   writer_add = bind_rows(wa_fixed, wa_random),
-                  seed = seed)
+                  seed = seed,
+                  run_limit_stop = ifelse(num_runs == run_limit, TRUE, FALSE))
   results
 }
 
