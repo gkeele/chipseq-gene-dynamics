@@ -1455,15 +1455,20 @@ g1 <- g1 + geom_smooth(aes(y = transformed_value, x = timepoint), method = "lm",
 g1 <- g1 + gg_theme
 g1
 
-set.seed(123)
-practice_absolute <- run_brms_on_raw_chipseq(chipseq_dat = unscaled_gene_chip_dat,
-                                             this_gene = "YAL001C",
-                                             iter = 100000)
-# YAL001C        writer_loss -0.6041361 930.8848
-set.seed(10)
-practice_absolute2 <- run_brms_on_raw_chipseq(chipseq_dat = unscaled_gene_chip_dat,
-                                             this_gene = high_wa[1])
-
+YAL001C_negbin_practice <- run_zinegbin_brms_on_chipseq(chipseq_dat = unscaled_gene_chip_dat,
+                                               this_gene = "YAL001C",
+                                               iter = 10000)
+YER175C_negbin_practice <- run_zinegbin_brms_on_chipseq(chipseq_dat = unscaled_gene_chip_dat,
+                                                        this_gene = "YER175C",
+                                                        iter = 10000)
+g2 <- ggplot(data = unscaled_gene_chip_dat %>% filter(gene == "YAL001C"), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g2 <- g2 + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
+g2 <- g2 + gg_theme
+g2
+g2 <- ggplot(data = unscaled_gene_chip_dat %>% filter(gene == "YER175C"), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g2 <- g2 + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
+g2 <- g2 + gg_theme
+g2
 
 high_wel <- absolute_dat %>%
   filter(assay == "writer_eraser_loss") %>%
