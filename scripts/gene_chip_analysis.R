@@ -24,8 +24,8 @@ wel_col <- "red"
 # wel_col <- "seagreen1"
 
 ## Set directory for local environment to the git repos
-setwd("~/projects/chipseq-gene-dynamics/")
-#setwd("~/Documents/git_repositories/chipseq-gene-dynamics/")
+#setwd("~/projects/chipseq-gene-dynamics/")
+setwd("~/Documents/git_repositories/chipseq-gene-dynamics/")
 
 ## ggplot theme
 gg_theme <- theme(panel.grid.major = element_blank(), 
@@ -138,89 +138,124 @@ grid.arrange(writer_loss, writer_eraser_loss, writer_add, nrow = 1)
 ## Function to run brms for beta regression
 #### ChIP-seq normalized to proportions within a replicate
 #### Per gene per assay
-run_brms_on_chipseq <- function(chipseq_dat, 
-                                this_gene, 
-                                adapt_delta = 0.8,
-                                iter = 2000) {
+run_beta_brms_on_chipseq <- function(chipseq_dat, 
+                                     this_gene, 
+                                     adapt_delta = 0.8,
+                                     iter = 2000,
+                                     seed = 123,
+                                     rhat_cutoff = 1.1) {
   use_dat <- chipseq_dat %>% filter(gene == this_gene)#,
-  # writer loss
-  wl_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
-                      data = use_dat %>% filter(assay == "writer_loss"), 
-                      family = "beta",
-                      iter = iter,
-                      control = list(adapt_delta = adapt_delta))
-  wl_fixed <- summary(wl_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
-  wl_random <- summary(wl_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
-  # writer-eraser loss
-  wel_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
-                       data = use_dat %>% filter(assay == "writer_eraser_loss"), 
-                       family = "beta",
-                       iter = iter,
-                       control = list(adapt_delta = adapt_delta))
-  wel_fixed <- summary(wel_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
-  wel_random <- summary(wel_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
-  # writer add
-  wa_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
-                      data = use_dat %>% filter(assay == "writer_add"), 
-                      family = "beta",
-                      iter = iter,
-                      control = list(adapt_delta = adapt_delta))
-  wa_fixed <- summary(wa_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
-  wa_random <- summary(wa_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
+  
+  stop_now <- FALSE
+  while(!stop_now) {
+    # writer loss
+    wl_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
+                        data = use_dat %>% filter(assay == "writer_loss"), 
+                        family = "beta",
+                        iter = iter,
+                        control = list(adapt_delta = adapt_delta),
+                        seed = seed)
+    wl_fixed <- summary(wl_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
+    wl_random <- summary(wl_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
+    # writer-eraser loss
+    wel_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
+                         data = use_dat %>% filter(assay == "writer_eraser_loss"), 
+                         family = "beta",
+                         iter = iter,
+                         control = list(adapt_delta = adapt_delta),
+                         seed = seed)
+    wel_fixed <- summary(wel_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
+    wel_random <- summary(wel_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
+    # writer add
+    wa_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
+                        data = use_dat %>% filter(assay == "writer_add"), 
+                        family = "beta",
+                        iter = iter,
+                        control = list(adapt_delta = adapt_delta), 
+                        seed = seed)
+    wa_fixed <- summary(wa_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
+    wa_random <- summary(wa_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
+    
+    if (any(wl_fixed$Rhat < rhat_cutoff) | any(wel_fixed$Rhat < rhat_cutoff) | any(wa_fixed$Rhat < rhat_cutoff)) {
+      stop_now <- TRUE
+    }
+    else {
+      seed <- seed + 1
+    }
+  }
   
   names(wl_fixed) <- names(wl_random) <- names(wel_fixed) <- names(wel_random) <- names(wa_fixed) <- names(wa_random) <- c("parameter", "estimate", "est_error", "lower_95", "upper_95", "eff_sample", "rhat")
   results <- list(writer_loss = bind_rows(wl_fixed, wl_random),
                   writer_eraser_loss = bind_rows(wel_fixed, wel_random),
-                  writer_add = bind_rows(wa_fixed, wa_random))
+                  writer_add = bind_rows(wa_fixed, wa_random),
+                  seed = seed)
   results
 }
 ## Try YAL012W and YAL066W
-yal012w_models <- run_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "YAL012W")
-yal066w_models <- run_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "YAL066W")
+yal012w_beta_models <- run_beta_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "YAL012W", iter = 10000)
+yal066w_beta_models <- run_beta_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "YAL066W")
 ## Gene with extreme low effect
-yal041w_models <- run_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "YAL041W", adapt_delta = 0.99, iter = 5000)
+yal041w_beta_models <- run_beta_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "YAL041W", adapt_delta = 0.99, iter = 5000)
 
 run_zoibeta_brms_on_chipseq <- function(chipseq_dat, 
                                 this_gene, 
                                 adapt_delta = 0.8,
-                                iter = 2000) {
+                                iter = 2000,
+                                seed = 123,
+                                rhat_cutoff = 1.1) {
   use_dat <- chipseq_dat %>% filter(gene == this_gene)#,
-  # writer loss
-  wl_fit <- brms::brm(raw_value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
-                      data = use_dat %>% filter(assay == "writer_loss"), 
-                      family = "zero_one_inflated_beta",
-                      iter = iter,
-                      control = list(adapt_delta = adapt_delta))
-  wl_fixed <- summary(wl_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
-  wl_random <- summary(wl_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
-  # writer-eraser loss
-  wel_fit <- brms::brm(raw_value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
-                       data = use_dat %>% filter(assay == "writer_eraser_loss"), 
-                       family = "zero_one_inflated_beta",
-                       iter = iter,
-                       control = list(adapt_delta = adapt_delta))
-  wel_fixed <- summary(wel_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
-  wel_random <- summary(wel_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
-  # writer add
-  wa_fit <- brms::brm(raw_value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
-                      data = use_dat %>% filter(assay == "writer_add"), 
-                      family = "zero_one_inflated_beta",
-                      iter = iter,
-                      control = list(adapt_delta = adapt_delta))
-  wa_fixed <- summary(wa_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
-  wa_random <- summary(wa_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
+  
+  stop_now <- FALSE
+  while(!stop_now) {
+    # writer loss
+    wl_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
+                        data = use_dat %>% filter(assay == "writer_loss"), 
+                        family = "zero_one_inflated_beta",
+                        iter = iter,
+                        control = list(adapt_delta = adapt_delta),
+                        seed = seed)
+    wl_fixed <- summary(wl_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
+    wl_random <- summary(wl_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
+    # writer-eraser loss
+    wel_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
+                         data = use_dat %>% filter(assay == "writer_eraser_loss"), 
+                         family = "zero_one_inflated_beta",
+                         iter = iter,
+                         control = list(adapt_delta = adapt_delta),
+                         seed = seed)
+    wel_fixed <- summary(wel_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
+    wel_random <- summary(wel_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
+    # writer add
+    wa_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
+                        data = use_dat %>% filter(assay == "writer_add"), 
+                        family = "zero_one_inflated_beta",
+                        iter = iter,
+                        control = list(adapt_delta = adapt_delta),
+                        seed = seed)
+    wa_fixed <- summary(wa_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
+    wa_random <- summary(wa_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
+    
+    if (any(wl_fixed$Rhat < rhat_cutoff) | any(wel_fixed$Rhat < rhat_cutoff) | any(wa_fixed$Rhat < rhat_cutoff)) {
+      stop_now <- TRUE
+    }
+    else {
+      seed <- seed + 1
+    }
+  }
   
   names(wl_fixed) <- names(wl_random) <- names(wel_fixed) <- names(wel_random) <- names(wa_fixed) <- names(wa_random) <- c("parameter", "estimate", "est_error", "lower_95", "upper_95", "eff_sample", "rhat")
   results <- list(writer_loss = bind_rows(wl_fixed, wl_random),
                   writer_eraser_loss = bind_rows(wel_fixed, wel_random),
-                  writer_add = bind_rows(wa_fixed, wa_random))
+                  writer_add = bind_rows(wa_fixed, wa_random),
+                  seed = seed)
   results
 }
 
-practice_beta <- run_brms_on_chipseq(chipseq_dat = gene_chip_dat, 
-                                     this_gene = gene_chip_dat$gene[1])
-practice_zoi_beta <- run_zoibeta_brms_on_chipseq(chipseq_dat = gene_chip_dat, 
-                                                this_gene = gene_chip_dat$gene[1])
+zoi_gene_chip_dat <- gene_chip_dat %>%
+  mutate(value = raw_value)
+## Try YAL012W
+yal012w_zoibeta_models <- run_zoibeta_brms_on_chipseq(chipseq_dat = zoi_gene_chip_dat, this_gene = "YAL012W", iter = 10000)
+
 
 ##############################################
 ##
@@ -1199,41 +1234,53 @@ hist(unscaled_gene_chip_dat$value * 1000)
 hist(unscaled_gene_chip_dat$transformed_value)
 
 ## Arbitrary, but use transformed_value = round(value * 1000)
-run_brms_on_raw_chipseq <- function(chipseq_dat, 
-                                    this_gene, 
-                                    adapt_delta = 0.8,
-                                    iter = 2000) {
+run_zinegbin_brms_on_chipseq <- function(chipseq_dat, 
+                                         this_gene, 
+                                         adapt_delta = 0.8,
+                                         iter = 2000,
+                                         seed = 123,
+                                         rhat_cutoff = 1.1) {
   use_dat <- chipseq_dat %>% filter(gene == this_gene)#,
-  #!(value %in% c(0, 1)))
-  # writer loss
-  wl_fit <- brms::brm(transformed_value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
-                      data = use_dat %>% filter(assay == "writer_loss"), 
-                      family = "zero_inflated_negbinomial",
-                      iter = iter,
-                      control = list(adapt_delta = adapt_delta))
-  wl_fixed <- summary(wl_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
-  wl_random <- summary(wl_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
-  # writer-eraser loss
-  wel_fit <- brms::brm(transformed_value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
-                       data = use_dat %>% filter(assay == "writer_eraser_loss"), 
-                       family = "zero_inflated_negbinomial",
-                       iter = iter,
-                       control = list(adapt_delta = adapt_delta))
-  wel_fixed <- summary(wel_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
-  wel_random <- summary(wel_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
-  # writer add
-  wa_fit <- brms::brm(transformed_value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
-                      data = use_dat %>% filter(assay == "writer_add"), 
-                      family = "zero_inflated_negbinomial",
-                      iter = iter,
-                      control = list(adapt_delta = adapt_delta))
-  wa_fixed <- summary(wa_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
-  wa_random <- summary(wa_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
-  
+
+  stop_now <- FALSE
+  while(!stop_now) {
+    # writer loss
+    wl_fit <- brms::brm(transformed_value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
+                        data = use_dat %>% filter(assay == "writer_loss"), 
+                        family = "zero_inflated_negbinomial",
+                        iter = iter,
+                        control = list(adapt_delta = adapt_delta))
+    wl_fixed <- summary(wl_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
+    wl_random <- summary(wl_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
+    # writer-eraser loss
+    wel_fit <- brms::brm(transformed_value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
+                         data = use_dat %>% filter(assay == "writer_eraser_loss"), 
+                         family = "zero_inflated_negbinomial",
+                         iter = iter,
+                         control = list(adapt_delta = adapt_delta))
+    wel_fixed <- summary(wel_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
+    wel_random <- summary(wel_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
+    # writer add
+    wa_fit <- brms::brm(transformed_value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
+                        data = use_dat %>% filter(assay == "writer_add"), 
+                        family = "zero_inflated_negbinomial",
+                        iter = iter,
+                        control = list(adapt_delta = adapt_delta))
+    wa_fixed <- summary(wa_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
+    wa_random <- summary(wa_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
+    
+    if (any(wl_fixed$Rhat < rhat_cutoff) | any(wel_fixed$Rhat < rhat_cutoff) | any(wa_fixed$Rhat < rhat_cutoff)) {
+      stop_now <- TRUE
+    }
+    else {
+      seed <- seed + 1
+    }
+  }
   names(wl_fixed) <- names(wl_random) <- names(wel_fixed) <- names(wel_random) <- names(wa_fixed) <- names(wa_random) <- c("parameter", "estimate", "est_error", "lower_95", "upper_95", "eff_sample", "rhat")
   results <- list(writer_loss = bind_rows(wl_fixed, wl_random),
                   writer_eraser_loss = bind_rows(wel_fixed, wel_random),
-                  writer_add = bind_rows(wa_fixed, wa_random))
+                  writer_add = bind_rows(wa_fixed, wa_random),
+                  seed = seed)
   results
 }
 
@@ -1247,7 +1294,7 @@ g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
 g <- g + gg_theme
 g
 
-raw_yal012w_models <- run_brms_on_chipseq(chipseq_dat = unscaled_gene_chip_dat, this_gene = "YAL012W", iter = 10000)
+raw_yal012w_models <- run_zinegbin_brms_on_chipseq(chipseq_dat = unscaled_gene_chip_dat, this_gene = "YAL012W", iter = 10000)
 
 
 g <- ggplot(data = unscaled_gene_chip_dat %>% filter(gene == "YAL066W"), aes(x = timepoint, y = transformed_value, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
@@ -1415,6 +1462,12 @@ absolute_dat %>%
   filter(assay == "writer_add",
          estimate > 5) %>%
   head
+
+
+g2 <- ggplot(data = unscaled_gene_chip_dat %>% filter(gene == "YER175C"), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
+g2 <- g2 + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
+g2 <- g2 + gg_theme
+g2
 
 
 
