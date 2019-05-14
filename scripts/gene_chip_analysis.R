@@ -179,7 +179,7 @@ run_beta_brms_on_chipseq <- function(chipseq_dat,
     wa_random <- summary(wa_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
     
     num_runs <- num_runs + 1
-    if (any(wl_fixed$Rhat < rhat_cutoff) | any(wel_fixed$Rhat < rhat_cutoff) | any(wa_fixed$Rhat < rhat_cutoff) | num_runs == run_limit) {
+    if (any(wl_fixed$Rhat > rhat_cutoff) | any(wel_fixed$Rhat > rhat_cutoff) | any(wa_fixed$Rhat > rhat_cutoff) | num_runs == run_limit) {
       stop_now <- TRUE
     }
     else {
@@ -242,7 +242,7 @@ run_zoibeta_brms_on_chipseq <- function(chipseq_dat,
     wa_random <- summary(wa_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
     
     num_runs <- num_runs + 1
-    if (any(wl_fixed$Rhat < rhat_cutoff) | any(wel_fixed$Rhat < rhat_cutoff) | any(wa_fixed$Rhat < rhat_cutoff) | num_runs == run_limit) {
+    if (any(wl_fixed$Rhat > rhat_cutoff) | any(wel_fixed$Rhat > rhat_cutoff) | any(wa_fixed$Rhat > rhat_cutoff) | num_runs == run_limit) {
       stop_now <- TRUE
     }
     else {
@@ -1280,7 +1280,7 @@ run_zinegbin_brms_on_chipseq <- function(chipseq_dat,
     wa_random <- summary(wa_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
     
     num_runs <- num_runs + 1
-    if (any(wl_fixed$Rhat < rhat_cutoff) | any(wel_fixed$Rhat < rhat_cutoff) | any(wa_fixed$Rhat < rhat_cutoff) | num_runs == run_limit) {
+    if (any(wl_fixed$Rhat > rhat_cutoff) | any(wel_fixed$Rhat > rhat_cutoff) | any(wa_fixed$Rhat > rhat_cutoff) | num_runs == run_limit) {
       stop_now <- TRUE
     }
     else {
