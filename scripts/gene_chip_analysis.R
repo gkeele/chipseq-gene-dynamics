@@ -16,9 +16,9 @@ library(UpSetR)
 library(scales)
 
 ## Colors
-wa_col <- "purple"
-wl_col <- "black"
-wel_col <- "red"
+wa_col <- "#FF00FF"
+wl_col <- "#010101"
+wel_col <- "#EC2224"
 # wa_col <- "coral"
 # wl_col <- "magenta"
 # wel_col <- "seagreen1"
