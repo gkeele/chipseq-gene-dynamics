@@ -142,6 +142,7 @@ run_beta_brms_on_chipseq <- function(chipseq_dat,
                                      this_gene, 
                                      adapt_delta = 0.8,
                                      iter = 2000,
+                                     zo_inflation = TRUE,
                                      seed = 123,
                                      rhat_cutoff = 1.1,
                                      run_limit = 10) {
@@ -153,7 +154,7 @@ run_beta_brms_on_chipseq <- function(chipseq_dat,
     # writer loss
     wl_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
                         data = use_dat %>% filter(assay == "writer_loss"), 
-                        family = "beta",
+                        family = ifelse(zo_inflation, "zero_one_inflated_beta", "beta"),
                         iter = iter,
                         control = list(adapt_delta = adapt_delta),
                         seed = seed)
@@ -162,7 +163,7 @@ run_beta_brms_on_chipseq <- function(chipseq_dat,
     # writer-eraser loss
     wel_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
                          data = use_dat %>% filter(assay == "writer_eraser_loss"), 
-                         family = "beta",
+                         family = ifelse(zo_inflation, "zero_one_inflated_beta", "beta"),
                          iter = iter,
                          control = list(adapt_delta = adapt_delta),
                          seed = seed)
@@ -171,7 +172,7 @@ run_beta_brms_on_chipseq <- function(chipseq_dat,
     # writer add
     wa_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
                         data = use_dat %>% filter(assay == "writer_add"), 
-                        family = "beta",
+                        family = ifelse(zo_inflation, "zero_one_inflated_beta", "beta"),
                         iter = iter,
                         control = list(adapt_delta = adapt_delta), 
                         seed = seed)
@@ -179,7 +180,7 @@ run_beta_brms_on_chipseq <- function(chipseq_dat,
     wa_random <- summary(wa_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
     
     num_runs <- num_runs + 1
-    if (any(wl_fixed$Rhat > rhat_cutoff) | any(wel_fixed$Rhat > rhat_cutoff) | any(wa_fixed$Rhat > rhat_cutoff) | num_runs == run_limit) {
+    if (all(wl_fixed$Rhat < rhat_cutoff) | all(wel_fixed$Rhat < rhat_cutoff) | all(wa_fixed$Rhat < rhat_cutoff) | num_runs == run_limit) {
       stop_now <- TRUE
     }
     else {
@@ -192,77 +193,32 @@ run_beta_brms_on_chipseq <- function(chipseq_dat,
                   writer_eraser_loss = bind_rows(wel_fixed, wel_random),
                   writer_add = bind_rows(wa_fixed, wa_random),
                   seed = seed,
-                  run_limit_stop = ifelse(num_runs == run_limit, TRUE, FALSE))
+                  run_limit_stop = ifelse(num_runs == run_limit, TRUE, FALSE),
+                  zo_inflation = zo_inflation)
   results
 }
 ## Try YAL012W and YAL066W
-yal012w_beta_models <- run_beta_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "YAL012W", iter = 10000)
-yal066w_beta_models <- run_beta_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "YAL066W")
+yal012w_beta_models <- run_beta_brms_on_chipseq(chipseq_dat = gene_chip_dat, 
+                                                this_gene = "YAL012W", 
+                                                iter = 10000,
+                                                zo_inflation = FALSE)
+yal066w_beta_models <- run_beta_brms_on_chipseq(chipseq_dat = gene_chip_dat, 
+                                                this_gene = "YAL066W",
+                                                iter = 10000,
+                                                zo_inflation = FALSE)
 ## Gene with extreme low effect
-yal041w_beta_models <- run_beta_brms_on_chipseq(chipseq_dat = gene_chip_dat, this_gene = "YAL041W", adapt_delta = 0.99, iter = 5000)
-
-run_zoibeta_brms_on_chipseq <- function(chipseq_dat, 
-                                this_gene, 
-                                adapt_delta = 0.8,
-                                iter = 2000,
-                                seed = 123,
-                                rhat_cutoff = 1.1,
-                                run_limit = 10) {
-  use_dat <- chipseq_dat %>% filter(gene == this_gene)#,
-  
-  stop_now <- FALSE
-  num_runs <- 0
-  while(!stop_now) {
-    # writer loss
-    wl_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
-                        data = use_dat %>% filter(assay == "writer_loss"), 
-                        family = "zero_one_inflated_beta",
-                        iter = iter,
-                        control = list(adapt_delta = adapt_delta),
-                        seed = seed)
-    wl_fixed <- summary(wl_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
-    wl_random <- summary(wl_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
-    # writer-eraser loss
-    wel_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
-                         data = use_dat %>% filter(assay == "writer_eraser_loss"), 
-                         family = "zero_one_inflated_beta",
-                         iter = iter,
-                         control = list(adapt_delta = adapt_delta),
-                         seed = seed)
-    wel_fixed <- summary(wel_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
-    wel_random <- summary(wel_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
-    # writer add
-    wa_fit <- brms::brm(value ~ 1 + timepoint + (1 + timepoint | sample_unit), 
-                        data = use_dat %>% filter(assay == "writer_add"), 
-                        family = "zero_one_inflated_beta",
-                        iter = iter,
-                        control = list(adapt_delta = adapt_delta),
-                        seed = seed)
-    wa_fixed <- summary(wa_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
-    wa_random <- summary(wa_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
-    
-    num_runs <- num_runs + 1
-    if (any(wl_fixed$Rhat > rhat_cutoff) | any(wel_fixed$Rhat > rhat_cutoff) | any(wa_fixed$Rhat > rhat_cutoff) | num_runs == run_limit) {
-      stop_now <- TRUE
-    }
-    else {
-      seed <- seed + 1
-    }
-  }
-  
-  names(wl_fixed) <- names(wl_random) <- names(wel_fixed) <- names(wel_random) <- names(wa_fixed) <- names(wa_random) <- c("parameter", "estimate", "est_error", "lower_95", "upper_95", "eff_sample", "rhat")
-  results <- list(writer_loss = bind_rows(wl_fixed, wl_random),
-                  writer_eraser_loss = bind_rows(wel_fixed, wel_random),
-                  writer_add = bind_rows(wa_fixed, wa_random),
-                  seed = seed,
-                  run_limit_stop = ifelse(num_runs == run_limit, TRUE, FALSE))
-  results
-}
+yal041w_beta_models <- run_beta_brms_on_chipseq(chipseq_dat = gene_chip_dat, 
+                                                this_gene = "YAL041W", 
+                                                iter = 5000,
+                                                zo_inflation = FALSE)
 
 zoi_gene_chip_dat <- gene_chip_dat %>%
   mutate(value = raw_value)
 ## Try YAL012W
-yal012w_zoibeta_models <- run_zoibeta_brms_on_chipseq(chipseq_dat = zoi_gene_chip_dat, this_gene = "YAL012W", iter = 10000)
+yal012w_zoibeta_models <- run_beta_brms_on_chipseq(chipseq_dat = zoi_gene_chip_dat, 
+                                                   this_gene = "YAL012W", 
+                                                   iter = 10000,
+                                                   zo_inflation = TRUE)
 
 
 ##############################################
@@ -448,26 +404,51 @@ gene_timepoint_dat <- bind_cols(gene_timepoint_dat, gene_error_data)
 ## Function to run brms for beta regression of loss assays
 #### ChIP-seq normalized to proportions within a replicate
 #### Per gene modeling of loss categories
-compare_wl_to_wel_brms <- function(chipseq_dat, 
-                                   this_gene, 
-                                   adapt_delta = 0.8,
-                                   iter = 2000) {
+compare_wl_to_wel_beta_brms <- function(chipseq_dat, 
+                                         this_gene, 
+                                         adapt_delta = 0.8,
+                                         iter = 2000,
+                                        zo_inflation = TRUE,
+                                         seed = 123,
+                                         rhat_cutoff = 1.1,
+                                         run_limit = 10) {
   use_dat <- chipseq_dat %>% filter(gene == this_gene,
                                     assay %in% c("writer_loss", "writer_eraser_loss"))
   
-  compare_fit <- brms::brm(value ~ 1 + timepoint_cat + assay + timepoint_cat:assay + (1 + timepoint_cat + assay + timepoint_cat:assay | sample_unit), 
-                           data = use_dat, 
-                           family = "beta",
-                           iter = iter,
-                           control = list(adapt_delta = adapt_delta))
-  compare_fixed <- summary(compare_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
-  compare_fixed
+  stop_now <- FALSE
+  num_runs <- 0
+  while(!stop_now) {
+    compare_fit <- brms::brm(value ~ 1 + timepoint_cat + assay + timepoint_cat:assay + (1 + timepoint_cat + assay + timepoint_cat:assay | sample_unit), 
+                             data = use_dat, 
+                             family = ifelse(zo_inflation, "zero_one_inflated_beta", "beta"),
+                             iter = iter,
+                             control = list(adapt_delta = adapt_delta))
+    compare_fixed <- summary(compare_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
+    
+    num_runs <- num_runs + 1
+    if (all(compare_fixed$Rhat < rhat_cutoff) | num_runs == run_limit) {
+      stop_now <- TRUE
+    }
+    else {
+      seed <- seed + 1
+    }
+  }
+  results <- list(comparison_wel_to_wl = compare_fixed,
+                  seed = seed,
+                  run_limit_stop = ifelse(num_runs == run_limit, TRUE, FALSE),
+                  zo_inflation = zo_inflation)
+  results
 }
 # Try YAL067W-A
-yal067w_a_compare_model <- compare_wl_to_wel_brms(chipseq_dat = gene_chip_dat,
-                                                  this_gene = "YAL067W-A",
-                                                  iter = 10000)
-
+yal067w_a_compare_beta_model <- compare_wl_to_wel_beta_brms(chipseq_dat = gene_chip_dat,
+                                                       this_gene = "YAL067W-A",
+                                                       iter = 10000, 
+                                                       seed = seed)
+yal067w_a_compare_model_zoibeta_model <- compare_wl_to_wel_beta_brms(chipseq_dat = gene_chip_dat,
+                                                                     this_gene = "YAL067W-A",
+                                                                     iter = 10000, 
+                                                                     zero_inflation = FALSE,
+                                                                     seed = seed)
 #####################################################
 ##
 ##  Joint loss beta regression: aggregate results
@@ -1280,7 +1261,7 @@ run_zinegbin_brms_on_chipseq <- function(chipseq_dat,
     wa_random <- summary(wa_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
     
     num_runs <- num_runs + 1
-    if (any(wl_fixed$Rhat > rhat_cutoff) | any(wel_fixed$Rhat > rhat_cutoff) | any(wa_fixed$Rhat > rhat_cutoff) | num_runs == run_limit) {
+    if (all(wl_fixed$Rhat < rhat_cutoff) | all(wel_fixed$Rhat < rhat_cutoff) | all(wa_fixed$Rhat < rhat_cutoff) | num_runs == run_limit) {
       stop_now <- TRUE
     }
     else {
