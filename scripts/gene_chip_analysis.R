@@ -1326,8 +1326,8 @@ grid.arrange(g1, g2)
 ##
 ########################################################
 ## Parsing full set of Stan results
-stan_negbin_paths <- list.files("individual_gene_Stan_models_absolute_signal_seed_123_alpha_0.8_iter_100000/", full.names = TRUE)
-file_path <- "individual_gene_Stan_models_absolute_signal_seed_123_alpha_0.8_iter_100000//sacCer3_nonOverlappingGenes_noChrMGenes_"
+stan_negbin_paths <- list.files("individual_gene_Stan_models_absolute_signal_alpha_0.8_iter_10000/", full.names = TRUE)
+file_path <- "individual_gene_Stan_models_absolute_signal_alpha_0.8_iter_10000//sacCer3_nonOverlappingGenes_noChrMGenes_"
 for (i in 1:length(stan_negbin_paths)) {
   this_fit <- readRDS(stan_negbin_paths[i])
   
@@ -1339,12 +1339,17 @@ for (i in 1:length(stan_negbin_paths)) {
     absolute_dat <- bind_rows(data.frame(gene = this_gene, assay = "writer_loss", this_fit$writer_loss %>% filter(parameter == "timepoint")),
                                data.frame(gene = this_gene, assay = "writer_eraser_loss", this_fit$writer_eraser_loss %>% filter(parameter == "timepoint")),
                                data.frame(gene = this_gene, assay = "writer_add", this_fit$writer_add %>% filter(parameter == "timepoint")))
+    absolute_dat$seed <- this_fit$seed
+    absolute_dat$run_limit_stop <- this_fit$run_limit_stop
   }
   else {
+    holder_dat <-bind_rows(data.frame(gene = this_gene, assay = "writer_loss", this_fit$writer_loss %>% filter(parameter == "timepoint")),
+                           data.frame(gene = this_gene, assay = "writer_eraser_loss", this_fit$writer_eraser_loss %>% filter(parameter == "timepoint")),
+                           data.frame(gene = this_gene, assay = "writer_add", this_fit$writer_add %>% filter(parameter == "timepoint")))
+    holder_dat$seed <- this_fit$seed
+    holder_dat$run_limit_stop <- this_fit$run_limit_stop
     absolute_dat <- bind_rows(absolute_dat,
-                              data.frame(gene = this_gene, assay = "writer_loss", this_fit$writer_loss %>% filter(parameter == "timepoint")),
-                              data.frame(gene = this_gene, assay = "writer_eraser_loss", this_fit$writer_eraser_loss %>% filter(parameter == "timepoint")),
-                              data.frame(gene = this_gene, assay = "writer_add", this_fit$writer_add %>% filter(parameter == "timepoint")))
+                              holder_dat)
   }
 }
 absolute_dat <- absolute_dat %>% 
@@ -1407,6 +1412,17 @@ legend("bottomright",
        col = c(wa_col, wl_col, wel_col, "gray", "gray"),
        pch=c(15, 15, 15, 19, 1),
        bty = "n")
+
+confident_absolute_dat <- absolute_dat %>% filter(rhat < 1.1)
+plot(confident_absolute_dat$est_error, confident_absolute_dat$estimate, pch = ifelse(confident_absolute_dat$category == "zero", 1, 19), col = c(wa_col, wl_col, wel_col)[as.factor(confident_absolute_dat$assay)], 
+     las = 1, ylab = "Histone trend with time", xlab = "Error on trend", frame.plot = FALSE)
+abline(h = 0, lty = 2)
+legend("bottomright", 
+       legend = c("writer add", "writer loss", "writer eraser loss", "confident within assay", "not confident within assay"),
+       col = c(wa_col, wl_col, wel_col, "gray", "gray"),
+       pch=c(15, 15, 15, 19, 1),
+       bty = "n")
+sum(absolute_dat$rhat > 1.1)
 
 plot(absolute_dat$est_error, absolute_dat$eff_sample, pch = ifelse(absolute_dat$category == "zero", 1, 19), col = c(wa_col, wl_col, wel_col)[as.factor(absolute_dat$assay)], 
      las = 1, ylab = "Histone trend with time", xlab = "Effective sample size", frame.plot = FALSE)
