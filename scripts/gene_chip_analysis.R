@@ -245,10 +245,9 @@ for (i in 1:length(stan_fit_paths)) {
     timepoint_dat$run_limit_stop <- this_fit$run_limit_stop
   }
   else {
-    holder_dat <- bind_rows(timepoint_dat,
-                               data.frame(gene = this_gene, assay = "writer_loss", this_fit$writer_loss %>% filter(parameter == "timepoint")),
-                               data.frame(gene = this_gene, assay = "writer_eraser_loss", this_fit$writer_eraser_loss %>% filter(parameter == "timepoint")),
-                               data.frame(gene = this_gene, assay = "writer_add", this_fit$writer_add %>% filter(parameter == "timepoint")))
+    holder_dat <- bind_rows(data.frame(gene = this_gene, assay = "writer_loss", this_fit$writer_loss %>% filter(parameter == "timepoint")),
+                            data.frame(gene = this_gene, assay = "writer_eraser_loss", this_fit$writer_eraser_loss %>% filter(parameter == "timepoint")),
+                            data.frame(gene = this_gene, assay = "writer_add", this_fit$writer_add %>% filter(parameter == "timepoint")))
     holder_dat$seed <- this_fit$seed
     holder_dat$run_limit_stop <- this_fit$run_limit_stop
     timepoint_dat <- bind_rows(timepoint_dat,
@@ -474,12 +473,18 @@ for (i in 1:length(loss_compare_files)) {
   
   if (i == 1) {
     loss_compare_dat <- data.frame(gene = rep(this_gene, 8), this_fit)
+    loss_compare_dat$seed <- this_fit$seed
+    loss_compare_dat$run_limit_stop <- this_fit$run_limit_stop
   }
   else {
+    holder_dat <- data.frame(gene = rep(this_gene, 8), this_fit)
+    holder_dat$seed <- this_fit$seed
+    holder_dat$run_limit_stop <- this_fit$run_limit_stop
     loss_compare_dat <- bind_rows(loss_compare_dat,
-                                  data.frame(gene = rep(this_gene, 8), this_fit))
+                                  holder_dat)
   }
 }
+loss_compare_dat$attempts <- (loss_compare_dat$seed - 123) + 1
 #############################################################
 ##
 ## Joint loss beta regression: characterizing lag in trend
