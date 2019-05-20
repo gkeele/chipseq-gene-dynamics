@@ -241,12 +241,18 @@ for (i in 1:length(stan_fit_paths)) {
     timepoint_dat <- bind_rows(data.frame(gene = this_gene, assay = "writer_loss", this_fit$writer_loss %>% filter(parameter == "timepoint")),
                                data.frame(gene = this_gene, assay = "writer_eraser_loss", this_fit$writer_eraser_loss %>% filter(parameter == "timepoint")),
                                data.frame(gene = this_gene, assay = "writer_add", this_fit$writer_add %>% filter(parameter == "timepoint")))
+    timepoint_dat$seed <- this_fit$seed
+    timepoint_dat$run_limit_stop <- this_fit$run_limit_stop
   }
   else {
-    timepoint_dat <- bind_rows(timepoint_dat,
+    holder_dat <- bind_rows(timepoint_dat,
                                data.frame(gene = this_gene, assay = "writer_loss", this_fit$writer_loss %>% filter(parameter == "timepoint")),
                                data.frame(gene = this_gene, assay = "writer_eraser_loss", this_fit$writer_eraser_loss %>% filter(parameter == "timepoint")),
                                data.frame(gene = this_gene, assay = "writer_add", this_fit$writer_add %>% filter(parameter == "timepoint")))
+    holder_dat$seed <- this_fit$seed
+    holder_dat$run_limit_stop <- this_fit$run_limit_stop
+    timepoint_dat <- bind_rows(timepoint_dat,
+                               holder_dat)
   }
 }
 timepoint_dat <- timepoint_dat %>% 
@@ -256,6 +262,8 @@ timepoint_dat <- timepoint_dat %>%
 timepoint_dat$category[timepoint_dat$lower_95 > 0] <- "positive"
 timepoint_dat$category[timepoint_dat$upper_95 < 0] <- "negative"
 timepoint_dat$category[timepoint_dat$lower_95 < 0 & timepoint_dat$upper_95 > 0] <- "zero"
+timepoint_dat$attempts <- (timepoint_dat$seed - 123) + 1
+
 ## Histogram
 ggplot(data = timepoint_dat, aes(x = estimate)) + geom_histogram() + gg_theme + facet_grid(assay~.)
 ## All genes
@@ -1359,6 +1367,8 @@ absolute_dat <- absolute_dat %>%
 absolute_dat$category[absolute_dat$lower_95 > 0] <- "positive"
 absolute_dat$category[absolute_dat$upper_95 < 0] <- "negative"
 absolute_dat$category[absolute_dat$lower_95 < 0 & absolute_dat$upper_95 > 0] <- "zero"
+absolute_dat$attempts <- (absolute_dat$seed - 123) + 1
+
 
 ## Grabbing high genes
 absolute_positive_genes <- absolute_dat %>% 
