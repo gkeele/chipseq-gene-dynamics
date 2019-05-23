@@ -16,9 +16,9 @@ library(UpSetR)
 library(scales)
 
 ## Colors
-wa_col <- "#FF00FF"
-wl_col <- "#010101"
-wel_col <- "#EC2224"
+wa_col <- "plum"
+wl_col <- "darkseagreen2"
+wel_col <- "tomato"
 # wa_col <- "coral"
 # wl_col <- "magenta"
 # wel_col <- "seagreen1"
@@ -32,7 +32,7 @@ gg_theme <- theme(panel.grid.major = element_blank(),
                   panel.grid.minor = element_blank(),
                   panel.background = element_blank(), 
                   axis.line = element_line(colour = "black"),
-                  plot.title = element_text(hjust = 0.5), 
+                  plot.title = element_text(hjust = 0.5, face = "bold"), 
                   axis.text = element_text(size = 12, face = "bold"),
                   axis.title = element_text(size = 12, face = "bold"),
                   axis.text.x = element_text(hjust = 1, face = "bold"))
@@ -321,6 +321,7 @@ g <- ggplot(data = gene_chip_dat %>% filter(gene %in% trend_genes[1:6]), aes(x =
 #g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
 g <- g + gg_theme + guides(color = FALSE)
 g
+
 ##############################################
 ##
 ##  Beta regression: Upset plot
@@ -1458,6 +1459,22 @@ legend("bottomright",
        pch=c(15, 15, 15, 19, 1),
        bty = "n")
 
+
+## Compare negbinom to beta model
+compare_rate_dat <- inner_join(timepoint_dat %>%
+                                 select(gene, assay, estimate, category) %>%
+                                 dplyr::rename(beta_estimate = estimate,
+                                               beta_category = category),
+                               absolute_dat %>%
+                                 select(gene, assay, estimate, category) %>%
+                                 dplyr::rename(negbin_estimate = estimate,
+                                               negbin_category = category))
+par(mfrow = c(1, 2))
+plot(compare_rate_dat$negbin_estimate, compare_rate_dat$beta_estimate, pch = ifelse(absolute_dat$category == "zero", 1, 19), col = c(wa_col, wl_col, wel_col)[as.factor(absolute_dat$assay)], 
+     las = 1, ylab = "Histone trend with time (proportions)", xlab = "Histone trend with time (absolute)", frame.plot = FALSE)
+plot(compare_rate_dat$negbin_estimate, compare_rate_dat$beta_estimate, pch = ifelse(absolute_dat$category == "zero", 1, 19), col = c(wa_col, wl_col, wel_col)[as.factor(absolute_dat$assay)], 
+     las = 1, ylab = "Histone trend with time (proportions)", xlab = "Histone trend with time (absolute)", frame.plot = FALSE, xlim = c(-2, 2))
+
 high_wa <- absolute_dat %>%
   filter(assay == "writer_add",
          estimate > 100) %>%
@@ -1498,6 +1515,35 @@ g2 <- ggplot(data = unscaled_gene_chip_dat %>% filter(gene == "YER175C"), aes(x 
 g2 <- g2 + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
 g2 <- g2 + gg_theme
 g2
+
+
+####################################
+## Genes Austin requested
+## 
+####################################
+YCR008W_prop_g <- ggplot(data = gene_chip_dat %>% filter(gene %in% "YCR008W"), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point(size = 2) + geom_line(aes(group = sample_unit), linetype = "longdash", size = 1.1)
+YCR008W_prop_g <- YCR008W_prop_g + gg_theme + guides(color = FALSE) + ggtitle("YCR008W proportional ChIP-seq data", face = "bold")
+YCR008W_prop_g
+
+YCR005C_prop_g <- ggplot(data = gene_chip_dat %>% filter(gene %in% "YCR005C"), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point(size = 2) + geom_line(aes(group = sample_unit), linetype = "longdash", size = 1.1)
+YCR005C_prop_g <- YCR005C_prop_g + gg_theme + guides(color = FALSE) + ggtitle("YCR005C proportional ChIP-seq data")
+YCR005C_prop_g
+
+YCR008W_nonprop_g <- ggplot(data = unscaled_gene_chip_dat %>% filter(gene %in% "YCR008W"), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point(size = 2) + geom_line(aes(group = sample_unit), linetype = "longdash", size = 1.1)
+YCR008W_nonprop_g <- YCR008W_nonprop_g + gg_theme + guides(color = FALSE) + ggtitle("YCR008W normalized ChIP-seq data")
+YCR008W_nonprop_g
+
+YCR005C_nonprop_g <- ggplot(data = unscaled_gene_chip_dat %>% filter(gene %in% "YCR005C"), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point(size = 2) + geom_line(aes(group = sample_unit), linetype = "longdash", size = 1.1)
+YCR005C_nonprop_g <- YCR005C_nonprop_g + gg_theme + guides(color = FALSE) + ggtitle("YCR005C normalized ChIP-seq data")
+YCR005C_nonprop_g
+
+pdf("~/Documents/git_repositories/chipseq-gene-dynamics/modeling_figures_gkeele/YCR005C_data.pdf", height = 4, width = 8)
+grid.arrange(YCR005C_nonprop_g, YCR005C_prop_g, nrow = 1)
+dev.off()
+
+pdf("~/Documents/git_repositories/chipseq-gene-dynamics/modeling_figures_gkeele/YCR008W_data.pdf", height = 4, width = 8)
+grid.arrange(YCR008W_nonprop_g, YCR008W_prop_g, nrow = 1)
+dev.off()
 
 
 
