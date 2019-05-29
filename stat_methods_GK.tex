@@ -21,7 +21,7 @@ Though the H3K36me3 data are large and well-balanced, with the vast majority of 
 	The Stan statistical platform \cite{Carpenter2017} is one such computational tool for fitting complex Bayesian hierarchical models. We used the brms software package \cite{Burkner2017, Burkner2018}, which acts as a wrapper of Stan in the R statistical programming language \cite{RCoreTeam2019}. Let $y_{ijkl}$ be the H3K36me3 measurement for the $i$\textsuperscript{th} replicate sample ($i=1,2,3$) at the $j$\textsuperscript{th} timepoint ($j=0,1,2,3$) for the $k$\textsuperscript{th} gene ($k=1,2,…,5368$) for $l$\textsuperscript{th} condition ($l=1,2,3$). Briefly, we model $y$ with a GLM by defining $E(y)=g^{-1}(\eta)$, where $E(.)$ is the expected value of a random variable, $g^{-1}(.)$ is the inverse link function, and $\eta$ is the linear predictor that relates the outcome to factors of interest.
 	A Bayesian analysis could in principle simultaneously model all genes and conditions, though in practice, such an approach would likely be computationally infeasible, particularly when considering the need for sufficient sampling in order for the parameter estimates to converge. To avoid these challenges, we instead model more manageable subsets of H3K36me3 data. First, we fit a model of H3K36me3 data for a specific gene and condition. Second, to make more direct comparisons between the writer loss and writer eraser loss conditions, we modeled their data jointly within a gene.
 	
-\section*{Zero-one-inflated Beta regression model of H3K36me3 proportions}
+\section*{Zero-one-inflated beta regression model of H3K36me3 proportions}
 For the H3K36me3 data transformed to the proportion scale, we modeled the data with a zero-one-inflated beta distribution (ZOIB) and the following parameterization:
 \begin{equation}
 	p(y_{i}) = \begin{cases} 
@@ -32,23 +32,31 @@ For the H3K36me3 data transformed to the proportion scale, we modeled the data w
 \end{equation}
 $\alpha$ is the zero-one-inflation probability (probability that a zero or one occurs), $\gamma$ is the conditional one-inflation probability (probability that one occurs rather than zerio), $B(.)$ is the beta function \cite{Casella2002}, and $\phi$ is a positive precision parameter. For the link function, we used the logit: $g(\eta)= \log\large(\frac{\eta}{1 - \eta}\large)$. Zero-one-inflation was used because standard beta regression expects $y \in (0, 1)$, but not at the boundaries.
 
-The H3K36me3 data scaled to the proportion of the maximum H3K36me3 measured within a replicate (three replicates per gene per condition) results in three values of 1 for each gene and condition pairing. Additionally, zeros may observed. We used this scale of the data to better standardize ChIP-seq dynamics across cells and better detect consistent patterns compared to the normalized ChIP-seq data. However, it represents a challenging scale in the context of a GLMM. The zeros and ones are informative, but would strongly violate the assumptions and expectations of standard beta regression, resulting in anti-conservative, extreme parameter estimates. Instead, we used ZOIB regression, which conservatively drops out zeros and ones in terms of parameter estimation, resulting in less extreme estimates for the time effect. Alternatively, we modeled the non-proportional, normalized ChIP-seq data.
+The H3K36me3 data scaled to the proportion of the maximum H3K36me3 measured within a replicate (three replicates per gene per condition) results in three values of 1 for each gene and condition pairing. Additionally, zeros may be observed. We used this scale of the data to better standardize ChIP-seq dynamics across cells and better detect consistent patterns compared to the normalized ChIP-seq data. However, it represents a challenging scale in the context of a GLMM, and an abuse of assumptions of beta regression specifically. The zeros and ones are informative, but would strongly violate the expectations of standard beta regression, resulting in anti-conservative, extreme parameter estimates. Instead, we used ZOIB regression, which conservatively drops out zeros and ones in terms of parameter estimation, resulting in less extreme estimates for the time effect. Alternatively, we modeled the non-proportional, normalized ChIP-seq data.
 
-\subsection*{Continuous time model}
+\section*{Zero-inflated negative binomial regression model of H3K36me3 proportions}
+
+\section*{Time models}
+
+\subsection*{Continuous}
 
 We modeled the gain or loss of H3K36me3 with a continuous time variable in the linear predictor of the model, 
 \begin{equation}
-	\eta_{ij} = \mu + \alpha_{i} + (\beta_{\text{time}} + \delta_{i})x_{ij},
+	\eta_{ij} = \mu + u_{i} + (\beta_{\text{time}} + v_{i})x_{ij},
 \end{equation}
-where $\mu$ is a shared intercept term, $x_{ij}$ is the $j$\textsuperscript{th} timepoint (in minutes) for the $i$\textsuperscript{th} replicate, and $\beta_{\text{time}}$ is the log odds ratio (OR) for change in proportion H3K36me3 (relative to the maximum) per minute. For all genes and conditions, we recorded the posterior mean ($\widehat{\beta}_{\text{time}, kl}$) as a point estimate for the change in H3K36me3 proportion with time for gene $k$ and condition $l$, the standard error on the estimate, and the 95\% Credible Interval (CrI), which we use to define ``confident'' genes for a given condition, which possess CrI that do not cover 0. $\widehat{\beta}_{\text{time}, kl}$ were plotted and correlated with additional factors of interests in order to identify interesting trends.
+where $\mu$ is a shared intercept term, $x_{ij}$ is the $j$\textsuperscript{th} timepoint (in minutes) for the $i$\textsuperscript{th} sample, and $\beta_{\text{time}}$ is the log odds ratio (OR) for change in proportion H3K36me3 (relative to the maximum) per minute. $u_{i}$ and $v_{i}$ are random, or group-level \cite{Gelman2006}, effects that account for the longitudinal nature of the data, and modeled with the following priors: $\text{N}(0, \tau^{2}_{u})$ and $\text{N}(0, \tau^{2}_{v})$, respectively. For all genes and conditions, we recorded the posterior mean ($\widehat{\beta}_{\text{time}, kl}$) as a point estimate for the change in H3K36me3 proportion with time for gene $k$ and condition $l$, the standard error on the estimate, and the 95\% Credible Interval (CrI), which we use to define ``confident'' genes for a given condition, which possess CrI that do not cover 0. $\widehat{\beta}_{\text{time}, kl}$ were plotted and correlated with additional factors of interests in order to identify interesting trends.
 
-\subsection*{Categorical time model}
+\subsection*{Categorical}
 
 Notably, writer loss and writer eraser loss had similar H3K36me3 dynamics with time. To more directly compare the dynamics of writer loss and writer eraser loss, we simultaneously analyzed their data per gene within a categorical time model, allowing for greater flexibility and non-linearity with respect to time:
-\begin{equation}
-	\eta_{ij} = \mu + \sum_{p = 1}^{3}\beta_{\text{timepoint}}^{p}I\{j = p\} + \sum_{q = 0}^{3}\delta_{\text{timepoint}}^{q}I\{j = q\},
-\end{equation}
-where $\mu$ is the intercept representing log odds for the proportion H3K36me3 at time0 for writer loss, $\beta_{\text{timepoint}}^{p}$ is the log OR comparing timepoint $p$ to $0$ for writer loss, and $\delta_{\text{timepoint}}^{q}$ represents deviations at each timepoint for writer eraser loss.
+\begin{align}
+	\eta_{ijl} = &\underbrace{\mu + u_{i}}_{\text{WL time0}} + \underbrace{(\delta_{\text{WEL}} + w_{i})I\{l = \text{WEL}\}}_{\text{WEL time0}} \\ 
+	&+ \underbrace{\sum_{p = 1}^{3}(\beta_{\text{timepoint}}^{p} + v_{i}^{p})I\{j = p\}}_{\text{WL timepoint }p} \nonumber \\ 
+	&+ \underbrace{\sum_{p = 1}^{3}(\delta_{\text{timepoint}}^{p} + z_{i}^{p})I\{j = p, l = \text{WEL}\}}_{\text{WEL timepoint }p},\nonumber
+\end{align}
+where $\mu$ is the intercept representing log odds for the proportion of maximum H3K36me3 at time0 for WL, $\delta_{\text{WL}}$ is the log OR at time0 comparing WEL to WL, $\beta_{\text{timepoint}}^{p}$ is the log OR comparing timepoint $p$ to $0$ for WL, and $\delta_{\text{timepoint}}^{q}$ represents log OR for timepoint $p$ for WEL compared to WL. $u_{i}$, $v_{i}^{p}$, $z_{i}^{p}$ are group-level effects that model the correlations within replicates, and have the following prior distributions: $\text{N}(0, \tau^{2}_{u})$, $\text{N}(0, \tau^{2}_{v,p})$, and $\text{N}(0, \tau^{2}_{z,p})$, respectively. $I\{A\}$ represents the indicator function, returning 1 if condition A is satisfied, and 0 if not.
+
+\section*{Sampling and model convergence}
 
 \bibliographystyle{plain}
 \bibliography{stat_methods_GK}
