@@ -69,9 +69,13 @@ Notably, writer loss and writer eraser loss had similar H3K36me3 dynamics with t
 \end{align}
 where $\mu$ is the intercept representing log odds for the proportion of maximum H3K36me3 at time0 for WL, $\delta_{\text{WL}}$ is the log OR at time0 comparing WEL to WL, $\beta_{\text{timepoint}}^{p}$ is the log OR comparing timepoint $p$ to $0$ for WL, and $\delta_{\text{timepoint}}^{q}$ represents log OR for timepoint $p$ for WEL compared to WL. $u_{i}$, $w_{i}$, $v_{i}^{p}$, $z_{i}^{p}$ are group-level effects that model the correlations within replicates, and have the following prior distributions: $\text{N}(0, \tau^{2}_{u})$, $\text{N}(0, \tau^{2}_{w})$, $\text{N}(0, \tau^{2}_{v,p})$, and $\text{N}(0, \tau^{2}_{z,p})$, respectively. $I\{A\}$ represents the indicator function, returning 1 if condition A is satisfied, and 0 if not. Similar to the continuous time model, we recorded posterior means and 95\% CrI for $\delta_{\text{timepoint}}^{p}$.
 
-\section*{Sampling and model convergence}
+\section*{Model specification, sampling, and model convergence}
 
-Bayesian inferences involves random sampling from the joint posterior of the model parameters. There are various diagnostics for the Monte Carlo Markov Chains (MCMC) samples that can be used to determining whether the model is converging and performing well. We use the split-$\widehat{R}$ statistic
+A Bayesian model requires the specification fo prior distributions for the various parameters. We used the default settings from brms. Briefly, for fixed, or population-level, effects, an improper flat prior over the reals was used. Group-level effects are modeled as normal variables with standard deviation parameter. These are modeled with half Student-$t$ distributions with 3 degrees of freedom and a minimal scale parameter of 10 \cite{Gelman2006}, which brms potentially increases based on the data to insure that the prior is minimally informative. The LKJ-correlation prior is used to model the correlations between the group-level effects on the same grouping factor \cite{Lewandowski2009}.
+
+Bayesian inferences involves random sampling from the joint posterior of the model parameters. For each Stan model, we ran four Monte Carlo Markov Chains (MCMC) chains, each with 2,000 iterations of warm-up and sampling. Initial values for parameters for each chain were randomly generated within Stan. The the adaptive delta parameter, necessary for the No-U-turn Sampler \cite{Hoffman2014} used by Stan, was set to 0.8, the default used by brms.
+
+There are various diagnostics for the MCMC samples that can be used to determining whether the model is converging and performing well. We used the split-$\widehat{R}$ statistic \cite{Gelman2013}, a ratio of the average variance within chains to the variance with the pooled chains.
 
 \bibliographystyle{plain}
 \bibliography{stat_methods_GK}
