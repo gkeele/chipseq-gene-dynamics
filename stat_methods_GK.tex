@@ -5,6 +5,7 @@
 
 \usepackage{xspace}
 \newcommand{\ie}{\emph{i.e.}\xspace}
+\newcommand{\eg}{\emph{e.g.}\xspace}
 
 \title{Statistical Methods}
 \date{}
@@ -22,7 +23,7 @@ Though the H3K36me3 data are large and well-balanced, with the vast majority of 
 	A Bayesian analysis could in principle simultaneously model all genes and conditions, though in practice, such an approach would likely be computationally infeasible, particularly when considering the need for sufficient sampling in order for the parameter estimates to converge. To avoid these challenges, we instead model more manageable subsets of H3K36me3 data. First, we fit a model of H3K36me3 data for a specific gene and condition. Second, to make more direct comparisons between the writer loss and writer eraser loss conditions, we modeled their data jointly within a gene.
 	
 \section*{Zero-one-inflated beta regression model of H3K36me3 proportions}
-For the H3K36me3 data transformed to the proportion scale, we modeled the data with a zero-one-inflated beta distribution (ZOIB) and the following parameterization:
+For the H3K36me3 data transformed to the proportion scale, we modeled the data with a zero-one-inflated beta (ZOIB) distribution with the following parameterization:
 \begin{equation}
 	p(y_{i}) = \begin{cases} 
       			\alpha(1 - \gamma) & y_{i} = 0 \\
@@ -32,9 +33,21 @@ For the H3K36me3 data transformed to the proportion scale, we modeled the data w
 \end{equation}
 $\alpha$ is the zero-one-inflation probability (probability that a zero or one occurs), $\gamma$ is the conditional one-inflation probability (probability that one occurs rather than zerio), $B(.)$ is the beta function \cite{Casella2002}, and $\phi$ is a positive precision parameter. For the link function, we used the logit: $g(\eta)= \log\large(\frac{\eta}{1 - \eta}\large)$. Zero-one-inflation was used because standard beta regression expects $y \in (0, 1)$, but not at the boundaries.
 
-The H3K36me3 data scaled to the proportion of the maximum H3K36me3 measured within a replicate (three replicates per gene per condition) results in three values of 1 for each gene and condition pairing. Additionally, zeros may be observed. We used this scale of the data to better standardize ChIP-seq dynamics across cells and better detect consistent patterns compared to the normalized ChIP-seq data. However, it represents a challenging scale in the context of a GLMM, and an abuse of assumptions of beta regression specifically. The zeros and ones are informative, but would strongly violate the expectations of standard beta regression, resulting in anti-conservative, extreme parameter estimates. Instead, we used ZOIB regression, which conservatively drops out zeros and ones in terms of parameter estimation, resulting in less extreme estimates for the time effect. Alternatively, we modeled the non-proportional, normalized ChIP-seq data.
+The H3K36me3 data scaled to the proportion of the maximum H3K36me3 measured within a replicate (three replicates per gene per condition) results in three values of 1 for each gene and condition pairing. Additionally, zeros may be observed. We used this scale of the data to better standardize ChIP-seq dynamics across cells and better detect consistent patterns compared to the normalized ChIP-seq data. However, it represents a challenging scale in the context of a GLMM, and even an abuse of assumptions of beta regression model, specifically. The zeros and ones are informative, but would strongly violate the expectations of standard beta regression, resulting in anti-conservative, extreme parameter estimates. Instead, we used ZOIB regression, which conservatively drops out zeros and ones in terms of parameter estimation, resulting in less extreme estimates for the time effect. Alternatively, we modeled the non-proportional, normalized ChIP-seq data.
 
 \section*{Zero-inflated negative binomial regression model of H3K36me3 proportions}
+The normalized ChIP-seq data are processed, ranging from 0 to 1.374346. Their distribution is consistent in shape with common count distributions, \eg Poisson and negative binomial, being non-negative with a right skew. We calculate quasi-counts as $y_{i}^{\text{quasi}} = \text{round}(y_{i} \times 1000)$. Though this transformation is artificial, it produces a new distribution that is proportional to the original and consistent with count distributions.
+
+For the quasi-count scale, we modeled the data with a zero-inflated negative binomial (ZINB) with the following parameterization:
+\begin{equation}
+	p(y_{i}) = \begin{cases} 
+			{{y_{i} + \phi - 1}\choose y_{i}} \large(\frac{\mu}{\mu + \phi}\large)^{y_{i}}\large(\frac{\phi}{\mu + \phi}\large)^{\phi} & y_{i} > 0 \\
+      			\xi + (1 - \xi)\text{NB}(y_{i} = 0) & y_{i} = 0
+   			\end{cases}
+\end{equation}
+$\xi$ is the zero-inflation probability, $\text{NB}(.)$ is the non-zero-inflated negative binomial probability mass function, and $\phi$ is a positive precision parameter. As $\phi \rightarrow \infty$, the negative binomial distribution converges to the Poisson distribution. The ZINB distribution estimates the zero observations as a mixture of true zeros, expected by the NB distribution, with an additional component from drop-outs, resulting in the zeros having less influence on the parameter estimates.
+
+In summary of the GLM distributions, the ZOIB and ZINB parameter inference should be consistent with each other. The proportional data scale are more standardized across genes and conditions, but they are also conservatively modeled by ZOIB regression, which will essentially remove the effect of zeros and ones on parameter inference. By contrast, the quasi-count scale is more artificial and disparate across genes and conditions, but more closely represents the raw data. It also makes more complete use of the data--the maximum values which are transformed to one in the proportional data--for parameter estimation.
 
 \section*{Time models}
 
@@ -57,6 +70,8 @@ Notably, writer loss and writer eraser loss had similar H3K36me3 dynamics with t
 where $\mu$ is the intercept representing log odds for the proportion of maximum H3K36me3 at time0 for WL, $\delta_{\text{WL}}$ is the log OR at time0 comparing WEL to WL, $\beta_{\text{timepoint}}^{p}$ is the log OR comparing timepoint $p$ to $0$ for WL, and $\delta_{\text{timepoint}}^{q}$ represents log OR for timepoint $p$ for WEL compared to WL. $u_{i}$, $w_{i}$, $v_{i}^{p}$, $z_{i}^{p}$ are group-level effects that model the correlations within replicates, and have the following prior distributions: $\text{N}(0, \tau^{2}_{u})$, $\text{N}(0, \tau^{2}_{w})$, $\text{N}(0, \tau^{2}_{v,p})$, and $\text{N}(0, \tau^{2}_{z,p})$, respectively. $I\{A\}$ represents the indicator function, returning 1 if condition A is satisfied, and 0 if not. Similar to the continuous time model, we recorded posterior means and 95\% CrI for $\delta_{\text{timepoint}}^{p}$.
 
 \section*{Sampling and model convergence}
+
+Bayesian inferences involves random sampling from the joint posterior of the model parameters. There are various diagnostics for the Monte Carlo Markov Chains (MCMC) samples that can be used to determining whether the model is converging and performing well. We use the split-$\widehat{R}$ statistic
 
 \bibliographystyle{plain}
 \bibliography{stat_methods_GK}
