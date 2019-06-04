@@ -365,7 +365,7 @@ legend("bottomright",
 ##                   on trend
 ##
 ##############################################
-time_alt_fit <- lmer(estimate ~ (1 | gene) + assay, 
+time_alt_fit <- lmer(estimate ~ -1 + (1 | gene) + assay, 
                      data = timepoint_dat, 
                      weights = 1/timepoint_dat$est_error,
                      REML = FALSE)
@@ -375,6 +375,7 @@ time_null_fit <- lmer(estimate ~ (1 | gene),
                       REML = FALSE)
 anova(time_alt_fit, time_null_fit)
 # p-value < 2.2e-16
+emmeans::emmeans(time_alt_fit, list(pairwise ~ assay), adjust = "tukey")
 
 ## Time trend for loss categories only
 loss_dat <- timepoint_dat %>%
@@ -1522,19 +1523,23 @@ g2
 ## 
 ####################################
 YCR008W_prop_g <- ggplot(data = gene_chip_dat %>% filter(gene %in% "YCR008W"), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point(size = 2) + geom_line(aes(group = sample_unit), linetype = "longdash", size = 1.1)
-YCR008W_prop_g <- YCR008W_prop_g + gg_theme + guides(color = FALSE) + ggtitle("YCR008W proportional ChIP-seq data", face = "bold")
+YCR008W_prop_g <- YCR008W_prop_g + gg_theme + guides(color = FALSE) + ggtitle("YCR008W proportional ChIP-seq data")
+YCR008W_prop_g <- YCR008W_prop_g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
 YCR008W_prop_g
 
 YCR005C_prop_g <- ggplot(data = gene_chip_dat %>% filter(gene %in% "YCR005C"), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point(size = 2) + geom_line(aes(group = sample_unit), linetype = "longdash", size = 1.1)
 YCR005C_prop_g <- YCR005C_prop_g + gg_theme + guides(color = FALSE) + ggtitle("YCR005C proportional ChIP-seq data")
+YCR005C_prop_g <- YCR005C_prop_g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
 YCR005C_prop_g
 
 YCR008W_nonprop_g <- ggplot(data = unscaled_gene_chip_dat %>% filter(gene %in% "YCR008W"), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point(size = 2) + geom_line(aes(group = sample_unit), linetype = "longdash", size = 1.1)
 YCR008W_nonprop_g <- YCR008W_nonprop_g + gg_theme + guides(color = FALSE) + ggtitle("YCR008W normalized ChIP-seq data")
+YCR008W_nonprop_g <- YCR008W_nonprop_g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
 YCR008W_nonprop_g
 
 YCR005C_nonprop_g <- ggplot(data = unscaled_gene_chip_dat %>% filter(gene %in% "YCR005C"), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point(size = 2) + geom_line(aes(group = sample_unit), linetype = "longdash", size = 1.1)
 YCR005C_nonprop_g <- YCR005C_nonprop_g + gg_theme + guides(color = FALSE) + ggtitle("YCR005C normalized ChIP-seq data")
+YCR005C_nonprop_g <- YCR005C_nonprop_g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
 YCR005C_nonprop_g
 
 pdf("~/Documents/git_repositories/chipseq-gene-dynamics/modeling_figures_gkeele/YCR005C_data.pdf", height = 4, width = 8)
