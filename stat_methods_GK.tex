@@ -63,8 +63,10 @@ where $\mu$ is a shared intercept term, $x_{ij}$ is the $j$\textsuperscript{th} 
 
 To formally test for a non-zero effect of condition with time is infeasible because it would require the joint estimation across all genes and conditions in a Bayesian context. Further, GLMMs are challenging models to fit, and not amenable to reliable likelihood-based inference, given the number of genes observed here. As an alternative, we fit a second model from the posterior mean $\widehat{\beta}_{\text{time}, kl}$, estimated for gene $k$ and condition $l$, described above. These parameters were modeled as Normal variables, which can be viewed as a latent variable that we model in a second regression as:
 \begin{equation}
-	\beta_{\text{time}, kl} = \mu + u_{k} + \delta_{\text{condition}}x_{ij} + \varepsilon_{kl},
+	\beta_{\text{time}, kl} = u_{k} + \delta_{\text{WA}}I\{l = \text{WA}\} + \delta_{\text{WL}}I\{l = \text{WL}\} + \delta_{\text{WEL}}I\{l = \text{WEL}\} + \varepsilon_{kl},
+	\label{eq:alt_model}
 \end{equation}
+where $u_{k}$ is a gene-specific random effect, modeled as $\text{N}(0, \tau^{2}_{u})$, $\delta_{\text{WA}}$, $\delta_{\text{WL}}$, and $\delta_{\text{WEL}}$ are the condition-specific effects on the previously measured continuous time effect, modeled as fixed effects, and $\varepsilon_{kl}$ is a noise term, distributed according to $\text{N}(0, \sigma^{2})$ with $\sigma^{2}$ representing the noise variance. $I\{A\}$ represents the indicator function, returning 1 if the conditional statement A is satisfied and 0 if not. Given that the effects can be modeled with a normal distribution, representing an linear mixed model (LMM), we use the R package lme4 \cite{Bates2015}. Using ANOVA \cite{Venables2010}, we compared the model in Equation \ref{eq:alt_model} to a null model with no fixed effects for the conditions.
 
 \subsection*{Categorical}
 
@@ -74,7 +76,9 @@ Notably, writer loss and writer eraser loss had similar H3K36me3 dynamics with t
 	&+ \underbrace{\sum_{p = 1}^{3}(\beta_{\text{timepoint}}^{p} + v_{i}^{p})I\{j = p\}}_{\text{WL timepoint }p} \nonumber \\ 
 	&+ \underbrace{\sum_{p = 1}^{3}(\delta_{\text{timepoint}}^{p} + z_{i}^{p})I\{j = p, l = \text{WEL}\}}_{\text{WEL timepoint }p},\nonumber
 \end{align}
-where $\mu$ is the intercept representing, representing WL at time0, $\omega_{\text{WL}}$ is the deviation of WEL from WL, $\beta_{\text{timepoint}}^{p}$ is the effect comparing timepoint $p$ to $0$ for WL, and $\delta_{\text{timepoint}}^{q}$ represents effect for timepoint $p$ for WEL compared to WL. $u_{i}$, $w_{i}$, $v_{i}^{p}$, $z_{i}^{p}$ are group-level effects that model the correlations within replicates, and have the following prior distributions: $\text{N}(0, \tau^{2}_{u})$, $\text{N}(0, \tau^{2}_{w})$, $\text{N}(0, \tau^{2}_{v,p})$, and $\text{N}(0, \tau^{2}_{z,p})$, respectively. $I\{A\}$ represents the indicator function, returning 1 if condition A is satisfied and 0 if not. Similar to the continuous time model, we recorded posterior means and 95\% CrI for $\delta_{\text{timepoint}}^{p}$. We fit the categorial time model with the ZOIB, though it could be used with ZINB as well.
+where $\mu$ is the intercept representing, representing WL at time0, $\omega_{\text{WL}}$ is the deviation of WEL from WL, $\beta_{\text{timepoint}}^{p}$ is the effect comparing timepoint $p$ to $0$ for WL, and $\delta_{\text{timepoint}}^{q}$ represents effect for timepoint $p$ for WEL compared to WL. $u_{i}$, $w_{i}$, $v_{i}^{p}$, $z_{i}^{p}$ are group-level effects that model the correlations within replicates, and have the following prior distributions: $\text{N}(0, \tau^{2}_{u})$, $\text{N}(0, \tau^{2}_{w})$, $\text{N}(0, \tau^{2}_{v,p})$, and $\text{N}(0, \tau^{2}_{z,p})$, respectively. 
+%$I\{A\}$ represents the indicator function, returning 1 if condition A is satisfied and 0 if not.
+Similar to the continuous time model, we recorded posterior means and 95\% CrI for $\delta_{\text{timepoint}}^{p}$. We fit the categorial time model with the ZOIB, though it could be used with ZINB as well.
 
 \subsection*{Interpreting estimated effects}
 
