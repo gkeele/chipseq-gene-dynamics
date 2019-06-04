@@ -3,6 +3,8 @@
 \usepackage{cite}
 \usepackage{amsmath}
 
+\usepackage[scientific-notation=true]{siunitx}
+
 \usepackage{xspace}
 \newcommand{\ie}{\emph{i.e.}\xspace}
 \newcommand{\eg}{\emph{e.g.}\xspace}
@@ -66,7 +68,9 @@ To formally test for a non-zero effect of condition with time is infeasible beca
 	\beta_{\text{time}, kl} = u_{k} + \delta_{\text{WA}}I\{l = \text{WA}\} + \delta_{\text{WL}}I\{l = \text{WL}\} + \delta_{\text{WEL}}I\{l = \text{WEL}\} + \varepsilon_{kl},
 	\label{eq:alt_model}
 \end{equation}
-where $u_{k}$ is a gene-specific random effect, modeled as $\text{N}(0, \tau^{2}_{u})$, $\delta_{\text{WA}}$, $\delta_{\text{WL}}$, and $\delta_{\text{WEL}}$ are the condition-specific effects on the previously measured continuous time effect, modeled as fixed effects, and $\varepsilon_{kl}$ is a noise term, distributed according to $\text{N}(0, \sigma^{2})$ with $\sigma^{2}$ representing the noise variance. $I\{A\}$ represents the indicator function, returning 1 if the conditional statement A is satisfied and 0 if not. Given that the effects can be modeled with a normal distribution, representing an linear mixed model (LMM), we use the R package lme4 \cite{Bates2015}. Using ANOVA \cite{Venables2010}, we compared the model in Equation \ref{eq:alt_model} to a null model with no fixed effects for the conditions.
+where $u_{k}$ is a gene-specific random effect, modeled as $\text{N}(0, \tau^{2}_{u})$, $\delta_{\text{WA}}$, $\delta_{\text{WL}}$, and $\delta_{\text{WEL}}$ are the condition-specific effects on the previously measured continuous time effect, modeled as fixed effects, and $\varepsilon_{kl}$ is a noise term, distributed according to $\text{N}(0, \frac{\sigma^{2}}{w_{ij}})$ with $\sigma^{2}$ representing the noise variance and $w_{kl}$ is a weight specific to gene $k$ and condition $l$. For the weight, we used $1/\text{SE}(\beta_{\text{time}, kl})$ from the GLMM model, effectively down weighting the influence of effect estimates with large standard error. $I\{A\}$ represents the indicator function, returning 1 if the conditional statement A is satisfied and 0 if not. 
+
+Given that the effects can be modeled with a normal distribution, representing a linear mixed model (LMM) with weights, we used the R package lme4 \cite{Bates2015}. Through ANOVA \cite{Venables2010} with maximum likelihood estimates, we compared the model in Equation \ref{eq:alt_model} to a null model with an intercept and no condition fixed effects, resulting in an ANOVA $p$-value $<$ \num{2.2e-16}. Using the R package emmeans \cite{emmeans}, we performed Tukey \textit{post hoc} tests of pairwise differences \cite{Venables2010} between the conditions, which were all found to be significant (Tukey $p$-values $<$ 0.0001). Notably, the rate of H3K36me3 loss was greater for WEL compared to WL.
 
 \subsection*{Categorical}
 
@@ -88,7 +92,7 @@ The interpretation of the regression coefficients will depend on whether ZOIB or
 
 A Bayesian model requires the specification fo prior distributions for the various parameters. We used the default settings from brms. Briefly, for fixed, or population-level, effects, an improper flat prior over the reals was used. Group-level effects are modeled as normal variables with standard deviation parameter. These are modeled with half Student-$t$ distributions with 3 degrees of freedom and a minimal scale parameter of 10 \cite{Gelman2006}, which brms potentially increases based on the data to insure that the prior is minimally informative. The LKJ-correlation prior is used to model the correlations between the group-level effects on the same grouping factor \cite{Lewandowski2009}.
 
-Bayesian inferences involves random sampling from the joint posterior of the model parameters. For each Stan model, we ran four Monte Carlo Markov Chains (MCMC) chains, each with 2,000 iterations of warm-up and sampling. Initial values for parameters for each chain were randomly generated within Stan. The the adaptive delta parameter, necessary for the No-U-turn Sampler \cite{Hoffman2014} used by Stan, was set to 0.8, the default used by brms.
+Bayesian inferences involves random sampling from the joint posterior of the model parameters. For each Stan model, we ran four Monte Carlo Markov Chains (MCMC), each with 2,000 iterations of warm-up and sampling. Initial values for parameters for each chain were randomly generated within Stan. The the adaptive delta parameter, necessary for the No-U-turn Sampler \cite{Hoffman2014} used by Stan, was set to 0.8, the default used by brms.
 
 There are various diagnostics for the MCMC samples that can be used to determining whether the model is converging and performing well. We used the split-$\widehat{R}$ statistic \cite{Gelman2013}, a ratio of the average variance within chains to the variance with the pooled chains. A split-$\widehat{R}$ value close to 1 means the variances within each chain are similar, and thus the model is likely mixing well and converging. Guidelines from the Stan development team state that models with split-$\widehat{R} > 1.1$ have not converged and should not be used for inference. To ensure replicable results and declare convergence and ensure replicable results, we set the seed and ran all models in Stan (through brms) for a given gene. We then checked that split-$\widehat{R} < 1.1$ for all parameters. If this was satisfied, we declared convergence and recorded the seed as well as posterior means and CrI for the parameters. If any split-$\widehat{R} > 1.1$, convergence failed, and we set a new seed and repeated the process. We capped that number of repeats at 10. If convergence is not met after 10 iterations, we declare modeling to have failed for those genes, likely due to challenging data.
 
