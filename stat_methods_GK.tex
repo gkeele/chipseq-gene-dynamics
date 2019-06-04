@@ -59,6 +59,13 @@ We modeled the gain or loss of H3K36me3 with a continuous time variable in the l
 \end{equation}
 where $\mu$ is a shared intercept term, $x_{ij}$ is the $j$\textsuperscript{th} timepoint (in minutes) for the $i$\textsuperscript{th} sample, and $\beta_{\text{time}}$ is the change rate with time. $u_{i}$ and $v_{i}$ are random, or group-level \cite{Gelman2006}, effects that account for the longitudinal nature of the data, and modeled with the following priors: $\text{N}(0, \tau^{2}_{u})$ and $\text{N}(0, \tau^{2}_{v})$, respectively. For all genes and conditions, we recorded the posterior mean ($\widehat{\beta}_{\text{time}, kl}$) as a point estimate for the change in H3K36me3 proportion with time for gene $k$ and condition $l$, the standard error on the estimate, and the 95\% Credible Interval (CrI), which we use to define ``confident'' genes for a given condition, which possess CrI that do not cover 0. $\widehat{\beta}_{\text{time}, kl}$ were plotted and correlated with additional covariates of interests in order to identify interesting trends.
 
+\subsubsection*{Testing for non-zero effect of condition with time}
+
+To formally test for a non-zero effect of condition with time is infeasible because it would require the joint estimation across all genes and conditions in a Bayesian context. Further, GLMMs are challenging models to fit, and not amenable to reliable likelihood-based inference, given the number of genes observed here. As an alternative, we fit a second model from the posterior mean $\widehat{\beta}_{\text{time}, kl}$, estimated for gene $k$ and condition $l$, described above. These parameters were modeled as Normal variables, which can be viewed as a latent variable that we model in a second regression as:
+\begin{equation}
+	\beta_{\text{time}, kl} = \mu + u_{k} + \delta_{\text{condition}}x_{ij} + \varepsilon_{kl},
+\end{equation}
+
 \subsection*{Categorical}
 
 Notably, writer loss and writer eraser loss had similar H3K36me3 dynamics with time. To more directly compare the dynamics of writer loss and writer eraser loss, we simultaneously analyzed their data per gene within a categorical time model, allowing for greater flexibility and non-linearity with respect to time:
