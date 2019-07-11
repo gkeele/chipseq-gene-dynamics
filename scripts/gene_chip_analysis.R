@@ -322,6 +322,11 @@ g <- ggplot(data = gene_chip_dat %>% filter(gene %in% trend_genes[1:6]), aes(x =
 g <- g + gg_theme + guides(color = FALSE)
 g
 
+g <- ggplot(data = gene_chip_dat %>% filter(gene %in% "Q0032"), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
+#g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
+g <- g + gg_theme + guides(color = FALSE)
+g
+
 ##############################################
 ##
 ##  Beta regression: Upset plot
@@ -1555,29 +1560,22 @@ dev.off()
 ## Table for paper
 ##
 ##################################
-table_dat1 <- gene_chip_dat %>% 
-  select(gene, assay) %>% 
-  distinct %>%
-  left_join(timepoint_dat %>%
-              mutate(estimate = ifelse(rhat > 1.1, NA, estimate),
-                     est_error = ifelse(rhat > 1.1, NA, est_error)) %>%
-              select(gene, assay, estimate, est_error)) %>%
-  dplyr::rename(Gene = gene,
-                ZOIBetaEstimate = estimate,
-                ZOIBetaError = est_error)
-table_dat2 <- gene_chip_dat %>% 
-  select(gene, assay) %>% 
-  distinct %>%
-  left_join(absolute_dat %>%
-              mutate(estimate = ifelse(rhat > 1.1, NA, estimate),
-                     est_error = ifelse(rhat > 1.1, NA, est_error)) %>%
-              select(gene, assay, estimate, est_error)) %>%
-  dplyr::rename(Gene = gene,
-                ZINegEstimate = estimate,
-                ZINegError = est_error)
-combined_dat <- inner_join(table_dat1, table_dat2)
+table_dat <- inner_join(timepoint_dat %>%
+                          mutate(estimate = ifelse(rhat > 1.1, NA, estimate),
+                          est_error = ifelse(rhat > 1.1, NA, est_error)) %>%
+                          select(gene, assay, estimate, est_error) %>%
+                          dplyr::rename(Gene = gene,
+                                        ZOIBetaEstimate = estimate,
+                                        ZOIBetaError = est_error),
+                         absolute_dat %>%
+                           mutate(estimate = ifelse(rhat > 1.1, NA, estimate),
+                                  est_error = ifelse(rhat > 1.1, NA, est_error)) %>%
+                           select(gene, assay, estimate, est_error) %>%
+                           dplyr::rename(Gene = gene,
+                                         ZINegEstimate = estimate,
+                                         ZINegError = est_error))
 
-combined_dat %>% 
+table_dat %>% 
   filter(assay == "writer_loss") %>%
   select(-assay) %>%
   write.table(., 
@@ -1585,7 +1583,7 @@ combined_dat %>%
               sep = "\t",
               row.names = FALSE,
               quote = FALSE)
-combined_dat %>% 
+table_dat %>% 
   filter(assay == "writer_eraser_loss") %>%
   select(-assay) %>%
   write.table(., 
@@ -1593,7 +1591,7 @@ combined_dat %>%
               sep = "\t",
               row.names = FALSE,
               quote = FALSE)
-combined_dat %>% 
+table_dat %>% 
   filter(assay == "writer_add") %>%
   select(-assay) %>%
   write.table(., 
