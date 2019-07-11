@@ -1579,7 +1579,7 @@ table_dat %>%
   filter(assay == "writer_loss") %>%
   select(-assay) %>%
   write.table(., 
-              file = "~/Documents/git_repositories/chipseq-gene-dynamics/tables/writer_loss_gene_table.txt",
+              file = "tables/writer_loss_gene_table.txt",
               sep = "\t",
               row.names = FALSE,
               quote = FALSE)
@@ -1587,7 +1587,7 @@ table_dat %>%
   filter(assay == "writer_eraser_loss") %>%
   select(-assay) %>%
   write.table(., 
-              file = "~/Documents/git_repositories/chipseq-gene-dynamics/tables/writer_eraser_loss_gene_table.txt",
+              file = "tables/writer_eraser_loss_gene_table.txt",
               sep = "\t",
               row.names = FALSE,
               quote = FALSE)
@@ -1595,7 +1595,7 @@ table_dat %>%
   filter(assay == "writer_add") %>%
   select(-assay) %>%
   write.table(., 
-              file = "~/Documents/git_repositories/chipseq-gene-dynamics/tables/writer_add_gene_table.txt",
+              file = "tables/writer_add_gene_table.txt",
               sep = "\t",
               row.names = FALSE,
               quote = FALSE)
