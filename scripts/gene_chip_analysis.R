@@ -1550,6 +1550,58 @@ pdf("~/Documents/git_repositories/chipseq-gene-dynamics/modeling_figures_gkeele/
 grid.arrange(YCR008W_nonprop_g, YCR008W_prop_g, nrow = 1)
 dev.off()
 
+##################################
+##
+## Table for paper
+##
+##################################
+table_dat1 <- gene_chip_dat %>% 
+  select(gene, assay) %>% 
+  distinct %>%
+  left_join(timepoint_dat %>%
+              mutate(estimate = ifelse(rhat > 1.1, NA, estimate),
+                     est_error = ifelse(rhat > 1.1, NA, est_error)) %>%
+              select(gene, assay, estimate, est_error)) %>%
+  dplyr::rename(Gene = gene,
+                ZOIBetaEstimate = estimate,
+                ZOIBetaError = est_error)
+table_dat2 <- gene_chip_dat %>% 
+  select(gene, assay) %>% 
+  distinct %>%
+  left_join(absolute_dat %>%
+              mutate(estimate = ifelse(rhat > 1.1, NA, estimate),
+                     est_error = ifelse(rhat > 1.1, NA, est_error)) %>%
+              select(gene, assay, estimate, est_error)) %>%
+  dplyr::rename(Gene = gene,
+                ZINegEstimate = estimate,
+                ZINegError = est_error)
+combined_dat <- inner_join(table_dat1, table_dat2)
+
+combined_dat %>% 
+  filter(assay == "writer_loss") %>%
+  select(-assay) %>%
+  write.table(., 
+              file = "~/Documents/git_repositories/chipseq-gene-dynamics/tables/writer_loss_gene_table.txt",
+              sep = "\t",
+              row.names = FALSE,
+              quote = FALSE)
+combined_dat %>% 
+  filter(assay == "writer_eraser_loss") %>%
+  select(-assay) %>%
+  write.table(., 
+              file = "~/Documents/git_repositories/chipseq-gene-dynamics/tables/writer_eraser_loss_gene_table.txt",
+              sep = "\t",
+              row.names = FALSE,
+              quote = FALSE)
+combined_dat %>% 
+  filter(assay == "writer_add") %>%
+  select(-assay) %>%
+  write.table(., 
+              file = "~/Documents/git_repositories/chipseq-gene-dynamics/tables/writer_add_gene_table.txt",
+              sep = "\t",
+              row.names = FALSE,
+              quote = FALSE)
+
 
 
 ####################################
