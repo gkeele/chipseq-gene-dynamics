@@ -1563,17 +1563,23 @@ dev.off()
 table_dat <- inner_join(timepoint_dat %>%
                           mutate(estimate = ifelse(rhat > 1.1, NA, estimate),
                           est_error = ifelse(rhat > 1.1, NA, est_error)) %>%
-                          select(gene, assay, estimate, est_error) %>%
+                          select(gene, assay, estimate, est_error, lower_95, upper_95, category) %>%
                           dplyr::rename(Gene = gene,
                                         ZOIBetaEstimate = estimate,
-                                        ZOIBetaError = est_error),
+                                        ZOIBetaError = est_error,
+                                        ZOIBetaLower95 = lower_95,
+                                        ZOIBetaUpper95 = upper_95,
+                                        ZOIBetaTrend = category),
                          absolute_dat %>%
                            mutate(estimate = ifelse(rhat > 1.1, NA, estimate),
                                   est_error = ifelse(rhat > 1.1, NA, est_error)) %>%
-                           select(gene, assay, estimate, est_error) %>%
+                           select(gene, assay, estimate, est_error, lower_95, upper_95, category) %>%
                            dplyr::rename(Gene = gene,
                                          ZINegEstimate = estimate,
-                                         ZINegError = est_error))
+                                         ZINegError = est_error,
+                                         ZINegLower95 = lower_95,
+                                         ZINegUpper95 = upper_95,
+                                         ZINegTrend = category))
 
 table_dat %>% 
   filter(assay == "writer_loss") %>%
