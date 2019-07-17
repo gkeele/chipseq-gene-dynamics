@@ -962,6 +962,7 @@ wa_tx_raw_dat %>%
   mutate(obs_unit = paste("Tx", timepoint, replicate)) %>%
   select(-c(timepoint, replicate, gene_length, assay)) %>%
   spread(key = obs_unit, value = transcript) %>%
+  filter(!grepl(Gene, pattern = "^Q", perl = TRUE)) %>%
   select(Gene, 
           `Tx 0min Rep1`, `Tx 20min Rep1`, `Tx 40min Rep1`, `Tx 60min Rep1`,
           `Tx 0min Rep2`, `Tx 20min Rep2`, `Tx 40min Rep2`, `Tx 60min Rep2`,
@@ -978,6 +979,7 @@ wl_tx_raw_dat %>%
   mutate(obs_unit = paste("Tx", timepoint, replicate)) %>%
   select(-c(timepoint, replicate, gene_length, assay)) %>%
   spread(key = obs_unit, value = transcript) %>%
+  filter(!grepl(Gene, pattern = "^Q", perl = TRUE)) %>%
   select(Gene, 
           `Tx 0min Rep1`, `Tx 30min Rep1`, `Tx 60min Rep1`, `Tx 90min Rep1`,
           `Tx 0min Rep2`, `Tx 30min Rep2`, `Tx 60min Rep2`, `Tx 90min Rep2`,
