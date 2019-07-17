@@ -954,6 +954,41 @@ tx_raw_dat <- bind_rows(wa_tx_raw_dat,
          assay = recode(assay, "1" = "writer_loss", "2" = "writer_add"),
          sample_unit = paste(gene, assay, replicate, sep = "_"))
 
+## Make supplementary table for paper
+wa_tx_raw_dat %>% 
+  dplyr::rename(Gene = gene) %>%
+  mutate(replicate = paste0("Rep", replicate),
+         timepoint = paste0(timepoint * 60, "min")) %>%
+  mutate(obs_unit = paste("Tx", timepoint, replicate)) %>%
+  select(-c(timepoint, replicate, gene_length, assay)) %>%
+  spread(key = obs_unit, value = transcript) %>%
+  select(Gene, 
+          `Tx 0min Rep1`, `Tx 20min Rep1`, `Tx 40min Rep1`, `Tx 60min Rep1`,
+          `Tx 0min Rep2`, `Tx 20min Rep2`, `Tx 40min Rep2`, `Tx 60min Rep2`,
+          `Tx 0min Rep3`, `Tx 20min Rep3`, `Tx 40min Rep3`) %>%
+  write.table(., 
+              file = "tables/writer_add_tx_data_table.txt",
+              sep = "\t",
+              row.names = FALSE,
+              quote = FALSE)
+wl_tx_raw_dat %>% 
+  dplyr::rename(Gene = gene) %>%
+  mutate(replicate = paste0("Rep", replicate),
+         timepoint = paste0(timepoint * 60, "min")) %>%
+  mutate(obs_unit = paste("Tx", timepoint, replicate)) %>%
+  select(-c(timepoint, replicate, gene_length, assay)) %>%
+  spread(key = obs_unit, value = transcript) %>%
+  select(Gene, 
+          `Tx 0min Rep1`, `Tx 30min Rep1`, `Tx 60min Rep1`, `Tx 90min Rep1`,
+          `Tx 0min Rep2`, `Tx 30min Rep2`, `Tx 60min Rep2`, `Tx 90min Rep2`,
+          `Tx 0min Rep3`, `Tx 30min Rep3`, `Tx 60min Rep3`, `Tx 90min Rep3`) %>%
+  write.table(., 
+              file = "tables/writer_loss_tx_data_table.txt",
+              sep = "\t",
+              row.names = FALSE,
+              quote = FALSE)
+  
+
 ##############################################
 ##
 ##  Raw data plots
@@ -1015,6 +1050,62 @@ histone_raw_dat$timepoint[histone_raw_dat$assay == "writer_add" & histone_raw_da
 histone_raw_dat$timepoint[histone_raw_dat$assay == "writer_add" & histone_raw_dat$timepoint_cat == 1] <- 20/60
 histone_raw_dat$timepoint[histone_raw_dat$assay == "writer_add" & histone_raw_dat$timepoint_cat == 2] <- 40/60
 histone_raw_dat$timepoint[histone_raw_dat$assay == "writer_add" & histone_raw_dat$timepoint_cat == 3] <- 60/60
+
+## Make supplementary table for paper
+# writer add
+histone_raw_dat %>% 
+  dplyr::rename(Gene = gene) %>%
+  filter(assay == "writer_add") %>%
+  mutate(replicate = paste0("Rep", replicate),
+         timepoint = paste0(timepoint * 60, "min")) %>%
+  mutate(obs_unit = paste("Histone", timepoint, replicate)) %>%
+  select(-c(timepoint, replicate, assay, sample_unit, timepoint_cat)) %>%
+  spread(key = obs_unit, value = histone) %>%
+  select(Gene, 
+          `Histone 0min Rep1`, `Histone 20min Rep1`, `Histone 40min Rep1`, `Histone 60min Rep1`,
+          `Histone 0min Rep2`, `Histone 20min Rep2`, `Histone 40min Rep2`, `Histone 60min Rep2`,
+          `Histone 0min Rep3`, `Histone 20min Rep3`, `Histone 40min Rep3`, `Histone 60min Rep3`) %>%
+  write.table(., 
+              file = "tables/writer_add_histone_data_table.txt",
+              sep = "\t",
+              row.names = FALSE,
+              quote = FALSE)
+# writer loss
+histone_raw_dat %>% 
+  dplyr::rename(Gene = gene) %>%
+  filter(assay == "writer_loss") %>%
+  mutate(replicate = paste0("Rep", replicate),
+         timepoint = paste0(timepoint * 60, "min")) %>%
+  mutate(obs_unit = paste("Histone", timepoint, replicate)) %>%
+  select(-c(timepoint, replicate, assay, sample_unit, timepoint_cat)) %>%
+  spread(key = obs_unit, value = histone) %>%
+  select(Gene, 
+          `Histone 0min Rep1`, `Histone 30min Rep1`, `Histone 60min Rep1`, `Histone 90min Rep1`,
+          `Histone 0min Rep2`, `Histone 30min Rep2`, `Histone 60min Rep2`, `Histone 90min Rep2`,
+          `Histone 0min Rep3`, `Histone 30min Rep3`, `Histone 60min Rep3`, `Histone 90min Rep3`) %>%
+  write.table(., 
+              file = "tables/writer_loss_histone_data_table.txt",
+              sep = "\t",
+              row.names = FALSE,
+              quote = FALSE)
+# writer eraser loss
+histone_raw_dat %>% 
+  dplyr::rename(Gene = gene) %>%
+  filter(assay == "writer_eraser_loss") %>%
+  mutate(replicate = paste0("Rep", replicate),
+         timepoint = paste0(timepoint * 60, "min")) %>%
+  mutate(obs_unit = paste("Histone", timepoint, replicate)) %>%
+  select(-c(timepoint, replicate, assay, sample_unit, timepoint_cat)) %>%
+  spread(key = obs_unit, value = histone) %>%
+  select(Gene, 
+          `Histone 0min Rep1`, `Histone 30min Rep1`, `Histone 60min Rep1`, `Histone 90min Rep1`,
+          `Histone 0min Rep2`, `Histone 30min Rep2`, `Histone 60min Rep2`, `Histone 90min Rep2`,
+          `Histone 0min Rep3`, `Histone 30min Rep3`, `Histone 60min Rep3`, `Histone 90min Rep3`) %>%
+  write.table(., 
+              file = "tables/writer_eraser_loss_histone_data_table.txt",
+              sep = "\t",
+              row.names = FALSE,
+              quote = FALSE)
 
 ## Merge transcript and histone data
 tx_histone_merge_dat <- tx_raw_dat %>% 
@@ -1654,5 +1745,4 @@ multigene_fit <- brms::brm(value ~ 1 + timepoint_cat + assay + timepoint_cat:ass
                            iter = 2000,
                            control = list(adapt_delta = 0.8))
 # Seems intractible for running
-
 
