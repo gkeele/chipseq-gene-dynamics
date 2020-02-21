@@ -7,6 +7,17 @@ title = {{Data Analysis Using Regression and Multilevel/Hierarchical Models}},
 year = {2006}
 }
 
+@book{Gelman2013,
+ title={Bayesian Data Analysis, Third Edition},
+ author={Gelman, A. and Carlin, J.B. and Stern, H.S. and Dunson, D.B. and Vehtari, A. and Rubin, D.B.},
+ isbn={9781439840955},
+ lccn={2013039507},
+ series={Chapman \& Hall/CRC Texts in Statistical Science},
+ url={https://books.google.com/books?id=ZXL6AQAAQBAJ},
+ year={2013},
+ publisher={Taylor \& Francis}
+}
+
 @misc{RCoreTeam2019,
 author = {{R Core Team}},
 title = {{RSoftware2019}},
@@ -73,17 +84,6 @@ year = {2017}
   publisher={Thomson Learning}
 }
 
-@book{Gelman2013,
- title={Bayesian Data Analysis, Third Edition},
- author={Gelman, A. and Carlin, J.B. and Stern, H.S. and Dunson, D.B. and Vehtari, A. and Rubin, D.B.},
- isbn={9781439840955},
- lccn={2013039507},
- series={Chapman \& Hall/CRC Texts in Statistical Science},
- url={https://books.google.com/books?id=ZXL6AQAAQBAJ},
- year={2013},
- publisher={Taylor \& Francis}
-}
-
 @article{Hoffman2014,
  author = {Hoffman, Matthew D. and Gelman, Andrew},
  title = {The No-U-turn Sampler: Adaptively Setting Path Lengths in Hamiltonian Monte Carlo},
@@ -146,6 +146,43 @@ year = {2009}
     note = {R package version 1.3.4},
     url = {https://CRAN.R-project.org/package=emmeans},
 }
+
+@article{Slob2002,
+abstract = {A family of (nested) dose-response models is introduced herein that can be used for describing the change in any continuous endpoint as a function of dose. A member from this family of models may be selected using the likelihood ratio test as a criterion, to prevent overparameterization. The proposed methodology provides for a formal approach of model selection, and a transparent way of assessing the benchmark dose. Apart from a number of natural constraints, the model expressions follow from an obvious way of quantifying differences in sensitivity between populations. As a consequence, dose-response data that relate to both sexes can be efficiently analyzed by incorporating the data from both sexes in the same analysis, even if the sexes are not equally sensitive to the compound studied. The idea of differences in sensitivity is closely related to the assessment factors used in risk assessment. Thus, the models are directly applicable to estimating such factors, if data concerning populations to be compared are available. Such information is valuable for further validation or adjustment of default assessment factors, as well as for informing distributional assessment factors in a probabilistic risk assessment. The various applications of the proposed methodology are illustrated by real data sets.},
+author = {Slob, Wout},
+doi = {10.1093/toxsci/66.2.298},
+file = {:Users/keeleg/Box/Arsenic - in vitro data/papers/Slob2002.pdf:pdf},
+issn = {10960929},
+journal = {Toxicological Sciences},
+keywords = {Benchmark dose,Continuous endpoints,Critical effect size,Dose-response modeling,Probabilistic assessment factor},
+month = {apr},
+number = {2},
+pages = {298--312},
+title = {{Dose-Response Modeling of Continuous Endpoints}},
+url = {https://academic.oup.com/toxsci/article-lookup/doi/10.1093/toxsci/66.2.298},
+volume = {66},
+year = {2002}
+}
+
+@article{Wilson2014,
+abstract = {High-throughput screening (HTS) of environmental chemicals is used to identify chemicals with high potential for adverse human health and environmental effects from among the thousands of untested chemicals. Predicting physiologically relevant activity with HTS data requires estimating the response of a large number of chemicals across a battery of screening assays based on sparse dose-response data for each chemical-assay combination. Many standard dose-response methods are inadequate because they treat each curve separately and under-perform when there are as few as 6-10 observations per curve. We propose a semiparametric Bayesian model that borrows strength across chemicals and assays. Our method directly parametrizes the efficacy and potency of the chemicals as well as the probability of response. We use the ToxCast data from the U.S. Environmental Protection Agency (EPA) as motivation. We demonstrate that our hierarchical method provides more accurate estimates of the probability of response, efficacy, and potency than separate curve estimation in a simulation study. We use our semiparametric method to compare the efficacy of chemicals in the ToxCast data to well-characterized reference chemicals on estrogen receptor $\alpha$ (ER$\alpha$) and peroxisome proliferator-activated receptor $\gamma$ (PPAR$\gamma$) assays, then estimate the probability that other chemicals are active at lower concentrations than the reference chemicals. {\textcopyright} 2014, The International Biometric Society.},
+author = {Wilson, Ander and Reif, David M. and Reich, Brian J.},
+doi = {10.1111/biom.12114},
+file = {:Users/keeleg/Box/Arsenic - in vitro data/papers/wilson2014.pdf:pdf},
+issn = {0006341X},
+journal = {Biometrics},
+keywords = {Bayesian,Computational toxicology,Dose-response,MCMC,Monotonicity,Semiparametric,ToxCast},
+month = {mar},
+number = {1},
+pages = {237--246},
+title = {{Hierarchical dose-response modeling for high-throughput toxicity screening of environmental chemicals}},
+url = {http://doi.wiley.com/10.1111/biom.12114},
+volume = {70},
+year = {2014}
+}
+
+
+
 
 
 
