@@ -74,9 +74,12 @@ single_gene_dat <- gene_chip_dat %>%
   group_by(sample_unit)
 
 ## Linear
-g <- ggplot(data = single_gene_dat, aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash")
-g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
-g <- g + gg_theme
+g <- ggplot(data = single_gene_dat, aes(x = timepoint, y = value, col = assay)) + 
+  scale_color_manual(values = c(wl_col, wel_col, wa_col)) + 
+  geom_point() + 
+  geom_line(aes(group = sample_unit), linetype = "longdash") + 
+  geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2) + 
+  gg_theme
 g
 
 ##############################################
@@ -89,43 +92,55 @@ mean_gene_chip_dat <- gene_chip_dat %>%
   summarise(value = mean(value)) %>%
   ungroup
 # Writer loss
-writer_loss <- ggplot(data = mean_gene_chip_dat %>% filter(assay == "writer_loss"), aes(x = timepoint, y = value, color = gene)) + geom_point() + geom_line()
-writer_loss <- writer_loss + scale_color_grey()
-writer_loss <- writer_loss + geom_smooth(aes(y = value, x = timepoint), method = "lm", col = wl_col) + ggtitle("Writer loss")
-writer_loss <- writer_loss + theme(panel.grid.major = element_blank(), 
-                                   panel.grid.minor = element_blank(),
-                                   panel.background = element_blank(), 
-                                   axis.line = element_line(colour = "black"),
-                                   plot.title = element_text(hjust = 0.5), 
-                                   axis.text = element_text(size = 12, face = "bold"),
-                                   axis.title = element_text(size = 12, face = "bold"),
-                                   axis.text.x = element_text(hjust = 1, face = "bold")) + guides(color = FALSE)
+writer_loss <- ggplot(data = mean_gene_chip_dat %>% filter(assay == "writer_loss"), aes(x = timepoint, y = value, color = gene)) + 
+  geom_point() + 
+  geom_line() + 
+  scale_color_grey() + 
+  geom_smooth(aes(y = value, x = timepoint), method = "lm", col = wl_col) + 
+  ggtitle("Writer loss") + 
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(), 
+        axis.line = element_line(colour = "black"),
+        plot.title = element_text(hjust = 0.5), 
+        axis.text = element_text(size = 12, face = "bold"),
+        axis.title = element_text(size = 12, face = "bold"),
+        axis.text.x = element_text(hjust = 1, face = "bold")) + 
+  guides(color = FALSE)
 writer_loss
 # Writer and eraser loss
-writer_eraser_loss <- ggplot(data = mean_gene_chip_dat %>% filter(assay == "writer_eraser_loss"), aes(x = timepoint, y = value, color = gene)) + geom_point() + geom_line()
-writer_eraser_loss <- writer_eraser_loss + scale_color_grey()
-writer_eraser_loss <- writer_eraser_loss + geom_smooth(aes(y = value, x = timepoint), method = "lm", col = wel_col) + ggtitle("Writer and eraser loss")
-writer_eraser_loss <- writer_eraser_loss + theme(panel.grid.major = element_blank(), 
-                                                 panel.grid.minor = element_blank(),
-                                                 panel.background = element_blank(), 
-                                                 axis.line = element_line(colour = "black"),
-                                                 plot.title = element_text(hjust = 0.5), 
-                                                 axis.text = element_text(size = 12, face = "bold"),
-                                                 axis.title = element_text(size = 12, face = "bold"),
-                                                 axis.text.x = element_text(hjust = 1, face = "bold")) + guides(color = FALSE)
+writer_eraser_loss <- ggplot(data = mean_gene_chip_dat %>% filter(assay == "writer_eraser_loss"), aes(x = timepoint, y = value, color = gene)) + 
+  geom_point() + 
+  geom_line() + 
+  scale_color_grey() + 
+  geom_smooth(aes(y = value, x = timepoint), method = "lm", col = wel_col) + 
+  ggtitle("Writer and eraser loss") + 
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(), 
+        axis.line = element_line(colour = "black"),
+        plot.title = element_text(hjust = 0.5), 
+        axis.text = element_text(size = 12, face = "bold"),
+        axis.title = element_text(size = 12, face = "bold"),
+        axis.text.x = element_text(hjust = 1, face = "bold")) + 
+  guides(color = FALSE)
 writer_eraser_loss
 # Writer add
-writer_add <- ggplot(data = mean_gene_chip_dat %>% filter(assay == "writer_add"), aes(x = timepoint, y = value, color = gene)) + geom_point() + geom_line()
-writer_add <- writer_add + scale_color_grey()
-writer_add <- writer_add + geom_smooth(aes(y = value, x = timepoint), method = "lm", col = wa_col) + ggtitle("Writer add")
-writer_add <- writer_add + theme(panel.grid.major = element_blank(), 
-                                 panel.grid.minor = element_blank(),
-                                 panel.background = element_blank(), 
-                                 axis.line = element_line(colour = "black"),
-                                 plot.title = element_text(hjust = 0.5), 
-                                 axis.text = element_text(size = 12, face = "bold"),
-                                 axis.title = element_text(size = 12, face = "bold"),
-                                 axis.text.x = element_text(hjust = 1, face = "bold")) + guides(color = FALSE)
+writer_add <- ggplot(data = mean_gene_chip_dat %>% filter(assay == "writer_add"), aes(x = timepoint, y = value, color = gene)) + 
+  geom_point() + 
+  geom_line() + 
+  scale_color_grey() + 
+  geom_smooth(aes(y = value, x = timepoint), method = "lm", col = wa_col) + 
+  ggtitle("Writer add") + 
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(), 
+        axis.line = element_line(colour = "black"),
+        plot.title = element_text(hjust = 0.5), 
+        axis.text = element_text(size = 12, face = "bold"),
+        axis.title = element_text(size = 12, face = "bold"),
+        axis.text.x = element_text(hjust = 1, face = "bold")) + 
+  guides(color = FALSE)
 writer_add
 
 grid.arrange(writer_loss, writer_eraser_loss, writer_add, nrow = 1)
@@ -187,7 +202,6 @@ run_beta_brms_on_chipseq <- function(chipseq_dat,
       seed <- seed + 1
     }
   }
-  
   names(wl_fixed) <- names(wl_random) <- names(wel_fixed) <- names(wel_random) <- names(wa_fixed) <- names(wa_random) <- c("parameter", "estimate", "est_error", "lower_95", "upper_95", "eff_sample", "rhat")
   results <- list(writer_loss = bind_rows(wl_fixed, wl_random),
                   writer_eraser_loss = bind_rows(wel_fixed, wel_random),
@@ -264,7 +278,10 @@ timepoint_dat$category[timepoint_dat$lower_95 < 0 & timepoint_dat$upper_95 > 0] 
 timepoint_dat$attempts <- (timepoint_dat$seed - 123) + 1
 
 ## Histogram
-ggplot(data = timepoint_dat, aes(x = estimate)) + geom_histogram() + gg_theme + facet_grid(assay~.)
+ggplot(data = timepoint_dat, aes(x = estimate)) + 
+  geom_histogram() + 
+  gg_theme + 
+  facet_grid(assay~.)
 ## All genes
 all_genes <- unique(gene_chip_dat$gene)
 ## Grabbing high genes
@@ -307,9 +324,16 @@ genes_all_zero <- timepoint_dat %>%
 ##
 ##############################################
 ## Genes with positive trends (writer add)
-g <- ggplot(data = gene_chip_dat %>% filter(gene %in% positive_genes[1:6]), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
-g <- g + geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2)
-g <- g + gg_theme + guides(color = FALSE)
+g <- ggplot(data = gene_chip_dat %>% 
+              filter(gene %in% positive_genes[1:6]), 
+            aes(x = timepoint, y = value, col = assay)) + 
+  scale_color_manual(values = c(wl_col, wel_col, wa_col)) + 
+  geom_point() + 
+  geom_line(aes(group = sample_unit), linetype = "longdash") + 
+  facet_wrap(~gene) + 
+  geom_smooth(aes(y = value, x = timepoint), method = "lm", size = 2) + 
+  gg_theme + 
+  guides(color = FALSE)
 g
 ## Genes with no trends
 g <- ggplot(data = gene_chip_dat %>% filter(gene %in% genes_all_zero[1:6]), aes(x = timepoint, y = value, col = assay)) + scale_color_manual(values = c(wl_col, wel_col, wa_col)) + geom_point() + geom_line(aes(group = sample_unit), linetype = "longdash") + facet_wrap(~gene)
@@ -1063,6 +1087,7 @@ histone_raw_dat %>%
   mutate(obs_unit = paste("Histone", timepoint, replicate)) %>%
   select(-c(timepoint, replicate, assay, sample_unit, timepoint_cat)) %>%
   spread(key = obs_unit, value = histone) %>%
+  filter(!grepl(Gene, pattern = "^Q", perl = TRUE)) %>%
   select(Gene, 
           `Histone 0min Rep1`, `Histone 20min Rep1`, `Histone 40min Rep1`, `Histone 60min Rep1`,
           `Histone 0min Rep2`, `Histone 20min Rep2`, `Histone 40min Rep2`, `Histone 60min Rep2`,
@@ -1081,6 +1106,7 @@ histone_raw_dat %>%
   mutate(obs_unit = paste("Histone", timepoint, replicate)) %>%
   select(-c(timepoint, replicate, assay, sample_unit, timepoint_cat)) %>%
   spread(key = obs_unit, value = histone) %>%
+  filter(!grepl(Gene, pattern = "^Q", perl = TRUE)) %>%
   select(Gene, 
           `Histone 0min Rep1`, `Histone 30min Rep1`, `Histone 60min Rep1`, `Histone 90min Rep1`,
           `Histone 0min Rep2`, `Histone 30min Rep2`, `Histone 60min Rep2`, `Histone 90min Rep2`,
@@ -1099,6 +1125,7 @@ histone_raw_dat %>%
   mutate(obs_unit = paste("Histone", timepoint, replicate)) %>%
   select(-c(timepoint, replicate, assay, sample_unit, timepoint_cat)) %>%
   spread(key = obs_unit, value = histone) %>%
+  filter(!grepl(Gene, pattern = "^Q", perl = TRUE)) %>%
   select(Gene, 
           `Histone 0min Rep1`, `Histone 30min Rep1`, `Histone 60min Rep1`, `Histone 90min Rep1`,
           `Histone 0min Rep2`, `Histone 30min Rep2`, `Histone 60min Rep2`, `Histone 90min Rep2`,
