@@ -23,11 +23,28 @@
 %\pagenumbering{gobble}
 
 %\title{LATEX Template - bioRxiv}
-\title{The real title of this manuscript}
-\author[1]{Minion 1}
-\author[1]{Minion 2}
-\author[1,*]{Gary A. Churchill}
-\affil[1]{The Jackson Laboratory, 600 Main Street, Bar Harbor, Maine, 04609}
+\title{Title}
+\author[$\ast$,1]{Andrew M. Lerner}
+\author[$\ast$,2]{Austin J. Hepperla}
+\author[1]{Hashem Meriesh}
+\author[3]{Gregory R. Keele}
+\author[1,4]{Hayretin Yumerefendi}
+\author[1]{David Restrepo}
+\author[1]{Seth Zimmerman}
+\author[5,6]{James Bear}
+\author[1,6]{Brian Kuhlman}
+\author[1,6,7,$\dagger$]{Ian J. Davis}
+\author[1,6,$\dagger$]{Brian D. Strahl}
+
+% Affiliations
+\affil[*]{These authors contributed equally.}
+\affil[1]{Department of Biochemistry \& Biophysics, University of North Carolina at Chapel Hill, Chapel Hill, NC 27599, USA}
+\affil[2]{Curriculum in Genetics \& Molecular Biology, University of North Carolina at Chapel Hill, Chapel Hill, NC 27599, USA}
+\affil[3]{The Jackson Laboratory, Bar Harbor, ME 04609, USA}
+\affil[4]{Oncology Research Unit, Pfizer Worldwide Research \& Development, Pearl River, NY 10965, USA}
+\affil[5]{Department of Cell Biology \& Physiology, University of North Carolina at Chapel Hill, Chapel Hill, NC 27599, USA}
+\affil[6]{Lineberger Comprehensive Cancer Center, University of North Carolina at Chapel Hill, Chapel Hill, NC 27599, USA} 
+\affil[7]{Departments of Pediatrics \& Genetics, University of North Carolina at Chapel Hill, Chapel Hill, NC 27599, USA}
 
 %
 % START HELPER CODE
@@ -67,17 +84,15 @@
 \begin{spacing}{2}
 
 \begin{abstract}
-Put your abstract here 
+Histone H3 lysine 36 methylation (H3K36me) is a conserved histone modification associated with transcription and DNA repair. While long-term effects of modulating H3K36 methylation have been interrogated, the short-term, genome-wide dynamics of H3K36me deposition and removal are not known. We established a rapid and reversible optogenetic tool for the sole H3K36 methyltransferase in yeast, Set2, by fusing this enzyme with the light activated nuclear shuttle (LANS) domain. Short-term, early H3K36me3 dynamics found that global H3K36 methylation occurs rapidly in vivo, and correlates with RNA abundance. Although genes have disparate levels of H3K36me3, relative rates of H3K36me3 accumulation are relatively linear and consistent across genes, suggesting a rate-limiting mechanism for H3K36me3 deposition.  While removal of total H3K36me2/3 levels is also rapid and highly dependent on the H3K36me3 demethylase Rph1, the per-gene rate of H3K36me3 loss is only weakly correlated with RNA abundance and conforms to an exponential decay, suggesting H3K36 demethylases act in a global, stochastic manner. 
 \end{abstract}
 
 
 % Include a list of up to six keywords after the abstract
-\keywords{Collaborative Cross, proteomics, genetics}
+\keywords{optogenetics, nucleocytoplasmic shuttle, LANS, Set2, Rph1, demethylation, chromatin dynamics, genomics, H3K36me3, Bayesian hierarchical model, longitudinal data, GLM}
 
 % Include email contact information for corresponding author
-{ \noindent \footnotesize \textbf{*}\linkable{Gary.Churchill@jax.org} }
-
-
+{ \noindent \footnotesize $^\dagger$Corresponding authors: ian\_davis@med.unc.edu; brian\_strahl@med.unc.edu}
 
 \vspace{0.5in}
 
@@ -134,7 +149,19 @@ We have implemented our model
 %
 %
 
-% Figures here
+%\centering
+\begin{figure}
+\center
+\includegraphics[width=\textwidth, trim={0in 0in 0in 0in}, clip]{figures/F1.pdf}
+\caption{\textbf{Optogenetic control of Set2 cellular localization.} (A) Schematic of histone H3 lysine 36 methylation triggered by light-induced translocation of LANS-Set2 into the nucleus as well as demethylation by Rph1. (B) Confocal images from \textbf{Video S1} demonstrating reversible control of mVenus-tagged LANS-Set2 localization in yeast cells with histone H2B endogenously tagged with mCherry (scale bar, 3 $\mu$m). (C) Quantification of nuclear/cytoplasmic fluorescence intensity change before and during light activation. Mean $\pm$ SEM was calculated from the activation of multiple cells ($n = 3$) shown in (B) and \textbf{Video S1}.}
+\end{figure}
+
+\begin{figure}
+\center
+\includegraphics[width=0.4\textwidth, trim={0in 0in 0in 0in}, clip]{figures/F2.pdf}
+\caption{\textbf{LANS-Set2 can regulate H3K36 methylation levels and Set2-associated phenotypes.} (A) Western blot analysis comparing levels of H3K36 methylation in whole cell lysates prepared from log phase cultures grown continuously in the dark or light. Asterisks indicate nonspecific bands. (B) Quantification of histone modifications from immunoblots in (A). Data represent mean values $\pm$ SD ($n = 3$). (C) Diagram of the \textit{FLO8-HIS3} reporter. The promoter upstream of the \textit{FLO8} gene has been replaced by a galactose inducible promoter and a \textit{HIS3} cassette has been inserted out of frame from the \textit{FLO8}\textsubscript{\textit{+1}} ATG such that growth in the absence of histidine can only occur when transcription initiates from an internal TATA located at \textit{FLO8}\textsubscript{\textit{+1626}}. (D) Four-fold serial dilutions of overnight \textit{set2$\Delta$} cultures expressing one of several constructs were spotted on the indicated solid media, which were incubated in the dark or light for 4 days before imaging (see Figure S1H for original images). LANS-Set2 phenocopies \textit{set2$\Delta$} in the dark and WT Set2 in the light. (E) Five-fold serial dilutions of overnight cultures of wild type BY4742 and \textit{BUR1} plasmid shuffling strains were spotted on the indicated solid media, which were incubated in the dark or light for 3 days before imaging (see Figure S1I for original images). LANS-Set2 phenocopies \textit{set2$\Delta$bur1$\delta$} in the dark and WT Set2 in the light. (F) Representative western blot analysis of whole-cell lysates probing gain of H3K36 methylation over time using LANS-Set2 in \textit{set2$\Delta$} after the transition of log phase cultures from dark to light (see Figure S2A for replicates). Asterisks indicate nonspecific bands. (G) Quantification of H3K36 modifications as a function of time from triplicate immunoblots shown in (F) and Figure S2A. $n = 3$ and data represent mean $\pm$ SEM.  (H) Representative western blot analysis of whole-cell lysates probing loss of H3K36 methylation over time using LANS-Set2 in \textit{set2$\Delta$} after the transition of log phase cultures from light to dark (see Figure S2B for replicates). Asterisks indicate nonspecific bands. (I) Quantification of H3K36 modifications as a function of time from triplicate immunoblots shown in (H) and Figure S2B. $n = 3$ and data represent mean $\pm$ SEM.  Half-lives were calculated from single exponential fits to the H3K36me3 and H3K36me2 relative abundance data using GraphPad Prism 5. $\ast P < 0.05$.}
+\end{figure}
+
 
 
 %

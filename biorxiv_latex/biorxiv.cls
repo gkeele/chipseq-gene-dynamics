@@ -175,7 +175,7 @@
 %%%%% Special sections %%%%%
 \def\absfont{\normalfont\footnotesize}
 % Abstract
-\def\abstract{\vspace{2ex}\noindent{\absfont\bfseries Abstract.} \absfont}
+\def\abstract{\vspace{2ex}\noindent{\absfont\bfseries Summary.} \absfont}
 \def\endabstract{\par \normalsize }
 
 % Keywords
