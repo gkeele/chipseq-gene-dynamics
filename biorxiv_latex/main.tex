@@ -1,0 +1,165 @@
+\documentclass[12pt]{biorxiv}
+
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{booktabs} \newcommand{\ra}[1]{\renewcommand{\arraystretch}{#1}}
+\usepackage{multirow}
+\usepackage[figuresfirst,nolists,nomarkers]{endfloat}
+\usepackage[colorinlistoftodos,textsize=tiny]{todonotes}
+\usepackage{lineno}
+\usepackage{setspace}
+\usepackage[scaled]{DejaVuSansMono}
+\usepackage[T1]{fontenc}  
+\usepackage{xcite}
+\usepackage{xr}
+\usepackage{color}
+\usepackage{breakcites}
+
+%\linenumbers
+%\pagenumbering{gobble}
+
+%\title{LATEX Template - bioRxiv}
+\title{The real title of this manuscript}
+\author[1]{Minion 1}
+\author[1]{Minion 2}
+\author[1,*]{Gary A. Churchill}
+\affil[1]{The Jackson Laboratory, 600 Main Street, Bar Harbor, Maine, 04609}
+
+%
+% START HELPER CODE
+%
+\makeatletter
+\newcommand*{\addFileDependency}[1]{% argument=file name and extension
+  \typeout{(#1)}% latexmk will find this if $recorder=0 (however, in that case, it will ignore #1 if it is a .aux or .pdf file etc and it exists! if it doesn't exist, it will appear in the list of dependents regardless)
+  \@addtofilelist{#1}% if you want it to appear in \listfiles, not really necessary and latexmk doesn't use this
+  \IfFileExists{#1}{}{\typeout{No file #1.}}% latexmk will find this message if #1 doesn't exist (yet)
+}
+\makeatother
+
+\newcommand*{\myexternaldocument}[1]{%
+    \externaldocument{#1}%
+    \addFileDependency{#1.tex}%
+    \addFileDependency{#1.aux}%
+}
+
+% \makeatletter
+% \newcommand*\bigcdot{\mathpalette\bigcdot@{.5}}
+% \newcommand*\bigcdot@[2]{\mathbin{\vcenter{\hbox{\scalebox{#2}{$\m@th#1\bullet$}}}}}
+% \makeatother
+
+% \renewcommand{\thesubfigure}{\Alph{subfigure}}  % subfigure bullets
+
+%
+% END HELPER CODE
+%
+
+% put all the external documents here!
+\myexternaldocument{supplementary}
+
+
+\begin{document}
+
+\maketitle
+\begin{spacing}{2}
+
+\begin{abstract}
+Put your abstract here 
+\end{abstract}
+
+
+% Include a list of up to six keywords after the abstract
+\keywords{Collaborative Cross, proteomics, genetics}
+
+% Include email contact information for corresponding author
+{ \noindent \footnotesize \textbf{*}\linkable{Gary.Churchill@jax.org} }
+
+
+
+\vspace{0.5in}
+
+Introduction here~\cite{Keele2020}.
+
+
+\section*{Results}
+
+Here are our novel findings.
+
+\subsection*{The first finding}
+
+We did this first.
+
+
+\subsection*{The second finding}
+
+We did this next.
+
+
+\subsection*{The third finding}
+
+We did this next.
+
+
+
+\section*{Discussion}
+
+In summary, we find substantial evidence for $\cdots$
+
+
+
+\section*{Methods}
+
+\subsection*{Data}
+
+Proteins
+
+
+\subsection*{Linear mixed models}
+
+We used blah blah.
+
+
+\subsection*{Software}
+We have implemented our model 
+
+
+
+
+%
+%
+% Figures
+%
+%
+
+% Figures here
+
+
+%
+%
+% Tables
+%
+%
+
+% Tables here
+
+
+
+\end{spacing}
+
+
+%
+%
+% References
+%
+%
+\newpage
+\bibliographystyle{genres}
+\bibliography{references}
+
+
+
+\end{document}
+

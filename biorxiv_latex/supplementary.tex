@@ -1,0 +1,99 @@
+\documentclass{biorxiv}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{threeparttable}
+\usepackage{multirow}
+\usepackage{url}
+\usepackage[figuresfirst,nolists]{endfloat}
+\usepackage{setspace}
+\usepackage{booktabs}
+\newcommand{\ra}[1]{\renewcommand{\arraystretch}{#1}}
+\usepackage{color, colortbl}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\newcommand{\beginsupplement}{%
+        \setcounter{table}{0}
+        \renewcommand{\thetable}{S\arabic{table}}%
+        \setcounter{figure}{0}
+        \renewcommand{\thefigure}{S\arabic{figure}}%
+}
+
+\renewcommand{\tablename}{Supplemental Table}
+\renewcommand{\figurename}{Supplemental Figure}
+
+\makeatletter
+\newcommand*\bigcdot{\mathpalette\bigcdot@{.5}}
+\newcommand*\bigcdot@[2]{\mathbin{\vcenter{\hbox{\scalebox{#2}{$\m@th#1\bullet$}}}}}
+\makeatother
+
+% \setcounter{page}{} % Put the first page number in the bracket
+
+% \title[LATEX Template - bioRxiv (Supplementary)]
+
+
+\begin{document}
+
+\beginsupplement
+
+\doublespacing
+
+% \section*{Supplementary Documents}
+
+\section*{Supplemental Materials: The real title of this manuscript}
+
+\vspace{0.5in}
+
+\subsection*{Additional Data}
+
+More data
+
+
+\subsection*{Theoretical Background}
+
+Theory 
+
+
+%
+%
+% Supplementary Figures
+%
+%
+
+\renewcommand\figureplace{}
+
+
+
+
+
+%
+%
+% Supplementary Tables
+%
+%
+
+\renewcommand\tableplace{} %don't show and endfloat marker in the main body
+
+
+
+
+%
+%
+% Supplementary References
+%
+%
+
+\newpage
+\bibliographystyle{genres}
+\bibliography{references}
+
+
+\end{document}
