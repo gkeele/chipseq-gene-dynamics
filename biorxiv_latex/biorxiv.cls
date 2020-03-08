@@ -219,7 +219,7 @@
 \newtheorem{definition}[theorem]{Definition}
 
 %%%% Figure and table captions %%%
-\renewcommand\figurename{Fig}
+\renewcommand\figurename{\textbf{Fig}}
 \long\def\@makecaption#1#2{%     % from article.cls
   \vskip\abovecaptionskip
   \sbox\@tempboxa{{{\footnotesize\bfseries #1} {\footnotesize #2}}}%
