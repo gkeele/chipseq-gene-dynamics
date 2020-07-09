@@ -50,6 +50,7 @@ plot_theme <- theme(panel.grid.major = element_blank(),
 ###########################################
 ### Set working directory to one containging
 # setwd("~/Documents/git_repositories/chipseq-gene-dynamics/supplemental_data/")
+# setwd("~/projects/chipseq-gene-dynamics/supplemental_data/")
 
 ###  Relative trimethylation data (quantiles of maximum value)
 raw_rel_trimethyl_dat <- read.table("Supplemental_Data1.txt")
@@ -614,10 +615,70 @@ fig4d_hist <- ggplot(data = beta_glmm_dat %>%
   theme(legend.position = c(0.6, 0.5)) +
   labs(fill = "Set2 assay")
 
-## ZIO beta GLMM rates by RNA abundance for dark to light (Figure 4E)
+## ZIO beta GLMM rates by RNA abundance for light to dark (Figure 4E)
+# Grab trimethyl abundance and average at time = 60
+wa_trimethyl_60min_dat <- abs_trimethyl_dat %>%
+  filter(assay == "writer_add",
+         timepoint == 1) %>%
+  dplyr::select(gene, value) %>%
+  group_by(gene) %>%
+  summarize(trimethyl_value = mean(value)) %>%
+  ungroup
+
+wa_glmm_vs_trimethyl_dat <- beta_glmm_dat %>%
+  filter(assay == "writer_add",
+         gene %in% high_confidence_genes) %>%
+  dplyr::select(gene, estimate) %>%
+  left_join(wa_rna_60min_dat) %>%
+  left_join(wa_trimethyl_60min_dat)
+
+fig4e <- ggplot(data = wa_glmm_vs_trimethyl_dat,
+                aes(x = trimethyl_value, y = estimate, col = transcript)) +
+  geom_point() + 
+  ylim(0, 10) +
+  xlim(0, 1) +
+  xlab("Mean normalized H3K36me3/H3 ChIP signal") +
+  ylab("GLMM Estimate") +
+  scale_color_gradient(low = "yellow", high = "red") +
+  plot_theme +
+  theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "horizontal") +
+  guides(color = guide_colorbar(title.position = "top", 
+                                title = "RNA Abundance (log TPM) at t = 60 min"))
+
+## ZIO beta GLMM rates by RNA abundance for dark to light (Figure 4F)
+# Grab trimethyl abundance and average at time = 60
+wl_trimethyl_0min_dat <- abs_trimethyl_dat %>%
+  filter(assay == "writer_loss",
+         timepoint == 0) %>%
+  dplyr::select(gene, value) %>%
+  group_by(gene) %>%
+  summarize(trimethyl_value = mean(value)) %>%
+  ungroup
+
+wl_glmm_vs_trimethyl_dat <- beta_glmm_dat %>%
+  filter(assay == "writer_loss",
+         gene %in% high_confidence_genes) %>%
+  dplyr::select(gene, estimate) %>%
+  left_join(wl_rna_0min_dat) %>%
+  left_join(wl_trimethyl_0min_dat)
+
+fig4f <- ggplot(data = wl_glmm_vs_trimethyl_dat,
+                aes(x = trimethyl_value, y = estimate, col = transcript)) +
+  geom_point() + 
+  xlab("Mean normalized H3K36me3/H3 ChIP signal") +
+  ylab("GLMM Estimate") +
+  scale_y_reverse(lim = c(0, -5)) +
+  scale_color_gradient(low = "yellow", high = "red") +
+  plot_theme +
+  xlim(0, 1) +
+  theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "horizontal") +
+  guides(color = guide_colorbar(title.position = "top", 
+                                title = "RNA Abundance (log TPM) at t = 0 min"))
+
+## ZIO beta GLMM rates by RNA abundance for dark to light (Figure 4G)
 wa_rna_dat <- data.table::fread("Supplemental_Data5.txt", data.table = FALSE) %>%
   dplyr::rename(gene_length = "Gene Length",
-         gene = GENE)
+                gene = GENE)
 
 # Grab RNA abundance and average at time = 60
 wa_rna_60min_dat <- wa_rna_dat %>%
@@ -635,8 +696,8 @@ wa_glmm_vs_rna_dat <- beta_glmm_dat %>%
   dplyr::select(gene, estimate) %>%
   left_join(wa_rna_60min_dat)
 
-fig4e <- ggplot(data = wa_glmm_vs_rna_dat,
-       aes(x = transcript, y = estimate)) +
+fig4g <- ggplot(data = wa_glmm_vs_rna_dat,
+                aes(x = transcript, y = estimate)) +
   geom_point(col = wa_col, alpha = 0.4) + 
   geom_smooth(aes(y = estimate, x = transcript), method = "lm", se = FALSE, size = 2, linetype = "longdash", col = "gray") + 
   ylim(3, 7) +
@@ -645,7 +706,7 @@ fig4e <- ggplot(data = wa_glmm_vs_rna_dat,
   annotate(geom = "text", x = 9, y = 7, label = paste("r =", round(cor(wa_glmm_vs_rna_dat$estimate, wa_glmm_vs_rna_dat$transcript), 3))) +
   plot_theme
 
-## ZIO beta GLMM rates by RNA abundance for light to dark (Figure 4F)
+## ZIO beta GLMM rates by RNA abundance for light to dark (Figure 4H)
 wl_rna_dat <- data.table::fread("Supplemental_Data6.txt", data.table = FALSE) %>%
   dplyr::rename(gene_length = "Gene Length",
                 gene = GENE)
@@ -667,75 +728,16 @@ wl_glmm_vs_rna_dat <- beta_glmm_dat %>%
   dplyr::select(gene, estimate) %>%
   left_join(wl_rna_0min_dat)
 
-fig4f <- ggplot(data = wl_glmm_vs_rna_dat,
-                aes(x = transcript, y = -estimate)) +
+fig4h <- ggplot(data = wl_glmm_vs_rna_dat,
+                aes(x = transcript, y = estimate)) +
   geom_point(col = wl_col, alpha = 0.4) + 
-  geom_smooth(aes(y = -estimate, x = transcript), method = "lm", se = FALSE, size = 2, linetype = "longdash", col = "gray") + 
-  ylim(1.5, 3.5) +
+  geom_smooth(aes(y = estimate, x = transcript), method = "lm", se = FALSE, size = 2, linetype = "longdash", col = "gray") + 
+  scale_y_reverse(lim = c(-1.5, -3.5)) +
   xlab("RNA Abundance (log TPM) at t = 0 min") +
   ylab("-GLMM Estimate") +
-  annotate(geom = "text", x = 0, y = 3.5, label = paste("r =", round(cor(wl_glmm_vs_rna_dat$estimate, -wl_glmm_vs_rna_dat$transcript), 3))) +
+  annotate(geom = "text", x = 0, y = -3.5, label = paste("r =", round(cor(wl_glmm_vs_rna_dat$estimate, -wl_glmm_vs_rna_dat$transcript), 3))) +
   plot_theme
 
-## ZIO beta GLMM rates by RNA abundance for light to dark (Figure 4F)
-# Grab trimethyl abundance and average at time = 60
-wa_trimethyl_60min_dat <- abs_trimethyl_dat %>%
-  filter(assay == "writer_add",
-         timepoint == 1) %>%
-  dplyr::select(gene, value) %>%
-  group_by(gene) %>%
-  summarize(trimethyl_value = mean(value)) %>%
-  ungroup
-
-wa_glmm_vs_trimethyl_dat <- beta_glmm_dat %>%
-  filter(assay == "writer_add",
-         gene %in% high_confidence_genes) %>%
-  dplyr::select(gene, estimate) %>%
-  left_join(wa_rna_60min_dat) %>%
-  left_join(wa_trimethyl_60min_dat)
-
-fig4g <- ggplot(data = wa_glmm_vs_trimethyl_dat,
-                aes(x = trimethyl_value, y = estimate, col = transcript)) +
-  geom_point() + 
-  ylim(0, 10) +
-  xlim(0, 1) +
-  xlab("Mean normalized H3K36me3/H3 ChIP signal") +
-  ylab("GLMM Estimate") +
-  scale_color_gradient(low = "yellow", high = "red") +
-  plot_theme +
-  theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "horizontal") +
-  guides(color = guide_colorbar(title.position = "top", 
-                                title = "RNA Abundance (log TPM) at t = 60 min"))
-
-## ZIO beta GLMM rates by RNA abundance for dark to light (Figure 4H)
-# Grab trimethyl abundance and average at time = 60
-wl_trimethyl_0min_dat <- abs_trimethyl_dat %>%
-  filter(assay == "writer_loss",
-         timepoint == 0) %>%
-  dplyr::select(gene, value) %>%
-  group_by(gene) %>%
-  summarize(trimethyl_value = mean(value)) %>%
-  ungroup
-
-wl_glmm_vs_trimethyl_dat <- beta_glmm_dat %>%
-  filter(assay == "writer_loss",
-         gene %in% high_confidence_genes) %>%
-  dplyr::select(gene, estimate) %>%
-  left_join(wl_rna_0min_dat) %>%
-  left_join(wl_trimethyl_0min_dat)
-
-fig4h <- ggplot(data = wl_glmm_vs_trimethyl_dat,
-                aes(x = trimethyl_value, y = -estimate, col = transcript)) +
-  geom_point() + 
-  ylim(0, 5) +
-  xlim(0, 1) +
-  xlab("Mean normalized H3K36me3/H3 ChIP signal") +
-  ylab("-GLMM Estimate") +
-  scale_color_gradient(low = "yellow", high = "red") +
-  plot_theme +
-  theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "horizontal") +
-  guides(color = guide_colorbar(title.position = "top", 
-                                title = "RNA Abundance (log TPM) at t = 0 min"))
 
 ###########################################
 ##        
@@ -835,17 +837,19 @@ fig6e_hist <- ggplot(data = beta_glmm_dat %>%
                        filter(gene %in% high_confidence_genes_down_both,
                               assay %in% c("writer_loss", "writer_eraser_loss")) %>%
                        mutate(assay = factor(assay, levels = c("writer_loss", "writer_eraser_loss"))),
-                     aes(x = -estimate, fill = assay, alpha = 0.6)) + 
+                     aes(x = estimate, fill = assay, alpha = 0.6)) + 
   geom_histogram(col = "black", bins = 50, size = 0.5) + 
-  xlim(0, 4) +
+  scale_x_reverse(lim = c(0, -4)) +
   scale_fill_manual(values = c(wl_col, wel_col)) +
-  ylab("Number of Genes") + xlab("-GLMM Estimate") +
+  ylab("Number of Genes") + xlab("GLMM Estimate") +
   plot_theme +
   theme(legend.position = c(0.6, 0.5)) +
   guides(fill = FALSE, alpha = FALSE)
 
 ## Difference in modeled timepoints between writer loss and writer eraser loss (Figure 6F)
 # Parameter estimates data for model comparing writer loss and writer eraser loss
+loss_compare_dat <- read.csv("Supplemental_Data7.csv", header = TRUE)
+
 loss_compare_plot_dat <- loss_compare_dat %>%
   filter(grepl(x = parameter, pattern = "assay")) %>%
   mutate(parameter = recode(parameter, 
@@ -859,13 +863,6 @@ loss_compare_plot_dat <- loss_compare_dat %>%
                        '1' = "30",
                        '2' = "60",
                        '3' = "90"))
-
-yal067w_a_compare_beta_model <- compare_wl_to_wel_beta_brms(rel_dat = rel_trimethyl_dat,
-                                                            this_gene = "YAL067W-A",
-                                                            iter = 10000,
-                                                            run_limit = 2,
-                                                            zo_inflation = FALSE,
-                                                            seed = 123)
   
 ## Plot all negative trend genes
 fig6f <- ggplot(data = loss_compare_plot_dat %>% 
@@ -875,17 +872,49 @@ fig6f <- ggplot(data = loss_compare_plot_dat %>%
   geom_boxplot(aes(x = time, y = Estimate), outlier.alpha = 0, color = wel_col, size = 0.7, alpha = 0.3) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "black", size = 1) +
   scale_color_grey(guide = FALSE) + 
-  ylab("WEL - WL timepoint effects") + 
+  ylab("WEL - WL Timepoint Effects") + 
   xlab("Timepoint (min)") +
   ylim(-5, 5) + 
   stat_summary(fun = mean, geom="line", aes(group=1), col = wel_col, size = 1) + 
   plot_theme
 
 
-yal067w_a_compare_beta_model <- compare_wl_to_wel_beta_brms(rel_dat = rel_trimethyl_dat,
-                                                            this_gene = "YAL067W-A",
-                                                            iter = 10000, 
-                                                            seed = 123)
+###########################################
+##        
+##          Supplemental Figure S4
+##
+###########################################
+## LANS-Set2 activation and inactivation for non-relative YAR009C (Supplemental Figure S4A left)
+yar009c_negbin_summaries <- run_zinegbin_brms(abs_dat = abs_trimethyl_dat, 
+                                             this_gene = "YAR009C")
+# Run the actual fits
+cds1_negbin_writer_add_fit <- run_single_zinegbin_brms(abs_dat = abs_trimethyl_dat, 
+                                                       this_gene = "YBR029C",
+                                                       this_assay = "writer_add",
+                                                       seed = 123)
+cds1_negbin_writer_loss_fit <- run_single_zinegbin_brms(abs_dat = abs_trimethyl_dat, 
+                                                        this_gene = "YBR029C",
+                                                        this_assay = "writer_loss",
+                                                        seed = 123)
+# Posterior data sets
+cds1_negbin_writer_add_post_dat <- conditional_effects(cds1_negbin_writer_add_fit, plot = FALSE)
+cds1_negbin_writer_loss_post_dat <- conditional_effects(cds1_negbin_writer_loss_fit, plot = FALSE)
+
+fig4a_left <- ggplot(data = abs_trimethyl_dat %>%
+                       filter(gene == "YBR029C",
+                              assay %in% c("writer_add", "writer_loss")),
+                     aes(x = timepoint_min, y = value, col = assay)) +
+  geom_line(aes(group = sample_unit), linetype = "longdash") +
+  scale_color_manual(values = c(wl_col, wa_col)) +
+  geom_smooth(data = cds1_negbin_writer_loss_post_dat$timepoint,
+              aes(x = `effect1__` * 60, y = `estimate__`/1000, ymin = `lower__`/1000, ymax = `upper__`/1000), 
+              stat = "identity", se = TRUE, col = wl_col, method = "loess", size = 2) + 
+  geom_smooth(data = cds1_negbin_writer_add_post_dat$timepoint, 
+              aes(x = `effect1__` * 60, y = `estimate__`/1000, ymin = `lower__`/1000, ymax = `upper__`/1000), 
+              stat = "identity", se = TRUE, col = wa_col, method = "loess", size = 2) +
+  xlim(0, 90) +
+  ylab("Proportional H3K36me3/H3") + xlab("Time (minutes)") +
+  plot_theme
 
 
 
