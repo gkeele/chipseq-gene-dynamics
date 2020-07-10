@@ -338,11 +338,11 @@ run_zinegbin_brms <- function(abs_dat,
 run_single_zinegbin_brms <- function(abs_dat, 
                                      this_gene, 
                                      this_assay,
-                                      adapt_delta = 0.8,
-                                      iter = 2000,
-                                      seed = 123,
-                                      rhat_cutoff = 1.1,
-                                      run_limit = 10) {
+                                     adapt_delta = 0.8,
+                                     iter = 2000,
+                                     seed = 123,
+                                     rhat_cutoff = 1.1,
+                                     run_limit = 10) {
   
   use_dat <- abs_dat %>% 
     filter(gene == this_gene,
@@ -359,7 +359,7 @@ run_single_zinegbin_brms <- function(abs_dat,
                    control = list(adapt_delta = adapt_delta))
     brm_fixed <- summary(brm_fit)$fixed %>% as.data.frame %>% rownames_to_column("parameter")
     brm_random <- summary(brm_fit)$random %>% as.data.frame %>% rownames_to_column("parameter")
-    
+
     num_runs <- num_runs + 1
     if ((all(brm_fixed$Rhat < rhat_cutoff) & all(brm_fixed$Rhat < rhat_cutoff) & all(brm_fixed$Rhat < rhat_cutoff)) | num_runs == run_limit) {
       stop_now <- TRUE
@@ -479,16 +479,17 @@ fig3e_boxplot <- ggplot(data = mean_rel_trimethyl_dat %>%
 ###########################################
 ## LANS-Set2 activation and inactivation for non-relative CDS1 (Figure 4A left)
 cds1_negbin_summaries <- run_zinegbin_brms(abs_dat = abs_trimethyl_dat, 
-                                           this_gene = "YBR029C")
+                                           this_gene = "YBR029C",
+                                           seed = 124)
 # Run the actual fits
 cds1_negbin_writer_add_fit <- run_single_zinegbin_brms(abs_dat = abs_trimethyl_dat, 
                                                        this_gene = "YBR029C",
                                                        this_assay = "writer_add",
-                                                       seed = 123)
+                                                       seed = 124)
 cds1_negbin_writer_loss_fit <- run_single_zinegbin_brms(abs_dat = abs_trimethyl_dat, 
                                                         this_gene = "YBR029C",
                                                         this_assay = "writer_loss",
-                                                        seed = 123)
+                                                        seed = 124)
 # Posterior data sets
 cds1_negbin_writer_add_post_dat <- conditional_effects(cds1_negbin_writer_add_fit, plot = FALSE)
 cds1_negbin_writer_loss_post_dat <- conditional_effects(cds1_negbin_writer_loss_fit, plot = FALSE)
@@ -506,7 +507,7 @@ fig4a_left <- ggplot(data = abs_trimethyl_dat %>%
               aes(x = `effect1__` * 60, y = `estimate__`/1000, ymin = `lower__`/1000, ymax = `upper__`/1000), 
               stat = "identity", se = TRUE, col = wa_col, method = "loess", size = 2) +
   xlim(0, 90) +
-  ylab("Proportional H3K36me3/H3") + xlab("Time (minutes)") +
+  ylab("Mean H3K36me3/H3") + xlab("Time (minutes)") +
   plot_theme
 
 ## LANS-Set2 activation and inactivation for relative CDS1 (Figure 4A right)
@@ -598,6 +599,8 @@ fig4c_scatter <- ggplot(data = compare_rate_dat,
   geom_point() +
   scale_color_manual(values = c(wa_col, wl_col)) +
   scale_shape_manual(values = c(20, 21)) +
+  xlim(-2, 3) +
+  ylim(-4, 8) + 
   ylab("Proportional H3K36me3/H3 GLMM Estimate") +
   xlab("Mean H3K36me3/H3 GLMM Estimate") +
   plot_theme
@@ -886,37 +889,112 @@ fig6f <- ggplot(data = loss_compare_plot_dat %>%
 ###########################################
 ## LANS-Set2 activation and inactivation for non-relative YAR009C (Supplemental Figure S4A left)
 yar009c_negbin_summaries <- run_zinegbin_brms(abs_dat = abs_trimethyl_dat, 
-                                             this_gene = "YAR009C")
+                                              this_gene = "YAR009C")
 # Run the actual fits
-cds1_negbin_writer_add_fit <- run_single_zinegbin_brms(abs_dat = abs_trimethyl_dat, 
-                                                       this_gene = "YBR029C",
+yar009c_negbin_writer_add_fit <- run_single_zinegbin_brms(abs_dat = abs_trimethyl_dat, 
+                                                       this_gene = "YAR009C",
                                                        this_assay = "writer_add",
-                                                       seed = 123)
-cds1_negbin_writer_loss_fit <- run_single_zinegbin_brms(abs_dat = abs_trimethyl_dat, 
-                                                        this_gene = "YBR029C",
+                                                       seed = 125)
+yar009c_negbin_writer_loss_fit <- run_single_zinegbin_brms(abs_dat = abs_trimethyl_dat, 
+                                                        this_gene = "YAR009C",
                                                         this_assay = "writer_loss",
-                                                        seed = 123)
+                                                        seed = 125)
 # Posterior data sets
-cds1_negbin_writer_add_post_dat <- conditional_effects(cds1_negbin_writer_add_fit, plot = FALSE)
-cds1_negbin_writer_loss_post_dat <- conditional_effects(cds1_negbin_writer_loss_fit, plot = FALSE)
+yar009c_negbin_writer_add_post_dat <- conditional_effects(yar009c_negbin_writer_add_fit, plot = FALSE)
+yar009c_negbin_writer_loss_post_dat <- conditional_effects(yar009c_negbin_writer_loss_fit, plot = FALSE)
 
-fig4a_left <- ggplot(data = abs_trimethyl_dat %>%
-                       filter(gene == "YBR029C",
+figs4a_left <- ggplot(data = abs_trimethyl_dat %>%
+                       filter(gene == "YAR009C",
                               assay %in% c("writer_add", "writer_loss")),
                      aes(x = timepoint_min, y = value, col = assay)) +
   geom_line(aes(group = sample_unit), linetype = "longdash") +
   scale_color_manual(values = c(wl_col, wa_col)) +
-  geom_smooth(data = cds1_negbin_writer_loss_post_dat$timepoint,
-              aes(x = `effect1__` * 60, y = `estimate__`/1000, ymin = `lower__`/1000, ymax = `upper__`/1000), 
-              stat = "identity", se = TRUE, col = wl_col, method = "loess", size = 2) + 
-  geom_smooth(data = cds1_negbin_writer_add_post_dat$timepoint, 
+  geom_smooth(data = yar009c_negbin_writer_add_post_dat$timepoint, 
               aes(x = `effect1__` * 60, y = `estimate__`/1000, ymin = `lower__`/1000, ymax = `upper__`/1000), 
               stat = "identity", se = TRUE, col = wa_col, method = "loess", size = 2) +
   xlim(0, 90) +
-  ylab("Proportional H3K36me3/H3") + xlab("Time (minutes)") +
+  ylim(0, 1) +
+  ylab("Mean H3K36me3/H3") + xlab("Time (minutes)") +
   plot_theme
 
+## LANS-Set2 inactivation for non-relative YAR009C blown up (Supplemental Figure S4A right)
+figs4a_right <- ggplot(data = abs_trimethyl_dat %>%
+                        filter(gene == "YAR009C",
+                               assay %in% c("writer_loss")),
+                      aes(x = timepoint_min, y = value, col = assay)) +
+  geom_smooth(data = yar009c_negbin_writer_loss_post_dat$timepoint, 
+              aes(x = `effect1__` * 60, y = `estimate__`/1000, ymin = `lower__`/1000, ymax = `upper__`/1000), 
+              stat = "identity", se = TRUE, col = wl_col, method = "loess", size = 2) +
+  xlim(0, 90) +
+  ylim(0, 25) +
+  ylab("Mean H3K36me3/H3") + xlab("Time (minutes)") +
+  plot_theme
 
+## LANS-Set2 activation and inactivation for relative YAR009C (Supplemental Figure S4B)
+yar009c_beta_summaries <- run_beta_brms(rel_dat = rel_trimethyl_dat, 
+                                        this_gene = "YAR009C")
+# Run the actual fits
+yar009c_beta_writer_add_fit <- run_single_beta_brms(rel_dat = rel_trimethyl_dat, 
+                                                    this_gene = "YAR009C",
+                                                    this_assay = "writer_add",
+                                                    seed = 123)
+yar009c_beta_writer_loss_fit <- run_single_beta_brms(rel_dat = rel_trimethyl_dat, 
+                                                     this_gene = "YAR009C",
+                                                     this_assay = "writer_loss",
+                                                     seed = 123)
+# Posterior data sets
+yar009c_beta_writer_add_post_dat <- conditional_effects(yar009c_beta_writer_add_fit, plot = FALSE)
+yar009c_beta_writer_loss_post_dat <- conditional_effects(yar009c_beta_writer_loss_fit, plot = FALSE)
 
+figs4b <- ggplot(data = rel_trimethyl_dat %>%
+                        filter(gene == "YAR009C",
+                               assay %in% c("writer_add", "writer_loss")),
+                      aes(x = timepoint_min, y = value, col = assay)) +
+  geom_line(aes(group = sample_unit), linetype = "longdash") +
+  scale_color_manual(values = c(wl_col, wa_col)) +
+  geom_smooth(data = yar009c_beta_writer_add_post_dat$timepoint, 
+              aes(x = `effect1__` * 60, y = `estimate__`, ymin = `lower__`, ymax = `upper__`), 
+              stat = "identity", se = TRUE, col = wa_col, method = "loess", size = 2) +
+  geom_smooth(data = yar009c_beta_writer_loss_post_dat$timepoint, 
+              aes(x = `effect1__` * 60, y = `estimate__`, ymin = `lower__`, ymax = `upper__`), 
+              stat = "identity", se = TRUE, col = wl_col, method = "loess", size = 2) +
+  xlim(0, 90) +
+  ylim(0, 1) +
+  ylab("Fractional H3K36me3/H3") + xlab("Time (minutes)") +
+  plot_theme
+
+## Comparison of ZIO beta GLMM rates to their error for all genes (Supplemental Figure S4C)
+figs4c_scatter <- ggplot(data = beta_glmm_dat %>%
+                           filter(assay %in% c("writer_loss", "writer_add")) %>%
+                           mutate(category = ifelse(category != "zero", "nonzero", "zero")),
+                         aes(x = est_error, y = estimate, col = assay, shape = category)) +
+  geom_point() +
+  scale_color_manual(values = c(wa_col, wl_col)) +
+  scale_shape_manual(values = c(20, 21)) +
+  ylab("Fractional H3K36me3/H3 GLMM Estimate") +
+  xlab("Fractional H3K36me3/H3 GLMM Estimate Error") +
+  plot_theme
+
+## Comparison of ZIO beta GLMM rates to ZI negbin GLMM rates, all genes included (Supplemental Figure S4D)
+figs4d_scatter <- ggplot(data = compare_rate_dat,
+                        aes(x = negbin_estimate, y = beta_estimate, col = assay, shape = category)) +
+  geom_point() +
+  scale_color_manual(values = c(wa_col, wl_col)) +
+  scale_shape_manual(values = c(20, 21)) +
+  ylab("Fractional H3K36me3/H3 GLMM Estimate") +
+  xlab("Mean H3K36me3/H3 GLMM Estimate") +
+  plot_theme
+
+## Histogram of ZIO beta GLMM rates of overlapping genes (Supplemental Figure S4E)
+figs4e_hist <- ggplot(data = beta_glmm_dat %>%
+                       filter(assay %in% c("writer_add", "writer_loss")),
+                     aes(x = estimate, fill = assay)) + 
+  geom_histogram(col = "black", bins = 50, size = 0.5) + 
+  geom_vline(xintercept = 0, linetype = "dashed", col = "gray") +
+  scale_fill_manual(values = c(wa_col, wl_col)) +
+  ylab("Frequency") + xlab("GLMM Estimate") +
+  plot_theme +
+  theme(legend.position = c(0.6, 0.5)) +
+  labs(fill = "Set2 assay")
 
 
