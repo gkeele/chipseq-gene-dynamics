@@ -579,6 +579,7 @@ plot(fig4b_venn, gp = gp, show = list(Faces = FALSE, Universe = FALSE))
 ## Comparison of ZIO beta GLMM rates to ZI negbin GLMM rates (Figure 4C)
 # ZI Negbin GLMM rate data
 negbin_glmm_dat <- read.csv("Supplemental_Data4.csv", header = TRUE)
+
 # Make data.frame to compare rates
 compare_rate_dat <- inner_join(beta_glmm_dat %>%
   filter(assay %in% c("writer_add", "writer_loss"),
@@ -960,7 +961,7 @@ figs4b <- ggplot(data = rel_trimethyl_dat %>%
               stat = "identity", se = TRUE, col = wl_col, method = "loess", size = 2) +
   xlim(0, 90) +
   ylim(0, 1) +
-  ylab("Fractional H3K36me3/H3") + xlab("Time (minutes)") +
+  ylab("Proportional H3K36me3/H3") + xlab("Time (minutes)") +
   plot_theme
 
 ## Comparison of ZIO beta GLMM rates to their error for all genes (Supplemental Figure S4C)
@@ -971,8 +972,8 @@ figs4c_scatter <- ggplot(data = beta_glmm_dat %>%
   geom_point() +
   scale_color_manual(values = c(wa_col, wl_col)) +
   scale_shape_manual(values = c(20, 21)) +
-  ylab("Fractional H3K36me3/H3 GLMM Estimate") +
-  xlab("Fractional H3K36me3/H3 GLMM Estimate Error") +
+  ylab("Proportional H3K36me3/H3 GLMM Estimate") +
+  xlab("Proportional H3K36me3/H3 GLMM Estimate Error") +
   plot_theme
 
 ## Comparison of ZIO beta GLMM rates to ZI negbin GLMM rates, all genes included (Supplemental Figure S4D)
@@ -981,7 +982,7 @@ figs4d_scatter <- ggplot(data = compare_rate_dat,
   geom_point() +
   scale_color_manual(values = c(wa_col, wl_col)) +
   scale_shape_manual(values = c(20, 21)) +
-  ylab("Fractional H3K36me3/H3 GLMM Estimate") +
+  ylab("Proportional H3K36me3/H3 GLMM Estimate") +
   xlab("Mean H3K36me3/H3 GLMM Estimate") +
   plot_theme
 
@@ -996,5 +997,24 @@ figs4e_hist <- ggplot(data = beta_glmm_dat %>%
   plot_theme +
   theme(legend.position = c(0.6, 0.5)) +
   labs(fill = "Set2 assay")
+
+## Scatterplot of ZIO beta GLMM rates for Set2 Inactivation vs Set Activation of high confidence genes (Supplemental Figure S4F)
+wa_vs_wl_beta_dat <- beta_glmm_dat %>%
+  filter(assay %in% c("writer_add", "writer_loss"),
+         gene %in% high_confidence_genes) %>%
+  dplyr::select(gene, assay, estimate) %>%
+  spread(key = assay, value = estimate)
+
+figs4f_scatter <- ggplot(data = wa_vs_wl_beta_dat,
+                      aes(y = writer_loss, x = writer_add)) + 
+  geom_point(col = "black", alpha = 0.5) + 
+  geom_smooth(method = "lm", se = FALSE, linetype = "dashed", col = "gray") +
+  scale_y_reverse() +
+  ylab("Proportional H3K36me3/H3 GLMM Estimate Set2 Inactivation") + xlab("Proportional H3K36me3/H3 GLMM Estimate Set2 Activation") +
+  annotate(geom = "text", x = 3.8, y = -3.4, label = paste("r =", round(cor(wa_vs_wl_beta_dat$writer_add, wa_vs_wl_beta_dat$writer_loss), 3))) +
+  plot_theme 
+
+## Scatterplot of ZIO beta GLMM rates for Set2 Inactivation vs Set Activation of high confidence genes (Supplemental Figure S4G)
+
 
 
