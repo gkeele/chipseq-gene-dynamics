@@ -1,5 +1,5 @@
-#########################################################################
-#########################################################################
+##############################################################################
+##############################################################################
 ###
 ###       Title: Supplemental_Code.R
 ###
@@ -14,8 +14,8 @@
 ###             
 ###       Authors: Greg Keele & Austin Hepperla
 ###
-#########################################################################
-#########################################################################
+##############################################################################
+##############################################################################
 
 ### Required R package dependencies
 library(tidyverse)
@@ -378,7 +378,7 @@ run_single_zinegbin_brms <- function(abs_dat,
 ##
 ###########################################
 ### Plots of unmodeled data summaries across all genes
-## LANS-Set2 activation for absolute data (Figure 3B)
+## DtL for absolute data (Figure 3B)
 fig3b_lines <- ggplot(data = mean_abs_trimethyl_dat %>%
                   filter(assay == "writer_add"), 
                 aes(x = timepoint * 60, y = value)) + 
@@ -404,7 +404,7 @@ fig3b_boxplot <- ggplot(data = mean_abs_trimethyl_dat %>%
   plot_theme
 # fig3b_lines and fig3b_boxplot overlaid in manuscript
 
-## LANS-Set2 inactivation for relative data (Figure 3C)
+## LtD for relative data (Figure 3C)
 fig3d_lines <- ggplot(data = mean_abs_trimethyl_dat %>%
                         filter(assay == "writer_loss"), 
                       aes(x = timepoint * 60, y = value)) + 
@@ -426,7 +426,7 @@ fig3c_boxplot <- ggplot(data = mean_abs_trimethyl_dat %>%
   plot_theme
 # fig3c_lines and fig3c_boxplot overlaid in manuscript
 
-## LANS-Set2 activation for absolute data (Figure 3D)
+## DtL for absolute data (Figure 3D)
 fig3d_lines <- ggplot(data = mean_rel_trimethyl_dat %>%
                         filter(assay == "writer_add"), 
                       aes(x = timepoint * 60, y = value)) + 
@@ -451,7 +451,7 @@ fig3d_boxplot <- ggplot(data = mean_rel_trimethyl_dat %>%
   plot_theme
 # fig3d_lines and fig3d_boxplot overlaid in manuscript
 
-## LANS-Set2 inactivation for absolute data (Figure 3E)
+## LtD for absolute data (Figure 3E)
 fig3e_lines <- ggplot(data = mean_rel_trimethyl_dat %>%
                         filter(assay == "writer_loss"), 
                       aes(x = timepoint * 60, y = value)) + 
@@ -477,7 +477,7 @@ fig3e_boxplot <- ggplot(data = mean_rel_trimethyl_dat %>%
 ##          Figure 4
 ##
 ###########################################
-## LANS-Set2 activation and inactivation for non-relative CDS1 (Figure 4A left)
+## DtL and LtD for non-relative CDS1 (Figure 4A left)
 cds1_negbin_summaries <- run_zinegbin_brms(abs_dat = abs_trimethyl_dat, 
                                            this_gene = "YBR029C",
                                            seed = 124)
@@ -510,7 +510,7 @@ fig4a_left <- ggplot(data = abs_trimethyl_dat %>%
   ylab("Mean H3K36me3/H3") + xlab("Time (minutes)") +
   plot_theme
 
-## LANS-Set2 activation and inactivation for relative CDS1 (Figure 4A right)
+## DtL and LtD for relative CDS1 (Figure 4A right)
 cds1_beta_summaries <- run_beta_brms(rel_dat = rel_trimethyl_dat, 
                                      this_gene = "YBR029C")
 ## Run the actual fits
@@ -542,7 +542,7 @@ fig4a_right <- ggplot(data = rel_trimethyl_dat %>%
   ylab("Proportional H3K36me3/H3") + xlab("Time (minutes)") +
   plot_theme
 
-## Venn diagram of high confidence genes under LANS-Set2 activation and inactivation (Figure 4B)
+## Venn diagram of high confidence genes under DtL and LtD (Figure 4B)
 # ZOI Beta GLMM rate data
 beta_glmm_dat <- read.csv("Supplemental_Data3.csv", header = TRUE)
 
@@ -619,7 +619,7 @@ fig4d_hist <- ggplot(data = beta_glmm_dat %>%
   theme(legend.position = c(0.6, 0.5)) +
   labs(fill = "Set2 assay")
 
-## ZIO beta GLMM rates by RNA abundance for light to dark (Figure 4E)
+## ZIO beta GLMM rates by mean trimethyl at time = 60, colored by RNA abundance for DtL (Figure 4E)
 # Grab trimethyl abundance and average at time = 60
 wa_trimethyl_60min_dat <- abs_trimethyl_dat %>%
   filter(assay == "writer_add",
@@ -649,8 +649,8 @@ fig4e <- ggplot(data = wa_glmm_vs_trimethyl_dat,
   guides(color = guide_colorbar(title.position = "top", 
                                 title = "RNA Abundance (log TPM) at t = 60 min"))
 
-## ZIO beta GLMM rates by RNA abundance for dark to light (Figure 4F)
-# Grab trimethyl abundance and average at time = 60
+## ZIO beta GLMM rates by mean trimethyl at time = 0, colored by RNA abundance for LtD (Figure 4F)
+# Grab trimethyl abundance and average at time = 0
 wl_trimethyl_0min_dat <- abs_trimethyl_dat %>%
   filter(assay == "writer_loss",
          timepoint == 0) %>%
@@ -681,17 +681,16 @@ fig4f <- ggplot(data = wl_glmm_vs_trimethyl_dat,
 
 ## ZIO beta GLMM rates by RNA abundance for dark to light (Figure 4G)
 wa_rna_dat <- data.table::fread("Supplemental_Data5.txt", data.table = FALSE) %>%
-  dplyr::rename(gene_length = "Gene Length",
-                gene = GENE)
+  dplyr::rename(gene = GENE)
 
 # Grab RNA abundance and average at time = 60
 wa_rna_60min_dat <- wa_rna_dat %>%
-  dplyr::select(gene, gene_length, contains("60min")) %>%
+  dplyr::select(gene, contains("60min")) %>%
   dplyr::rename(rep1 = DtL_60min_set2d_RNA_Rep1,
                 rep2 = DtL_60min_set2d_RNA_Rep2) %>%
-  gather(key = replicate, value = transcript, -c(gene, gene_length)) %>%
+  gather(key = replicate, value = transcript, -gene) %>%
   group_by(gene) %>%
-  summarize(transcript = mean(log(transcript + 1))) %>%
+  summarize(transcript = log(mean(transcript) + 1)) %>%
   ungroup
 
 wa_glmm_vs_rna_dat <- beta_glmm_dat %>%
@@ -712,18 +711,17 @@ fig4g <- ggplot(data = wa_glmm_vs_rna_dat,
 
 ## ZIO beta GLMM rates by RNA abundance for light to dark (Figure 4H)
 wl_rna_dat <- data.table::fread("Supplemental_Data6.txt", data.table = FALSE) %>%
-  dplyr::rename(gene_length = "Gene Length",
-                gene = GENE)
+  dplyr::rename(gene = GENE)
 
 # Grab RNA abundance and average at time = 0
 wl_rna_0min_dat <- wl_rna_dat %>%
-  dplyr::select(gene, gene_length, contains("_0min")) %>%
+  dplyr::select(gene, contains("_0min")) %>%
   dplyr::rename(rep1 = LtD_0min_set2d_RNA_Rep1,
                 rep2 = LtD_0min_set2d_RNA_Rep2,
                 rep3 = LtD_0min_set2d_RNA_Rep3) %>%
-  gather(key = replicate, value = transcript, -c(gene, gene_length)) %>%
+  gather(key = replicate, value = transcript, -gene) %>%
   group_by(gene) %>%
-  summarize(transcript = mean(log(transcript + 1))) %>%
+  summarize(transcript = log(mean(transcript) + 1)) %>%
   ungroup
 
 wl_glmm_vs_rna_dat <- beta_glmm_dat %>%
@@ -739,7 +737,7 @@ fig4h <- ggplot(data = wl_glmm_vs_rna_dat,
   scale_y_reverse(lim = c(-1.5, -3.5)) +
   xlab("RNA Abundance (log TPM) at t = 0 min") +
   ylab("-GLMM Estimate") +
-  annotate(geom = "text", x = 0, y = -3.5, label = paste("r =", round(cor(wl_glmm_vs_rna_dat$estimate, -wl_glmm_vs_rna_dat$transcript), 3))) +
+  annotate(geom = "text", x = 0.5, y = -3.5, label = paste("r =", round(cor(wl_glmm_vs_rna_dat$estimate, -wl_glmm_vs_rna_dat$transcript), 3))) +
   plot_theme
 
 
@@ -748,7 +746,7 @@ fig4h <- ggplot(data = wl_glmm_vs_rna_dat,
 ##          Figure 6
 ##
 ###########################################
-## LANS-Set2 inactivation with and without Rph1 for absolute data (Figure 6B)
+## LtD with and without Rph1 for absolute data (Figure 6B)
 fig6b_lines <- ggplot(data = mean_abs_trimethyl_dat %>%
                         filter(assay %in% c("writer_loss", "writer_eraser_loss")) %>%
                         mutate(unit = paste(gene, assay)), 
@@ -777,7 +775,7 @@ fig6b_boxplot <- ggplot(data = mean_abs_trimethyl_dat %>%
   plot_theme
 # fig6b_lines and fig6b_boxplot overlaid in manuscript
 
-## LANS-Set2 inactivation with and without Rph1 for relative data (Figure 6C)
+## LtD with and without Rph1 for relative data (Figure 6C)
 fig6c_lines <- ggplot(data = mean_rel_trimethyl_dat %>%
                         filter(assay %in% c("writer_loss", "writer_eraser_loss")) %>%
                         mutate(unit = paste(gene, assay)), 
@@ -806,7 +804,7 @@ fig6c_boxplot <- ggplot(data = mean_rel_trimethyl_dat %>%
   plot_theme
 # fig6c_lines and fig6c_boxplot overlaid in manuscript
 
-## Venn diagram of high confidence genes under LANS-Set2 inactivation with and without Rph1 (Figure 6D)
+## Venn diagram of high confidence genes under LtD with and without Rph1 (Figure 6D)
 # High confidence genes
 high_confidence_genes_down_eraser <- beta_glmm_dat %>%
   filter(assay == "writer_eraser_loss",
@@ -888,7 +886,7 @@ fig6f <- ggplot(data = loss_compare_plot_dat %>%
 ##          Supplemental Figure S4
 ##
 ###########################################
-## LANS-Set2 activation and inactivation for non-relative YAR009C (Supplemental Figure S4A left)
+## DtL and LtD for non-relative YAR009C (Supplemental Figure S4A left)
 yar009c_negbin_summaries <- run_zinegbin_brms(abs_dat = abs_trimethyl_dat, 
                                               this_gene = "YAR009C")
 # Run the actual fits
@@ -918,7 +916,7 @@ figs4a_left <- ggplot(data = abs_trimethyl_dat %>%
   ylab("Mean H3K36me3/H3") + xlab("Time (minutes)") +
   plot_theme
 
-## LANS-Set2 inactivation for non-relative YAR009C blown up (Supplemental Figure S4A right)
+## LtD for non-relative YAR009C blown up (Supplemental Figure S4A right)
 figs4a_right <- ggplot(data = abs_trimethyl_dat %>%
                         filter(gene == "YAR009C",
                                assay %in% c("writer_loss")),
@@ -931,7 +929,7 @@ figs4a_right <- ggplot(data = abs_trimethyl_dat %>%
   ylab("Mean H3K36me3/H3") + xlab("Time (minutes)") +
   plot_theme
 
-## LANS-Set2 activation and inactivation for relative YAR009C (Supplemental Figure S4B)
+## DtL and LtD for relative YAR009C (Supplemental Figure S4B)
 yar009c_beta_summaries <- run_beta_brms(rel_dat = rel_trimethyl_dat, 
                                         this_gene = "YAR009C")
 # Run the actual fits
@@ -998,7 +996,7 @@ figs4e_hist <- ggplot(data = beta_glmm_dat %>%
   theme(legend.position = c(0.6, 0.5)) +
   labs(fill = "Set2 assay")
 
-## Scatterplot of ZIO beta GLMM rates for Set2 Inactivation vs Set Activation of high confidence genes (Supplemental Figure S4F)
+## Scatterplot of ZIO beta GLMM rates for LtD vs DtL of high confidence genes (Supplemental Figure S4F)
 wa_vs_wl_beta_dat <- beta_glmm_dat %>%
   filter(assay %in% c("writer_add", "writer_loss"),
          gene %in% high_confidence_genes) %>%
@@ -1010,11 +1008,266 @@ figs4f_scatter <- ggplot(data = wa_vs_wl_beta_dat,
   geom_point(col = "black", alpha = 0.5) + 
   geom_smooth(method = "lm", se = FALSE, linetype = "dashed", col = "gray") +
   scale_y_reverse() +
-  ylab("Proportional H3K36me3/H3 GLMM Estimate Set2 Inactivation") + xlab("Proportional H3K36me3/H3 GLMM Estimate Set2 Activation") +
+  ylab("Proportional H3K36me3/H3 GLMM Estimate LtD") + xlab("Proportional H3K36me3/H3 GLMM Estimate DtL") +
   annotate(geom = "text", x = 3.8, y = -3.4, label = paste("r =", round(cor(wa_vs_wl_beta_dat$writer_add, wa_vs_wl_beta_dat$writer_loss), 3))) +
   plot_theme 
 
-## Scatterplot of ZIO beta GLMM rates for Set2 Inactivation vs Set Activation of high confidence genes (Supplemental Figure S4G)
+## Scatterplot of mean RNA abundance for LtD vs mean RNA abundance for DtL of high confidence genes (Supplemental Figure S4G)
+# Grab mean RNA abundances at time = 0 for LtD and time = 60 for DtL
+wa_vs_wl_rna_comparison_dat <- inner_join(wl_rna_0min_dat %>%
+                                      dplyr::select(gene, wl_min0 = transcript),
+                                    wa_rna_60min_dat %>%
+                                      dplyr::select(gene, wa_min60 = transcript))
+
+figs4g_scatter <- ggplot(data = wa_vs_wl_rna_comparison_dat %>%
+                           filter(gene %in% high_confidence_genes),
+                         aes(y = wl_min0, x = wa_min60)) + 
+  geom_point(col = "black", alpha = 0.5) + 
+  ylab("Mean RNA Abundance (t = 0) (log TPM) LtD") + xlab("Mean RNA Abundance (t = 60) (log TPM) DtL") +
+  plot_theme 
+
+## Scatterplot of mean RNA abundance vs mean trimetyl for high confidence genes at DtL (Supplemental Figure S4J left)
+wa_rna_vs_trimethyl_comparison_dat <- inner_join(wa_trimethyl_60min_dat %>%
+                                            dplyr::select(gene, trimethyl_value),
+                                          wa_rna_60min_dat %>%
+                                            dplyr::select(gene, transcript)) %>%
+  filter(gene %in% high_confidence_genes)
+
+figs4j_scatter_left <- ggplot(data = wa_rna_vs_trimethyl_comparison_dat,
+                         aes(y = transcript, x = trimethyl_value)) + 
+  geom_point(col = wa_col, alpha = 0.1) + 
+  xlim(0, 1) +
+  ylab("Mean RNA Abundance (t = 60 min) (log TPM)") + xlab("Mean H3K36me3/H3 Signal (t = 60 min)") +
+  annotate(geom = "text", x = 0.9, y = 10, label = paste("r =", round(cor(wa_rna_vs_trimethyl_comparison_dat$transcript, wa_rna_vs_trimethyl_comparison_dat$trimethyl_value, use = "pairwise.complete.obs"), 3))) +
+  plot_theme 
+
+## Scatterplot of mean RNA abundance vs mean trimetyl for high confidence genes at LtD (Supplemental Figure S4J right)
+wl_rna_vs_trimethyl_comparison_dat <- inner_join(wl_trimethyl_0min_dat %>%
+                                                   dplyr::select(gene, trimethyl_value),
+                                                 wl_rna_0min_dat %>%
+                                                   dplyr::select(gene, transcript)) %>%
+  filter(gene %in% high_confidence_genes)
+
+figs4j_scatter_right <- ggplot(data = wl_rna_vs_trimethyl_comparison_dat,
+                         aes(y = transcript, x = trimethyl_value)) + 
+  geom_point(col = wl_col, alpha = 0.1) + 
+  xlim(0, 1) +
+  ylab("Mean RNA Abundance (t = 0 min) (log TPM)") + xlab("Mean H3K36me3/H3 Signal (t = 0 min)") +
+  annotate(geom = "text", x = 0.9, y = 10, label = paste("r =", round(cor(wl_rna_vs_trimethyl_comparison_dat$transcript, wl_rna_vs_trimethyl_comparison_dat$trimethyl_value, use = "pairwise.complete.obs"), 3))) +
+  plot_theme 
+
+## Scatterplot of gene length vs mean trimethyl levels for high confidence genes at DtL (Supplemental Figure S4K left)
+gene_length_dat <- read.table("Supplemental_Data8.txt", header = FALSE) %>%
+  dplyr::rename(gene = V4) %>%
+  dplyr::mutate(gene_length = V3 - V2) %>%
+  dplyr::select(gene, gene_length)
+
+wa_genelength_vs_trimethyl_comparison_dat <- inner_join(wa_trimethyl_60min_dat,
+                                                        gene_length_dat) %>%
+  filter(gene %in% high_confidence_genes)
+
+figs4k_scatter_left <- ggplot(data = wa_genelength_vs_trimethyl_comparison_dat,
+                               aes(y = gene_length, x = trimethyl_value)) + 
+  geom_point(col = wa_col, alpha = 0.1) + 
+  xlim(0, 1) +
+  ylim(0, 15000) +
+  ylab("Gene Length (bp)") + xlab("Mean H3K36me3/H3 Signal (t = 60 min)") +
+  annotate(geom = "text", x = 0.9, y = 15000, label = paste("r =", round(cor(wa_genelength_vs_trimethyl_comparison_dat$trimethyl_value, wa_genelength_vs_trimethyl_comparison_dat$gene_length), 3))) +
+  plot_theme 
+
+cor(wa_genelength_vs_trimethyl_comparison_dat$trimethyl_value, wa_genelength_vs_trimethyl_comparison_dat$gene_length)
+
+## Scatterplot of gene length vs mean trimethyl levels for high confidence genes at LtD (Supplemental Figure S4K right)
+wl_genelength_vs_trimethyl_comparison_dat <- inner_join(wl_trimethyl_0min_dat,
+                                                        gene_length_dat) %>%
+  filter(gene %in% high_confidence_genes)
+
+figs4k_scatter_right <- ggplot(data = wa_genelength_vs_trimethyl_comparison_dat,
+                              aes(y = gene_length, x = trimethyl_value)) + 
+  geom_point(col = wl_col, alpha = 0.1) + 
+  xlim(0, 1) +
+  ylim(0, 15000) +
+  ylab("Gene Length (bp)") + xlab("Mean H3K36me3/H3 Signal (t = 0 min)") +
+  annotate(geom = "text", x = 0.9, y = 15000, label = paste("r =", round(cor(wl_genelength_vs_trimethyl_comparison_dat$trimethyl_value, wl_genelength_vs_trimethyl_comparison_dat$gene_length), 3))) +
+  plot_theme 
+
+## Scatterplot of gene length vs mean RNA abundance for high confidence genes at DtL (Supplemental Figure S4L left)
+wa_genelength_vs_rna_comparison_dat <- inner_join(wa_rna_60min_dat,
+                                                  gene_length_dat) %>%
+  filter(gene %in% high_confidence_genes)
+
+figs4l_scatter_left <- ggplot(data = wa_genelength_vs_rna_comparison_dat,
+                              aes(y = gene_length, x = transcript)) + 
+  geom_point(col = wa_col, alpha = 0.1) + 
+  xlim(0, 11) +
+  ylim(0, 15000) +
+  ylab("Gene Length (bp)") + xlab("Mean RNA Abundance (t = 60 min) (log TPM)") +
+  annotate(geom = "text", x = 10, y = 15000, label = paste("r =", round(cor(wa_genelength_vs_rna_comparison_dat$transcript, wa_genelength_vs_rna_comparison_dat$gene_length), 3))) +
+  plot_theme 
+
+## Scatterplot of gene length vs mean RNA abundance for high confidence genes at LtD (Supplemental Figure S4L right)
+wl_genelength_vs_rna_comparison_dat <- inner_join(wl_rna_0min_dat,
+                                                  gene_length_dat) %>%
+  filter(gene %in% high_confidence_genes)
+
+figs4l_scatter_right <- ggplot(data = wl_genelength_vs_rna_comparison_dat,
+                               aes(y = gene_length, x = transcript)) + 
+  geom_point(col = wl_col, alpha = 0.1) + 
+  xlim(0, 11) +
+  ylim(0, 15000) +
+  ylab("Gene Length (bp)") + xlab("Mean RNA Abundance (t = 0 min) (log TPM)") +
+  annotate(geom = "text", x = 10, y = 15000, label = paste("r =", round(cor(wl_genelength_vs_rna_comparison_dat$transcript, wl_genelength_vs_rna_comparison_dat$gene_length, use = "pairwise.complete.obs"), 3))) +
+  plot_theme 
+
+## ZIO beta GLMM rates by gene length, colored by RNA abundance for DtL (Supplemental Figure S4M)
+# Grab GLMM estimates, errors, average trimethyl and averate RNA at time = 60 for DtL, and gene length
+wa_full_60min_dat <- beta_glmm_dat %>%
+  filter(assay == "writer_add",
+         gene %in% high_confidence_genes) %>%
+  dplyr::select(gene, estimate, est_error) %>%
+  inner_join(wa_rna_60min_dat) %>%
+  inner_join(wa_trimethyl_60min_dat) %>%
+  inner_join(gene_length_dat)
+
+figs4m <- ggplot(data = wa_full_60min_dat,
+                aes(x = gene_length, y = estimate, col = transcript)) +
+  geom_point() + 
+  ylim(0, 10) +
+  xlim(0, 15000) +
+  xlab("Gene Length (bp)") +
+  ylab("GLMM Estimate DtL") +
+  scale_color_gradient(low = "yellow", high = "red") +
+  plot_theme +
+  theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "vertical") +
+  guides(color = guide_colorbar(title.position = "top", 
+                                title = "RNA Abundance (log TPM) at t = 60 min"))
+
+## ZIO beta GLMM rate errors by gene length, colored by RNA abundance for DtL (Supplemental Figure S4N)
+figs4n <- ggplot(data = wa_full_60min_dat,
+                 aes(x = gene_length, y = est_error, col = transcript)) +
+  geom_point() + 
+  ylim(0, 3) +
+  xlim(0, 15000) +
+  xlab("Gene Length (bp)") +
+  ylab("GLMM Estimate Error DtL") +
+  scale_color_gradient(low = "yellow", high = "red") +
+  plot_theme +
+  theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "vertical") +
+  guides(color = guide_colorbar(title.position = "top", 
+                                title = "RNA Abundance (log TPM) at t = 60 min"))
+
+## ZIO beta GLMM rates by mean trimethyl at time = 60, colored by RNA abundance for DtL (Supplemental Figure S4O)
+figs4o <- ggplot(data = wa_full_60min_dat,
+                 aes(x = trimethyl_value, y = estimate, col = transcript)) +
+  geom_point() + 
+  ylim(0, 10) +
+  xlim(0, 1) +
+  xlab("Mean H3K36me3/H3 Signal (t = 60 min)") +
+  ylab("GLMM Estimate DtL") +
+  scale_color_gradient(low = "yellow", high = "red") +
+  plot_theme +
+  theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "vertical") +
+  guides(color = guide_colorbar(title.position = "top", 
+                                title = "RNA Abundance (log TPM) at t = 60 min"))
+
+## ZIO beta GLMM rate errors by mean trimethyl at time = 60, colored by RNA abundance for DtL (Supplemental Figure S4P)
+figs4p <- ggplot(data = wa_full_60min_dat,
+                 aes(x = trimethyl_value, y = est_error, col = transcript)) +
+  geom_point() + 
+  ylim(0, 3) +
+  xlim(0, 1) +
+  xlab("Mean H3K36me3/H3 Signal (t = 60 min)") +
+  ylab("GLMM Estimate Error DtL") +
+  scale_color_gradient(low = "yellow", high = "red") +
+  plot_theme +
+  theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "vertical") +
+  guides(color = guide_colorbar(title.position = "top", 
+                                title = "RNA Abundance (log TPM) at t = 60 min"))
+
+## ZIO beta GLMM rates by gene length, colored by RNA abundance for LtD (Supplemental Figure S4Q)
+# Grab GLMM estimates, errors, average trimethyl and averate RNA at time = 0 for LtD, and gene length
+wl_full_0min_dat <- beta_glmm_dat %>%
+  filter(assay == "writer_loss",
+         gene %in% high_confidence_genes) %>%
+  dplyr::select(gene, estimate, est_error) %>%
+  inner_join(wl_rna_0min_dat) %>%
+  inner_join(wl_trimethyl_0min_dat) %>%
+  inner_join(gene_length_dat)
+
+figs4q <- ggplot(data = wl_full_0min_dat,
+                 aes(x = gene_length, y = estimate, col = transcript)) +
+  geom_point() + 
+  scale_y_reverse(lim = c(0, -5)) +
+  xlim(0, 15000) +
+  xlab("Gene Length (bp)") +
+  ylab("GLMM Estimate LtD") +
+  scale_color_gradient(low = "yellow", high = "red") +
+  plot_theme +
+  theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "vertical") +
+  guides(color = guide_colorbar(title.position = "top", 
+                                title = "RNA Abundance (log TPM) at t = 0 min"))
+
+## ZIO beta GLMM rate errors by gene length, colored by RNA abundance for LtD (Supplemental Figure S4R)
+figs4r <- ggplot(data = wl_full_0min_dat,
+                 aes(x = gene_length, y = est_error, col = transcript)) +
+  geom_point() + 
+  ylim(0, 3) +
+  xlim(0, 15000) +
+  xlab("Gene Length (bp)") +
+  ylab("GLMM Estimate Error LtD") +
+  scale_color_gradient(low = "yellow", high = "red") +
+  plot_theme +
+  theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "vertical") +
+  guides(color = guide_colorbar(title.position = "top", 
+                                title = "RNA Abundance (log TPM) at t = 0 min"))
+
+## ZIO beta GLMM rates by mean trimethyl at time = 60, colored by RNA abundance for LtD (Supplemental Figure S4S)
+figs4s <- ggplot(data = wl_full_0min_dat,
+                 aes(x = trimethyl_value, y = estimate, col = transcript)) +
+  geom_point() + 
+  scale_y_reverse(lim = c(0, -5)) +
+  xlim(0, 1) +
+  xlab("Mean H3K36me3/H3 Signal (t = 0 min)") +
+  ylab("GLMM Estimate LtD") +
+  scale_color_gradient(low = "yellow", high = "red") +
+  plot_theme +
+  theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "vertical") +
+  guides(color = guide_colorbar(title.position = "top", 
+                                title = "RNA Abundance (log TPM) at t = 0 min"))
+
+## ZIO beta GLMM rate errors by mean trimethyl at time = 60, colored by RNA abundance for LtD (Supplemental Figure S4T)
+figs4t <- ggplot(data = wl_full_0min_dat,
+                 aes(x = trimethyl_value, y = est_error, col = transcript)) +
+  geom_point() + 
+  ylim(0, 3) +
+  xlim(0, 1) +
+  xlab("Mean H3K36me3/H3 Signal (t = 0 min)") +
+  ylab("GLMM Estimate Error LtD") +
+  scale_color_gradient(low = "yellow", high = "red") +
+  plot_theme +
+  theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "vertical") +
+  guides(color = guide_colorbar(title.position = "top", 
+                                title = "RNA Abundance (log TPM) at t = 0 min"))
+
+
+## Scatterplot of mean trimethyl for LtD - RPH1 vs mean RNA trimethyl for LtD (Supplemental Figure S6A)
+# Grab mean RNA abundances at time = 0 for LtD and time = 60 for DtL
+wl_vs_wel_trimethyl_comparison_dat <- mean_abs_trimethyl_dat %>%
+  filter(assay %in% c("writer_loss", "writer_eraser_loss",
+                      timepoint == 0))
+
+
+mean_abs_trimethyl_dat 
+
+figs4g_scatter <- ggplot(data = wa_vs_wl_rna_comparison_dat %>%
+                           filter(gene %in% high_confidence_genes),
+                         aes(y = wl_min0, x = wa_min60)) + 
+  geom_point(col = "black", alpha = 0.5) + 
+  ylab("Mean RNA Abundance (t = 0) (log TPM) LtD") + xlab("Mean RNA Abundance (t = 60) (log TPM) DtL") +
+  plot_theme 
+
+
+
 
 
 
