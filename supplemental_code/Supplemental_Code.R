@@ -478,10 +478,7 @@ fig3e_boxplot <- ggplot(data = mean_rel_trimethyl_dat %>%
 ##
 ###########################################
 ## DtL and LtD for non-relative CDS1 (Figure 4A left)
-cds1_negbin_summaries <- run_zinegbin_brms(abs_dat = abs_trimethyl_dat, 
-                                           this_gene = "YBR029C",
-                                           seed = 124)
-# Run the actual fits
+# Run the Stan model fits
 cds1_negbin_writer_add_fit <- run_single_zinegbin_brms(abs_dat = abs_trimethyl_dat, 
                                                        this_gene = "YBR029C",
                                                        this_assay = "writer_add",
@@ -511,9 +508,7 @@ fig4a_left <- ggplot(data = abs_trimethyl_dat %>%
   plot_theme
 
 ## DtL and LtD for relative CDS1 (Figure 4A right)
-cds1_beta_summaries <- run_beta_brms(rel_dat = rel_trimethyl_dat, 
-                                     this_gene = "YBR029C")
-## Run the actual fits
+## Run the Stan model fits
 cds1_beta_writer_add_fit <- run_single_beta_brms(rel_dat = rel_trimethyl_dat, 
                                                  this_gene = "YBR029C",
                                                  this_assay = "writer_add",
@@ -710,29 +705,15 @@ fig4g <- ggplot(data = wa_glmm_vs_rna_dat,
   plot_theme
 
 ## ZIO beta GLMM rates by RNA abundance for light to dark (Figure 4H)
-wl_rna_dat <- data.table::fread("Supplemental_Data6.txt", data.table = FALSE) %>%
-  dplyr::rename(gene = GENE)
-
-# Grab RNA abundance and average at time = 0
-wl_rna_0min_dat <- wl_rna_dat %>%
-  dplyr::select(gene, contains("_0min")) %>%
-  dplyr::rename(rep1 = LtD_0min_set2d_RNA_Rep1,
-                rep2 = LtD_0min_set2d_RNA_Rep2,
-                rep3 = LtD_0min_set2d_RNA_Rep3) %>%
-  gather(key = replicate, value = transcript, -gene) %>%
-  group_by(gene) %>%
-  summarize(transcript = log(mean(transcript) + 1)) %>%
-  ungroup
-
-wl_glmm_vs_rna_dat <- beta_glmm_dat %>%
-  filter(assay == "writer_loss",
-         gene %in% high_confidence_genes) %>%
+wel_glmm_vs_rna_dat <- beta_glmm_dat %>%
+  filter(assay == "writer_eraser_loss",
+         gene %in% high_confidence_genes_down_eraser) %>%
   dplyr::select(gene, estimate) %>%
   left_join(wl_rna_0min_dat)
 
-fig4h <- ggplot(data = wl_glmm_vs_rna_dat,
+figs6d <- ggplot(data = wel_glmm_vs_rna_dat,
                 aes(x = transcript, y = estimate)) +
-  geom_point(col = wl_col, alpha = 0.4) + 
+  geom_point(col = wel_col) + 
   geom_smooth(aes(y = estimate, x = transcript), method = "lm", se = FALSE, size = 2, linetype = "longdash", col = "gray") + 
   scale_y_reverse(lim = c(-1.5, -3.5)) +
   xlab("RNA Abundance (log TPM) at t = 0 min") +
@@ -887,8 +868,6 @@ fig6f <- ggplot(data = loss_compare_plot_dat %>%
 ##
 ###########################################
 ## DtL and LtD for non-relative YAR009C (Supplemental Figure S4A left)
-yar009c_negbin_summaries <- run_zinegbin_brms(abs_dat = abs_trimethyl_dat, 
-                                              this_gene = "YAR009C")
 # Run the actual fits
 yar009c_negbin_writer_add_fit <- run_single_zinegbin_brms(abs_dat = abs_trimethyl_dat, 
                                                        this_gene = "YAR009C",
@@ -930,8 +909,6 @@ figs4a_right <- ggplot(data = abs_trimethyl_dat %>%
   plot_theme
 
 ## DtL and LtD for relative YAR009C (Supplemental Figure S4B)
-yar009c_beta_summaries <- run_beta_brms(rel_dat = rel_trimethyl_dat, 
-                                        this_gene = "YAR009C")
 # Run the actual fits
 yar009c_beta_writer_add_fit <- run_single_beta_brms(rel_dat = rel_trimethyl_dat, 
                                                     this_gene = "YAR009C",
@@ -1249,22 +1226,117 @@ figs4t <- ggplot(data = wl_full_0min_dat,
   guides(color = guide_colorbar(title.position = "top", 
                                 title = "RNA Abundance (log TPM) at t = 0 min"))
 
-
+###########################################
+##        
+##          Supplemental Figure S6
+##
+###########################################
 ## Scatterplot of mean trimethyl for LtD - RPH1 vs mean RNA trimethyl for LtD (Supplemental Figure S6A)
 # Grab mean RNA abundances at time = 0 for LtD and time = 60 for DtL
 wl_vs_wel_trimethyl_comparison_dat <- mean_abs_trimethyl_dat %>%
-  filter(assay %in% c("writer_loss", "writer_eraser_loss",
-                      timepoint == 0))
+  filter(assay %in% c("writer_loss", "writer_eraser_loss"),
+                      timepoint == 0) %>%
+  dplyr::select(gene, assay, value) %>%
+  spread(key = assay, value = value)
 
-
-mean_abs_trimethyl_dat 
-
-figs4g_scatter <- ggplot(data = wa_vs_wl_rna_comparison_dat %>%
-                           filter(gene %in% high_confidence_genes),
-                         aes(y = wl_min0, x = wa_min60)) + 
-  geom_point(col = "black", alpha = 0.5) + 
-  ylab("Mean RNA Abundance (t = 0) (log TPM) LtD") + xlab("Mean RNA Abundance (t = 60) (log TPM) DtL") +
+figs6a_scatter <- ggplot(data = wl_vs_wel_trimethyl_comparison_dat %>%
+                           filter(gene %in% high_confidence_genes_down_both),
+                         aes(y = writer_eraser_loss, x = writer_loss)) + 
+  geom_point(col = "black", size = 0.9) + 
+  geom_abline(intercept = 0, slope = 1, col = "gray", linetype = "dashed") +
+  xlim(0, 1.2) + ylim(0, 1.2) +
+  ylab(expression(paste(italic("set2"), Delta, italic("rph1"), Delta, " + LANS-Set2 Mean H3K36me3/H3"))) + 
+  xlab(expression(paste(italic("set2"), Delta, " + LANS-Set2 Mean H3K36me3/H3"))) + 
   plot_theme 
+
+## LtD and LtD + RPH1delta for non-relative PCL6 (Supplemental Figure 6B)
+# Run the Stan model fits
+pcl6_negbin_writer_loss_fit <- run_single_zinegbin_brms(abs_dat = abs_trimethyl_dat, 
+                                                        this_gene = "YAL012W",
+                                                        this_assay = "writer_loss",
+                                                        seed = 125)
+pcl6_negbin_writer_eraser_loss_fit <- run_single_zinegbin_brms(abs_dat = abs_trimethyl_dat, 
+                                                               this_gene = "YAL012W",
+                                                               this_assay = "writer_eraser_loss",
+                                                               seed = 125)
+# Posterior data sets
+pcl6_negbin_writer_loss_post_dat <- conditional_effects(pcl6_negbin_writer_loss_fit, plot = FALSE)
+pcl6_negbin_writer_eraser_loss_post_dat <- conditional_effects(pcl6_negbin_writer_eraser_loss_fit, plot = FALSE)
+
+figs6b <- ggplot(data = abs_trimethyl_dat %>%
+                       filter(gene == "YAL012W",
+                              assay %in% c("writer_loss", "writer_eraser_loss")),
+                     aes(x = timepoint_min, y = value, col = assay)) +
+  geom_line(aes(group = sample_unit), linetype = "longdash") +
+  scale_color_manual(values = c(wl_col, wel_col)) +
+  geom_smooth(data = pcl6_negbin_writer_eraser_loss_post_dat$timepoint,
+              aes(x = `effect1__` * 60, y = `estimate__`/1000, ymin = `lower__`/1000, ymax = `upper__`/1000), 
+              stat = "identity", se = TRUE, col = wel_col, method = "loess", size = 2) + 
+  geom_smooth(data = pcl6_negbin_writer_loss_post_dat$timepoint, 
+              aes(x = `effect1__` * 60, y = `estimate__`/1000, ymin = `lower__`/1000, ymax = `upper__`/1000), 
+              stat = "identity", se = TRUE, col = wl_col, method = "loess", size = 2) +
+  xlim(0, 90) +
+  ylab("Mean H3K36me3/H3") + xlab("Time (minutes)") +
+  plot_theme
+
+## LtD and LtD + RPH1delta for relative PCL6 (Supplemental Figure 6C)
+## Run the Stan model fits
+pcl6_beta_writer_loss_fit <- run_single_beta_brms(rel_dat = rel_trimethyl_dat, 
+                                                  this_gene = "YAL012W",
+                                                  this_assay = "writer_loss",
+                                                  seed = 124)
+pcl6_beta_writer_eraser_loss_fit <- run_single_beta_brms(rel_dat = rel_trimethyl_dat, 
+                                                         this_gene = "YAL012W",
+                                                         this_assay = "writer_eraser_loss",
+                                                         seed = 124)
+# Posterior data sets
+pcl6_beta_writer_loss_post_dat <- conditional_effects(pcl6_beta_writer_loss_fit, plot = FALSE)
+pcl6_beta_writer_eraser_loss_post_dat <- conditional_effects(pcl6_beta_writer_eraser_loss_fit, plot = FALSE)
+
+figs6c <- ggplot(data = rel_trimethyl_dat %>%
+                        filter(gene == "YAL012W",
+                               assay %in% c("writer_loss", "writer_eraser_loss")),
+                      aes(x = timepoint_min, y = value, col = assay)) +
+  geom_line(aes(group = sample_unit), linetype = "longdash") +
+  scale_color_manual(values = c(wl_col, wel_col)) +
+  geom_smooth(data = pcl6_beta_writer_loss_post_dat$timepoint,
+              aes(x = `effect1__` * 60, y = `estimate__`, ymin = `lower__`, ymax = `upper__`), 
+              stat = "identity", se = TRUE, col = wl_col, method = "loess", size = 2) + 
+  geom_smooth(data = pcl6_beta_writer_eraser_loss_post_dat$timepoint, 
+              aes(x = `effect1__` * 60, y = `estimate__`, ymin = `lower__`, ymax = `upper__`), 
+              stat = "identity", se = TRUE, col = wel_col, method = "loess", size = 2) +
+  ylim(0, 1) + xlim(0, 90) +
+  ylab("Proportional H3K36me3/H3") + xlab("Time (minutes)") +
+  plot_theme
+
+## ZIO beta GLMM rates by RNA abundance for dark to light + RPH1detla (Supplemental Figure S6D)
+# Grab RNA abundance and average at time = 0
+wel_rna_dat <- read.table("Supplemental_Data9.txt", header = TRUE) %>%
+  dplyr::rename(gene = Gene) %>%
+  gather(key = rep, value = transcript, -gene) %>%
+  group_by(gene) %>%
+  summarize(transcript = log(mean(transcript) + 1)) %>%
+  ungroup
+
+wel_glmm_vs_rna_dat <- beta_glmm_dat %>%
+  filter(assay == "writer_eraser_loss") %>%
+  dplyr::select(gene, estimate) %>%
+  left_join(wel_rna_dat) %>%
+  filter(gene %in% high_confidence_genes_down_both)
+  
+figs6d <- ggplot(data = wel_glmm_vs_rna_dat,
+                aes(x = transcript, y = -estimate)) +
+  geom_point(col = wel_col) + 
+  geom_smooth(aes(y = -estimate, x = transcript), method = "lm", se = FALSE, size = 1, linetype = "dashed", col = "gray") + 
+  xlim(0, 10) +
+  ylim(1.5, 3.5) +
+  xlab(expression(paste(italic("rph1"), italic(Delta), " RNA Abundance (log TPM)"))) +
+  ylab("-GLMM Estimate") +
+  annotate(geom = "text", x = 9, y = 3.5, label = paste("r =", round(cor(-wel_glmm_vs_rna_dat$estimate, wel_glmm_vs_rna_dat$transcript), 3))) +
+  plot_theme
+
+
+
 
 
 
