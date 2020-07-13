@@ -51,9 +51,8 @@ plot_theme <- theme(panel.grid.major = element_blank(),
 ##          Read in and process data
 ##
 ###########################################
-### Set working directory to one containging
-# setwd("~/Documents/git_repositories/chipseq-gene-dynamics/supplemental_data/")
-# setwd("~/projects/chipseq-gene-dynamics/supplemental_data/")
+### Set working directory to one containing Supplemental Data
+setwd("<your directory>")
 
 ###  Relative h3k36 methylation data (quantiles of maximum value)
 raw_rel_h3k36_dat <- read.table("Supplemental_Data1.txt")
