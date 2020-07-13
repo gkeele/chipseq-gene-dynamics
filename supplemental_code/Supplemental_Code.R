@@ -387,7 +387,7 @@ fig3b_lines <- ggplot(data = mean_abs_h3k36_dat %>%
                 aes(x = timepoint * 60, y = value)) + 
   geom_line(aes(group = gene), alpha = 0.05, col = wa_col) + 
   ylim(0, 1) +
-  xlab("Time (minutes)") + ylab("Mean H3K36me3/H3") +
+  xlab("Time (minutes)") + ylab("Mean H3K36me3/H3 (normalized ChIP signal)") +
   plot_theme
 
 outlier_mean_abs_h3k36_dat <- mean_abs_h3k36_dat %>%
@@ -403,7 +403,7 @@ fig3b_boxplot <- ggplot(data = mean_abs_h3k36_dat %>%
                filter(assay == "writer_add",
                       outlier), position = position_jitter(w = 0.1, h = 0), size = 0.33) +
   ylim(0, 1) +
-  xlab("Time (minutes)") + ylab("Mean H3K36me3/H3") +
+  xlab("Time (minutes)") + ylab("Mean H3K36me3/H3\n(normalized ChIP signal)") +
   plot_theme
 # fig3b_lines and fig3b_boxplot overlaid in manuscript
 
@@ -413,7 +413,7 @@ fig3d_lines <- ggplot(data = mean_abs_h3k36_dat %>%
                       aes(x = timepoint * 60, y = value)) + 
   geom_line(aes(group = gene), alpha = 0.05, col = wl_col) + 
   ylim(0, 1) +
-  xlab("Time (minutes)") + ylab("Mean H3K36me3/H3") +
+  xlab("Time (minutes)") + ylab("Mean H3K36me3/H3\n(normalized ChIP signal)") +
   plot_theme
 
 fig3c_boxplot <- ggplot(data = mean_abs_h3k36_dat %>%
@@ -425,7 +425,7 @@ fig3c_boxplot <- ggplot(data = mean_abs_h3k36_dat %>%
                filter(assay == "writer_loss",
                       outlier), position = position_jitter(w = 0.1, h = 0), size = 0.33) +
   ylim(0, 1) +
-  xlab("Time (minutes)") + ylab("Mean H3K36me3/H3") +
+  xlab("Time (minutes)") + ylab("Mean H3K36me3/H3\n(normalized ChIP signal)") +
   plot_theme
 # fig3c_lines and fig3c_boxplot overlaid in manuscript
 
@@ -435,8 +435,9 @@ fig3d_lines <- ggplot(data = mean_rel_h3k36_dat %>%
                       aes(x = timepoint * 60, y = value)) + 
   geom_line(aes(group = gene), alpha = 0.05, col = wa_col) + 
   ylim(0, 1) +
-  xlab("Time (minutes)") + ylab("Proportional H3K36me3/H3") +
+  xlab("Time (minutes)") + ylab("Proportional H3K36me3/H3\n(as a fraction of each gene max)") +
   plot_theme
+
 outlier_mean_rel_h3k36_dat <- mean_rel_h3k36_dat %>%
   group_by(assay, factor(timepoint * 60)) %>%
   mutate(outlier = value > quantile(value, probs = 0.75, na.rm = TRUE) + 1.5 * IQR(value, na.rm = TRUE) | value < quantile(value, probs = 0.25, na.rm = TRUE) - 1.5 * IQR(value, na.rm = TRUE)) %>%
@@ -450,7 +451,7 @@ fig3d_boxplot <- ggplot(data = mean_rel_h3k36_dat %>%
                filter(assay == "writer_add",
                       outlier), position = position_jitter(w = 0.1, h = 0), size = 0.33) +
   ylim(0, 1) +
-  xlab("Time (minutes)") + ylab("Proportional H3K36me3/H3") +
+  xlab("Time (minutes)") + ylab("Proportional H3K36me3/H3\n(as a fraction of each gene max)") +
   plot_theme
 # fig3d_lines and fig3d_boxplot overlaid in manuscript
 
@@ -460,7 +461,7 @@ fig3e_lines <- ggplot(data = mean_rel_h3k36_dat %>%
                       aes(x = timepoint * 60, y = value)) + 
   geom_line(aes(group = gene), alpha = 0.05, col = wl_col) + 
   ylim(0, 1) +
-  xlab("Time (minutes)") + ylab("Mean H3K36me3/H3") +
+  xlab("Time (minutes)") + ylab("Mean H3K36me3/H3\n(as a fraction of each gene max)") +
   plot_theme
 fig3e_boxplot <- ggplot(data = mean_rel_h3k36_dat %>%
                           filter(assay == "writer_loss"), 
@@ -471,7 +472,7 @@ fig3e_boxplot <- ggplot(data = mean_rel_h3k36_dat %>%
                filter(assay == "writer_loss",
                       outlier), position = position_jitter(w = 0.1, h = 0), size = 0.33) +
   ylim(0, 1) +
-  xlab("Time (minutes)") + ylab("Mean H3K36me3/H3") +
+  xlab("Time (minutes)") + ylab("Mean H3K36me3/H3\n(as a fraction of each gene max)") +
   plot_theme
 # fig3e_lines and fig3e_boxplot overlaid in manuscript
 
@@ -499,16 +500,21 @@ fig4a_left <- ggplot(data = abs_h3k36_dat %>%
                              assay %in% c("writer_add", "writer_loss")),
                     aes(x = timepoint_min, y = value, col = assay)) +
   geom_line(aes(group = sample_unit), linetype = "dashed") +
-  scale_color_manual(values = c(wl_col, wa_col)) +
-  geom_smooth(data = cds1_negbin_writer_loss_post_dat$timepoint,
-              aes(x = `effect1__` * 60, y = `estimate__`/1000, ymin = `lower__`/1000, ymax = `upper__`/1000), 
-              stat = "identity", se = TRUE, col = wl_col, method = "loess", size = 2) + 
+  scale_color_manual(values = c(wl_col, wa_col), labels = c("Light to Dark", "Dark to Light")) +
   geom_smooth(data = cds1_negbin_writer_add_post_dat$timepoint, 
               aes(x = `effect1__` * 60, y = `estimate__`/1000, ymin = `lower__`/1000, ymax = `upper__`/1000), 
               stat = "identity", se = TRUE, col = wa_col, method = "loess", size = 2) +
+  geom_smooth(data = cds1_negbin_writer_loss_post_dat$timepoint,
+              aes(x = `effect1__` * 60, y = `estimate__`/1000, ymin = `lower__`/1000, ymax = `upper__`/1000), 
+              stat = "identity", se = TRUE, col = wl_col, method = "loess", size = 2) + 
   xlim(0, 90) +
-  ylab("Mean H3K36me3/H3") + xlab("Time (minutes)") +
-  plot_theme
+  ylim(0, 0.5) +
+  ylab("Mean H3K36me3/H3\n(normalized ChIP signal)") + xlab("Time (minutes)") +
+  annotate(geom = "text", x = 85, y = 0.5, label = "CDS1") +
+  plot_theme +
+  theme(legend.position = c(0.2, 0.9)) +
+  labs(col = expression(paste(bolditalic("set2"), Delta, bold(" + LANS-Set2:")))) +
+  guides(color = guide_legend(override.aes = list(size = 1.5, alpha = 1)))
 
 ## DtL and LtD for relative CDS1 (Figure 4A right)
 ## Run the Stan model fits
@@ -529,7 +535,7 @@ fig4a_right <- ggplot(data = rel_h3k36_dat %>%
                              assay %in% c("writer_add", "writer_loss")),
                     aes(x = timepoint_min, y = value, col = assay)) +
   geom_line(aes(group = sample_unit), linetype = "dashed") +
-  scale_color_manual(values = c(wl_col, wa_col)) +
+  scale_color_manual(values = c(wl_col, wa_col), labels = c("Light to Dark", "Dark to Light")) +
   geom_smooth(data = cds1_beta_writer_loss_post_dat$timepoint,
               aes(x = `effect1__` * 60, y = `estimate__`, ymin = `lower__`, ymax = `upper__`), 
               stat = "identity", se = TRUE, col = wl_col, method = "loess", size = 2) + 
@@ -537,8 +543,12 @@ fig4a_right <- ggplot(data = rel_h3k36_dat %>%
               aes(x = `effect1__` * 60, y = `estimate__`, ymin = `lower__`, ymax = `upper__`), 
               stat = "identity", se = TRUE, col = wa_col, method = "loess", size = 2) +
   ylim(0, 1) + xlim(0, 90) +
-  ylab("Proportional H3K36me3/H3") + xlab("Time (minutes)") +
-  plot_theme
+  ylab("Proportional H3K36me3/H3\n(as a fraction of each gene max)") + xlab("Time (minutes)") +
+  annotate(geom = "text", x = 85, y = 1, label = "CDS1") +
+  plot_theme +
+  theme(legend.position = c(0.75, 0.15)) +
+  labs(col = expression(paste(bolditalic("set2"), Delta, bold(" + LANS-Set2:")))) +
+  guides(color = guide_legend(override.aes = list(size = 1.5, alpha = 1)))
 
 ## Venn diagram of high confidence genes under DtL and LtD (Figure 4B)
 # ZOI Beta GLMM rate data
@@ -554,12 +564,12 @@ high_confidence_genes_up <- beta_glmm_dat %>%
          category == "positive") %>%
   pull(gene)
 high_confidence_genes <- intersect(high_confidence_genes_down, high_confidence_genes_up)
-venn_list <- list("Set2 inactivation" = high_confidence_genes_down,
-                  "Set2 activation" = high_confidence_genes_up)
+venn_list <- list("Light to Dark" = high_confidence_genes_down,
+                  "Dark to Light" = high_confidence_genes_up)
 fig4b <- compute.Venn(Venn(venn_list))
 
 # Adjusting features of the Venn diagram
-gp <- VennThemes(fig4b_venn)
+gp <- VennThemes(fig4b)
 gp$Set$Set1$col <- wl_col
 gp$FaceText$`10`$col <- wl_col
 gp$SetText$Set1$col <- wl_col
@@ -567,12 +577,14 @@ gp$Set$Set2$col <- wa_col
 gp$FaceText$`01`$col <- wa_col
 gp$SetText$Set2$col <- wa_col
 
-SetLabels <- VennGetSetLabels(fig4b_venn)
-SetLabels[SetLabels$Label == "Set2 inactivation", "x"] <- -40
-SetLabels[SetLabels$Label == "Set2 activation", "x"] <- 40
-fig4b_venn <- VennSetSetLabels(fig4b_venn, SetLabels)
+SetLabels <- VennGetSetLabels(fig4b)
+SetLabels[SetLabels$Label == "Light to Dark", "x"] <- -50
+SetLabels[SetLabels$Label == "Dark to Light", "x"] <- 50
+SetLabels[SetLabels$Label == "Light to Dark", "y"] <- 30
+SetLabels[SetLabels$Label == "Dark to Light", "y"] <- -40
+fig4b <- VennSetSetLabels(fig4b, SetLabels)
 
-plot(fig4b_venn, gp = gp, show = list(Faces = FALSE, Universe = FALSE))
+plot(fig4b, gp = gp, show = list(Faces = FALSE, Universe = FALSE))
 
 ## Comparison of ZIO beta GLMM rates to ZI negbin GLMM rates (Figure 4C)
 # ZI Negbin GLMM rate data
@@ -591,33 +603,49 @@ compare_rate_dat <- inner_join(beta_glmm_dat %>%
     dplyr::select(gene, assay, estimate, category) %>%
     dplyr::rename(negbin_estimate = estimate,
                   negbin_category = category)) %>%
-  mutate(category = ifelse(beta_category != "zero" & negbin_category != "zero", "nonzero", "zero"))
+  mutate(category = ifelse(beta_category != "zero" & negbin_category != "zero", "nonzero", "zero"),
+         assay = factor(assay, levels = c("writer_loss", "writer_add")))
   
 fig4c <- ggplot(data = compare_rate_dat,
                 aes(x = negbin_estimate, y = beta_estimate, col = assay, shape = category)) +
   geom_point() +
-  scale_color_manual(values = c(wa_col, wl_col)) +
-  scale_shape_manual(values = c(20, 21)) +
+  scale_color_manual(values = c(wl_col, wa_col), labels = c("Light to Dark", "Dark to Light")) +
+  scale_shape_manual(values = c(20, 21), labels = c("High Confidence", "Low Confidence")) +
   xlim(-2, 3) +
   ylim(-4, 8) + 
-  ylab("Proportional H3K36me3/H3 GLMM Estimate") +
-  xlab("Mean H3K36me3/H3 GLMM Estimate") +
-  plot_theme
+  ylab("Proportional H3K36me3/H3\nGLMM Estimate") +
+  xlab("Mean H3K36me3/H3\nGLMM Estimate") +
+  plot_theme + 
+  theme(legend.position = c(0.8, 0.3)) +
+  labs(col = expression(paste(bolditalic("set2"), Delta, bold(" + LANS-Set2:"))), shape = "")
 
 ## Histogram of ZIO beta GLMM rates of overlapping high confidence genes (Figure 4D)
 fig4d <- ggplot(data = beta_glmm_dat %>%
                   filter(gene %in% high_confidence_genes,
-                         assay %in% c("writer_add", "writer_loss")),
+                         assay %in% c("writer_add", "writer_loss")) %>%
+                  mutate(assay = factor(assay, levels = c("writer_loss", "writer_add"))),
                 aes(x = estimate, fill = assay)) + 
   geom_histogram(col = "black", bins = 90, size = 0.5) + 
   geom_vline(xintercept = 0, linetype = "dashed", col = "gray") +
-  scale_fill_manual(values = c(wa_col, wl_col)) +
+  scale_fill_manual(values = c(wl_col, wa_col), labels = c("Light to Dark", "Dark to Light")) +
   ylab("Frequency") + xlab("GLMM Estimate") +
   plot_theme +
   theme(legend.position = c(0.6, 0.5)) +
-  labs(fill = "Set2 assay")
+  labs(fill = expression(paste(bolditalic("set2"), Delta, bold(" + LANS-Set2:"))))
 
 ## ZIO beta GLMM rates by mean h3k36 at time = 60, colored by RNA abundance for DtL (Figure 4E)
+# Grab RNA abundance and average at time = 60
+wa_rna_dat <- data.table::fread("Supplemental_Data5.txt", data.table = FALSE) %>%
+  dplyr::rename(gene = GENE)
+wa_rna_60min_dat <- wa_rna_dat %>%
+  dplyr::select(gene, contains("60min")) %>%
+  dplyr::rename(rep1 = DtL_60min_set2d_RNA_Rep1,
+                rep2 = DtL_60min_set2d_RNA_Rep2) %>%
+  gather(key = replicate, value = transcript, -gene) %>%
+  group_by(gene) %>%
+  summarize(transcript = log(mean(transcript) + 1)) %>%
+  ungroup
+
 # Grab h3k36 abundance and average at time = 60
 wa_h3k36_60min_dat <- abs_h3k36_dat %>%
   filter(assay == "writer_add",
@@ -639,15 +667,30 @@ fig4e <- ggplot(data = wa_glmm_vs_h3k36_dat,
   geom_point() + 
   ylim(0, 10) +
   xlim(0, 1) +
-  xlab("Mean normalized H3K36me3/H3 ChIP signal") +
+  xlab("Mean normalized H3K36me3/H3\nChIP signal") +
   ylab("GLMM Estimate") +
   scale_color_gradient(low = "yellow", high = "red") +
   plot_theme +
   theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "horizontal") +
   guides(color = guide_colorbar(title.position = "top", 
-                                title = "RNA Abundance (log TPM) at t = 60 min"))
+                                title = "RNA Abundance\n(log TPM) at t = 60 min")) +
+  annotate(geom = "text", x = 0.25, y = 2, label = expression(paste(bolditalic("set2"), Delta, bold(" + LANS-Set2:"), " Dark -> Light")))
 
 ## ZIO beta GLMM rates by mean h3k36 at time = 0, colored by RNA abundance for LtD (Figure 4F)
+wl_rna_dat <- data.table::fread("Supplemental_Data6.txt", data.table = FALSE) %>%
+  dplyr::rename(gene = GENE)
+
+# Grab RNA abundance and average at time = 0
+wl_rna_0min_dat <- wl_rna_dat %>%
+  dplyr::select(gene, contains("_0min")) %>%
+  dplyr::rename(rep1 = LtD_0min_set2d_RNA_Rep1,
+                rep2 = LtD_0min_set2d_RNA_Rep2,
+                rep3 = LtD_0min_set2d_RNA_Rep3) %>%
+  gather(key = replicate, value = transcript, -gene) %>%
+  group_by(gene) %>%
+  summarize(transcript = log(mean(transcript) + 1)) %>%
+  ungroup
+
 # Grab h3k36 abundance and average at time = 0
 wl_h3k36_0min_dat <- abs_h3k36_dat %>%
   filter(assay == "writer_loss",
@@ -667,7 +710,7 @@ wl_glmm_vs_h3k36_dat <- beta_glmm_dat %>%
 fig4f <- ggplot(data = wl_glmm_vs_h3k36_dat,
                 aes(x = h3k36_value, y = estimate, col = transcript)) +
   geom_point() + 
-  xlab("Mean normalized H3K36me3/H3 ChIP signal") +
+  xlab("Mean normalized H3K36me3/H3\nChIP signal") +
   ylab("GLMM Estimate") +
   scale_y_reverse(lim = c(0, -5)) +
   scale_color_gradient(low = "yellow", high = "red") +
@@ -675,22 +718,10 @@ fig4f <- ggplot(data = wl_glmm_vs_h3k36_dat,
   xlim(0, 1) +
   theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "horizontal") +
   guides(color = guide_colorbar(title.position = "top", 
-                                title = "RNA Abundance (log TPM) at t = 0 min"))
+                                title = "RNA Abundance\n(log TPM) at t = 0 min")) +
+  annotate(geom = "text", x = 0.25, y = -1, label = expression(paste(bolditalic("set2"), Delta, bold(" + LANS-Set2:"), " Light to Dark")))
 
 ## ZIO beta GLMM rates by RNA abundance for dark to light (Figure 4G)
-wa_rna_dat <- data.table::fread("Supplemental_Data5.txt", data.table = FALSE) %>%
-  dplyr::rename(gene = GENE)
-
-# Grab RNA abundance and average at time = 60
-wa_rna_60min_dat <- wa_rna_dat %>%
-  dplyr::select(gene, contains("60min")) %>%
-  dplyr::rename(rep1 = DtL_60min_set2d_RNA_Rep1,
-                rep2 = DtL_60min_set2d_RNA_Rep2) %>%
-  gather(key = replicate, value = transcript, -gene) %>%
-  group_by(gene) %>%
-  summarize(transcript = log(mean(transcript) + 1)) %>%
-  ungroup
-
 wa_glmm_vs_rna_dat <- beta_glmm_dat %>%
   filter(assay == "writer_add",
          gene %in% high_confidence_genes) %>%
@@ -700,43 +731,31 @@ wa_glmm_vs_rna_dat <- beta_glmm_dat %>%
 fig4g <- ggplot(data = wa_glmm_vs_rna_dat,
                 aes(x = transcript, y = estimate)) +
   geom_point(col = wa_col, alpha = 0.4) + 
-  geom_smooth(aes(y = estimate, x = transcript), method = "lm", se = FALSE, size = 2, linetype = "dashed", col = "gray") + 
+  geom_smooth(aes(y = estimate, x = transcript), method = "lm", se = FALSE, size = 1.5, linetype = "dashed", col = "gray") + 
   ylim(3, 7) +
   xlab("RNA Abundance (log TPM) at t = 60 min") +
   ylab("GLMM Estimate") +
   annotate(geom = "text", x = 9, y = 7, label = paste("r =", round(cor(wa_glmm_vs_rna_dat$estimate, wa_glmm_vs_rna_dat$transcript), 3))) +
-  plot_theme
+  plot_theme +
+  annotate(geom = "text", x = 3, y = 7, label = expression(paste(bolditalic("set2"), Delta, bold(" + LANS-Set2:"), " Dark -> Light")))
 
 ## ZIO beta GLMM rates by RNA abundance for light to dark (Figure 4H)
-wl_rna_dat <- data.table::fread("Supplemental_Data6.txt", data.table = FALSE) %>%
-  dplyr::rename(gene = GENE)
-
-# Grab RNA abundance and average at time = 0
-wl_rna_0min_dat <- wl_rna_dat %>%
-  dplyr::select(gene, contains("_0min")) %>%
-  dplyr::rename(rep1 = LtD_0min_set2d_RNA_Rep1,
-                rep2 = LtD_0min_set2d_RNA_Rep2,
-                rep3 = LtD_0min_set2d_RNA_Rep3) %>%
-  gather(key = replicate, value = transcript, -gene) %>%
-  group_by(gene) %>%
-  summarize(transcript = log(mean(transcript) + 1)) %>%
-  ungroup
-
-wel_glmm_vs_rna_dat <- beta_glmm_dat %>%
-  filter(assay == "writer_eraser_loss",
-         gene %in% high_confidence_genes_down_eraser) %>%
+wl_glmm_vs_rna_dat <- beta_glmm_dat %>%
+  filter(assay == "writer_loss",
+         gene %in% high_confidence_genes) %>%
   dplyr::select(gene, estimate) %>%
   left_join(wl_rna_0min_dat)
 
-fig4h <- ggplot(data = wel_glmm_vs_rna_dat,
+fig4h <- ggplot(data = wl_glmm_vs_rna_dat,
                 aes(x = transcript, y = estimate)) +
   geom_point(col = wl_col, alpha = 0.4) + 
-  geom_smooth(aes(y = estimate, x = transcript), method = "lm", se = FALSE, size = 2, linetype = "dashed", col = "gray") + 
+  geom_smooth(aes(y = estimate, x = transcript), method = "lm", se = FALSE, size = 1.5, linetype = "dashed", col = "gray") + 
   scale_y_reverse(lim = c(-1.5, -3.5)) +
   xlab("RNA Abundance (log TPM) at t = 0 min") +
-  ylab("-GLMM Estimate") +
+  ylab("GLMM Estimate") +
   annotate(geom = "text", x = 0.5, y = -3.5, label = paste("r =", round(cor(wl_glmm_vs_rna_dat$estimate, wl_glmm_vs_rna_dat$transcript), 3))) +
-  plot_theme
+  plot_theme +
+  annotate(geom = "text", x = 5, y = -1.75, label = expression(paste(bolditalic("set2"), Delta, bold(" + LANS-Set2:"), " Light to Dark")))
 
 
 ###########################################
@@ -750,9 +769,13 @@ fig6b_lines <- ggplot(data = mean_abs_h3k36_dat %>%
                         mutate(unit = paste(gene, assay)), 
                       aes(x = timepoint * 60, y = value, col = assay)) + 
   geom_line(aes(group = unit), alpha = 0.05) + 
-  xlab("Time (minutes)") + ylab("Mean H3K36me3/H3") +
-  scale_color_manual(values = c(wl_col, wel_col)) +
+  xlab("Time (minutes)") + ylab("Mean H3K36me3/H3\n(normalized ChIP signal)") +
+  scale_color_manual(values = c(wl_col, wel_col), 
+                     labels = c(expression(paste(italic("set2"), Delta, " + LANS-Set2")),
+                                expression(paste(italic("set2"), Delta, italic("rph1"), Delta, " + LANS-Set2")))) +
   theme(legend.position = c(x = 0.5, y = 0.9)) +
+  guides(color = guide_legend(override.aes = list(size = 1.5, alpha = 1))) +
+  labs(color = "") +
   plot_theme
 
 fig6b_boxplot <- ggplot(data = mean_abs_h3k36_dat %>%
@@ -767,9 +790,13 @@ fig6b_boxplot <- ggplot(data = mean_abs_h3k36_dat %>%
                       outlier),  
              position = position_jitterdodge(jitter.width = 0.1, jitter.height = 0, dodge.width = 0.5), size = 0.33) +
   ylim(0, 1) +
-  xlab("Time (minutes)") + ylab("Mean H3K36me3/H3") +
-  scale_color_manual(values = c("gray60", "black")) +
+  xlab("Time (minutes)") + ylab("Mean H3K36me3/H3\n(normalized ChIP signal)") +
+  scale_color_manual(values = c(wl_col, wel_col), 
+                     labels = c(expression(paste(italic("set2"), Delta, " + LANS-Set2")),
+                                expression(paste(italic("set2"), Delta, italic("rph1"), Delta, " + LANS-Set2")))) +
   theme(legend.position = c(x = 0.5, y = 0.9)) +
+  guides(color = guide_legend(override.aes = list(size = 1.5, alpha = 1))) +
+  labs(color = "") +
   plot_theme
 # fig6b_lines and fig6b_boxplot overlaid in manuscript
 
@@ -779,9 +806,13 @@ fig6c_lines <- ggplot(data = mean_rel_h3k36_dat %>%
                         mutate(unit = paste(gene, assay)), 
                       aes(x = timepoint * 60, y = value, col = assay)) + 
   geom_line(aes(group = unit), alpha = 0.05) + 
-  xlab("Time (minutes)") + ylab("Proportional H3K36me3/H3") +
-  scale_color_manual(values = c(wl_col, wel_col)) +
-  theme(legend.position = c(x = 0.5, y = 0.9)) +
+  xlab("Time (minutes)") + ylab("Proportional H3K36me3/H3\n(as a fraction of each gene max)") +
+  scale_color_manual(values = c(wl_col, wel_col), 
+                     labels = c(expression(paste(italic("set2"), Delta, " + LANS-Set2")),
+                                expression(paste(italic("set2"), Delta, italic("rph1"), Delta, " + LANS-Set2")))) +
+  theme(legend.position = c(x = 0.2, y = 0.2)) +
+  guides(color = guide_legend(override.aes = list(size = 1.5, alpha = 1))) +
+  labs(color = "") +
   plot_theme
 
 fig6c_boxplot <- ggplot(data = mean_rel_h3k36_dat %>%
@@ -796,9 +827,13 @@ fig6c_boxplot <- ggplot(data = mean_rel_h3k36_dat %>%
                       outlier),  
              position = position_jitterdodge(jitter.width = 0.1, jitter.height = 0, dodge.width = 0.5), size = 0.33) +
   ylim(0, 1) +
-  xlab("Time (minutes)") + ylab("Proportional H3K36me3/H3") +
-  scale_color_manual(values = c("gray60", "black")) +
-  theme(legend.position = c(x = 0.25, y = 0.15)) +
+  xlab("Time (minutes)") + ylab("Proportional H3K36me3/H3\n(as a fraction of each gene max)") +
+  scale_color_manual(values = c(wl_col, wel_col), 
+                     labels = c(expression(paste(italic("set2"), Delta, " + LANS-Set2")),
+                                expression(paste(italic("set2"), Delta, italic("rph1"), Delta, " + LANS-Set2")))) +
+  theme(legend.position = c(x = 0.2, y = 0.2)) +
+  guides(color = guide_legend(override.aes = list(size = 1.5, alpha = 1))) +
+  labs(color = "") +
   plot_theme
 # fig6c_lines and fig6c_boxplot overlaid in manuscript
 
@@ -872,7 +907,7 @@ fig6f <- ggplot(data = loss_compare_plot_dat %>%
   geom_boxplot(aes(x = time, y = Estimate), outlier.alpha = 0, color = wel_col, size = 0.7, alpha = 0.3) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "black", size = 1) +
   scale_color_grey(guide = FALSE) + 
-  ylab("WEL - WL Timepoint Effects") + 
+  ylab(expression(paste(italic("set2"), Delta, italic("rph1"), Delta, " - ", italic("set2"), Delta, " Timepoint Effects"))) +
   xlab("Timepoint (min)") +
   ylim(-5, 5) + 
   stat_summary(fun = mean, geom="line", aes(group=1), col = wel_col, size = 1) + 
@@ -903,27 +938,37 @@ figs4a_left <- ggplot(data = abs_h3k36_dat %>%
                               assay %in% c("writer_add", "writer_loss")),
                      aes(x = timepoint_min, y = value, col = assay)) +
   geom_line(aes(group = sample_unit), linetype = "dashed") +
-  scale_color_manual(values = c(wl_col, wa_col)) +
+  scale_color_manual(values = c(wl_col, wa_col), labels = c("Light to Dark", "Dark to Light")) +
   geom_smooth(data = yar009c_negbin_writer_add_post_dat$timepoint, 
               aes(x = `effect1__` * 60, y = `estimate__`/1000, ymin = `lower__`/1000, ymax = `upper__`/1000), 
               stat = "identity", se = TRUE, col = wa_col, method = "loess", size = 2) +
   xlim(0, 90) +
   ylim(0, 1) +
-  ylab("Mean H3K36me3/H3") + xlab("Time (minutes)") +
-  plot_theme
+  ylab("Mean H3K36me3/H3\n(normalized ChIP signal)") + xlab("Time (minutes)") +
+  annotate(geom = "text", x = 85, y = 1, label = "YAR009C") +
+  plot_theme +
+  theme(legend.position = c(0.8, 0.4)) +
+  labs(col = expression(paste(bolditalic("set2"), Delta, bold(" + LANS-Set2:")))) +
+  guides(color = guide_legend(override.aes = list(size = 1.5, alpha = 1)))
 
 ## LtD for non-relative YAR009C blown up (Supplemental Figure S4A right)
 figs4a_right <- ggplot(data = abs_h3k36_dat %>%
                         filter(gene == "YAR009C",
                                assay %in% c("writer_loss")),
                       aes(x = timepoint_min, y = value, col = assay)) +
-  geom_smooth(data = yar009c_negbin_writer_loss_post_dat$timepoint, 
-              aes(x = `effect1__` * 60, y = `estimate__`/1000, ymin = `lower__`/1000, ymax = `upper__`/1000), 
-              stat = "identity", se = TRUE, col = wl_col, method = "loess", size = 2) +
+  geom_smooth(data = yar009c_negbin_writer_loss_post_dat$timepoint %>%
+                mutate(assay = "writer_loss"), 
+              aes(x = `effect1__` * 60, y = `estimate__`/1000, ymin = `lower__`/1000, ymax = `upper__`/1000, col = assay), 
+            stat = "identity", se = TRUE, method = "loess", size = 2) +
+  scale_color_manual(values = wl_col, labels = "Light to Dark") +
   xlim(0, 90) +
   ylim(0, 25) +
-  ylab("Mean H3K36me3/H3") + xlab("Time (minutes)") +
-  plot_theme
+  ylab("Mean H3K36me3/H3\n(normalized ChIP signal)") + xlab("Time (minutes)") +
+  annotate(geom = "text", x = 85, y = 25, label = "YAR009C") +
+  plot_theme +
+  theme(legend.position = c(0.25, 0.9)) +
+  labs(col = expression(paste(bolditalic("set2"), Delta, bold(" + LANS-Set2:")))) +
+  guides(color = guide_legend(override.aes = list(size = 1.5, alpha = 1)))
 
 ## DtL and LtD for relative YAR009C (Supplemental Figure S4B)
 # Run the actual fits
@@ -944,7 +989,7 @@ figs4b <- ggplot(data = rel_h3k36_dat %>%
                                assay %in% c("writer_add", "writer_loss")),
                       aes(x = timepoint_min, y = value, col = assay)) +
   geom_line(aes(group = sample_unit), linetype = "dashed") +
-  scale_color_manual(values = c(wl_col, wa_col)) +
+  scale_color_manual(values = c(wl_col, wa_col), labels = c("Light to Dark", "Dark to Light")) +
   geom_smooth(data = yar009c_beta_writer_add_post_dat$timepoint, 
               aes(x = `effect1__` * 60, y = `estimate__`, ymin = `lower__`, ymax = `upper__`), 
               stat = "identity", se = TRUE, col = wa_col, method = "loess", size = 2) +
@@ -953,42 +998,53 @@ figs4b <- ggplot(data = rel_h3k36_dat %>%
               stat = "identity", se = TRUE, col = wl_col, method = "loess", size = 2) +
   xlim(0, 90) +
   ylim(0, 1) +
-  ylab("Proportional H3K36me3/H3") + xlab("Time (minutes)") +
-  plot_theme
+  ylab("Proportional H3K36me3/H3\n(as a fraction of gen max)") + xlab("Time (minutes)") +
+  annotate(geom = "text", x = 85, y = 0.9, label = "YAR009C") +
+  plot_theme +
+  theme(legend.position = c(0.8, 0.4)) +
+  labs(col = expression(paste(bolditalic("set2"), Delta, bold(" + LANS-Set2:")))) +
+  guides(color = guide_legend(override.aes = list(size = 1.5, alpha = 1)))
 
 ## Comparison of ZIO beta GLMM rates to their error for all genes (Supplemental Figure S4C)
 figs4c <- ggplot(data = beta_glmm_dat %>%
                    filter(assay %in% c("writer_loss", "writer_add")) %>%
-                   mutate(category = ifelse(category != "zero", "nonzero", "zero")),
+                   mutate(assay = factor(assay, levels = c("writer_loss", "writer_add")),
+                          category = ifelse(category != "zero", "nonzero", "zero")),
                  aes(x = est_error, y = estimate, col = assay, shape = category)) +
   geom_point() +
-  scale_color_manual(values = c(wa_col, wl_col)) +
-  scale_shape_manual(values = c(20, 21)) +
-  ylab("Proportional H3K36me3/H3 GLMM Estimate") +
-  xlab("Proportional H3K36me3/H3 GLMM Estimate Error") +
-  plot_theme
+  scale_color_manual(values = c(wa_col, wl_col), labels = c("Light to Dark", "Dark to Light")) +
+  scale_shape_manual(values = c(20, 21), labels = c("High Confidence", "Low Confidence")) +
+  ylab("Proportional H3K36me3/H3\nGLMM Estimate") +
+  xlab("Proportional H3K36me3/H3\nGLMM Estimate Error") +
+  plot_theme +
+  theme(legend.position = c(0.8, 0.3)) +
+  labs(col = expression(paste(bolditalic("set2"), Delta, bold(" + LANS-Set2:"))), shape = "")
 
 ## Comparison of ZIO beta GLMM rates to ZI negbin GLMM rates, all genes included (Supplemental Figure S4D)
-figs4d <- ggplot(data = compare_rate_dat,
+figs4d <- ggplot(data = compare_rate_dat %>%
+                   mutate(assay = factor(assay, levels = c("writer_loss", "writer_add"))),
                  aes(x = negbin_estimate, y = beta_estimate, col = assay, shape = category)) +
   geom_point() +
-  scale_color_manual(values = c(wa_col, wl_col)) +
-  scale_shape_manual(values = c(20, 21)) +
-  ylab("Proportional H3K36me3/H3 GLMM Estimate") +
-  xlab("Mean H3K36me3/H3 GLMM Estimate") +
-  plot_theme
+  scale_color_manual(values = c(wl_col, wa_col), labels = c("Light to Dark", "Dark to Light")) +
+  scale_shape_manual(values = c(20, 21), labels = c("High Confidence", "Low Confidence")) +
+  ylab("Proportional H3K36me3/H3\nGLMM Estimate") +
+  xlab("Mean H3K36me3/H3\nGLMM Estimate") +
+  plot_theme +
+  theme(legend.position = c(0.8, 0.3)) +
+  labs(col = expression(paste(bolditalic("set2"), Delta, bold(" + LANS-Set2:"))), shape = "")
 
 ## Histogram of ZIO beta GLMM rates of overlapping genes (Supplemental Figure S4E)
 figs4e <- ggplot(data = beta_glmm_dat %>%
-                   filter(assay %in% c("writer_add", "writer_loss")),
+                   filter(assay %in% c("writer_add", "writer_loss")) %>%
+                   mutate(assay = factor(assay, levels = c("writer_loss", "writer_add"))),
                  aes(x = estimate, fill = assay)) + 
   geom_histogram(col = "black", bins = 50, size = 0.5) + 
   geom_vline(xintercept = 0, linetype = "dashed", col = "gray") +
-  scale_fill_manual(values = c(wa_col, wl_col)) +
+  scale_fill_manual(values = c(wl_col, wa_col), labels = c("Light to Dark", "Dark to Light")) +
   ylab("Frequency") + xlab("GLMM Estimate") +
   plot_theme +
   theme(legend.position = c(0.6, 0.5)) +
-  labs(fill = "Set2 assay")
+  labs(fill = expression(paste(bolditalic("set2"), Delta, bold(" + LANS-Set2:"))))
 
 ## Scatterplot of ZIO beta GLMM rates for LtD vs DtL of high confidence genes (Supplemental Figure S4F)
 wa_vs_wl_beta_dat <- beta_glmm_dat %>%
@@ -1002,7 +1058,7 @@ figs4f <- ggplot(data = wa_vs_wl_beta_dat,
   geom_point(col = "black", alpha = 0.5) + 
   geom_smooth(method = "lm", se = FALSE, linetype = "dashed", col = "gray") +
   scale_y_reverse() +
-  ylab("Proportional H3K36me3/H3 GLMM Estimate LtD") + xlab("Proportional H3K36me3/H3 GLMM Estimate DtL") +
+  ylab("Proportional H3K36me3/H3\nGLMM Estimate\nLight to Dark") + xlab("Proportional H3K36me3/H3\nGLMM Estimate\nDark to Light") +
   annotate(geom = "text", x = 3.8, y = -3.4, label = paste("r =", round(cor(wa_vs_wl_beta_dat$writer_add, wa_vs_wl_beta_dat$writer_loss), 3))) +
   plot_theme 
 
@@ -1017,7 +1073,7 @@ figs4g <- ggplot(data = wa_vs_wl_rna_comparison_dat %>%
                    filter(gene %in% high_confidence_genes),
                  aes(y = wl_min0, x = wa_min60)) + 
   geom_point(col = "black", alpha = 0.5) + 
-  ylab("Mean RNA Abundance (t = 0) (log TPM) LtD") + xlab("Mean RNA Abundance (t = 60) (log TPM) DtL") +
+  ylab("Mean RNA Abundance (t = 0)\n(log TPM)\nLight to Dark") + xlab("Mean RNA Abundance (t = 60)\n(log TPM)\nDark to Light") +
   plot_theme 
 
 ## Scatterplot of mean RNA abundance vs mean trimetyl for high confidence genes at DtL (Supplemental Figure S4J left)
@@ -1031,7 +1087,7 @@ figs4j_left <- ggplot(data = wa_rna_vs_h3k36_comparison_dat,
                       aes(y = transcript, x = h3k36_value)) + 
   geom_point(col = wa_col, alpha = 0.1) + 
   xlim(0, 1) +
-  ylab("Mean RNA Abundance (t = 60 min) (log TPM)") + xlab("Mean H3K36me3/H3 Signal (t = 60 min)") +
+  ylab("Mean RNA Abundance (t = 60 min)\n(log TPM)") + xlab("Mean H3K36me3/H3 Signal (t = 60 min)") +
   annotate(geom = "text", x = 0.9, y = 10, label = paste("r =", round(cor(wa_rna_vs_h3k36_comparison_dat$transcript, wa_rna_vs_h3k36_comparison_dat$h3k36_value, use = "pairwise.complete.obs"), 3))) +
   plot_theme 
 
@@ -1046,7 +1102,7 @@ figs4j_right <- ggplot(data = wl_rna_vs_h3k36_comparison_dat,
                        aes(y = transcript, x = h3k36_value)) + 
   geom_point(col = wl_col, alpha = 0.1) + 
   xlim(0, 1) +
-  ylab("Mean RNA Abundance (t = 0 min) (log TPM)") + xlab("Mean H3K36me3/H3 Signal (t = 0 min)") +
+  ylab("Mean RNA Abundance (t = 0 min)\n(log TPM)") + xlab("Mean H3K36me3/H3 Signal (t = 0 min)") +
   annotate(geom = "text", x = 0.9, y = 10, label = paste("r =", round(cor(wl_rna_vs_h3k36_comparison_dat$transcript, wl_rna_vs_h3k36_comparison_dat$h3k36_value, use = "pairwise.complete.obs"), 3))) +
   plot_theme 
 
