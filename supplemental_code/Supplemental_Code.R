@@ -1113,7 +1113,7 @@ gene_length_dat <- read.table("Supplemental_Data8.txt", header = FALSE) %>%
   dplyr::select(gene, gene_length)
 
 wa_genelength_vs_h3k36_comparison_dat <- inner_join(wa_h3k36_60min_dat,
-                                                        gene_length_dat) %>%
+                                                    gene_length_dat) %>%
   filter(gene %in% high_confidence_genes)
 
 figs4k_left <- ggplot(data = wa_genelength_vs_h3k36_comparison_dat,
@@ -1125,11 +1125,9 @@ figs4k_left <- ggplot(data = wa_genelength_vs_h3k36_comparison_dat,
   annotate(geom = "text", x = 0.9, y = 15000, label = paste("r =", round(cor(wa_genelength_vs_h3k36_comparison_dat$h3k36_value, wa_genelength_vs_h3k36_comparison_dat$gene_length), 3))) +
   plot_theme 
 
-cor(wa_genelength_vs_h3k36_comparison_dat$h3k36_value, wa_genelength_vs_h3k36_comparison_dat$gene_length)
-
 ## Scatterplot of gene length vs mean h3k36 levels for high confidence genes at LtD (Supplemental Figure S4K right)
 wl_genelength_vs_h3k36_comparison_dat <- inner_join(wl_h3k36_0min_dat,
-                                                        gene_length_dat) %>%
+                                                    gene_length_dat) %>%
   filter(gene %in% high_confidence_genes)
 
 figs4k_right <- ggplot(data = wa_genelength_vs_h3k36_comparison_dat, 
@@ -1151,7 +1149,7 @@ figs4l_left <- ggplot(data = wa_genelength_vs_rna_comparison_dat,
   geom_point(col = wa_col, alpha = 0.1) + 
   xlim(0, 11) +
   ylim(0, 15000) +
-  ylab("Gene Length (bp)") + xlab("Mean RNA Abundance (t = 60 min) (log TPM)") +
+  ylab("Gene Length (bp)") + xlab("Mean RNA Abundance (t = 60 min)\n(log TPM)") +
   annotate(geom = "text", x = 10, y = 15000, label = paste("r =", round(cor(wa_genelength_vs_rna_comparison_dat$transcript, wa_genelength_vs_rna_comparison_dat$gene_length), 3))) +
   plot_theme 
 
@@ -1165,7 +1163,7 @@ figs4l_right <- ggplot(data = wl_genelength_vs_rna_comparison_dat,
   geom_point(col = wl_col, alpha = 0.1) + 
   xlim(0, 11) +
   ylim(0, 15000) +
-  ylab("Gene Length (bp)") + xlab("Mean RNA Abundance (t = 0 min) (log TPM)") +
+  ylab("Gene Length (bp)") + xlab("Mean RNA Abundance (t = 0 min)\n(log TPM)") +
   annotate(geom = "text", x = 10, y = 15000, label = paste("r =", round(cor(wl_genelength_vs_rna_comparison_dat$transcript, wl_genelength_vs_rna_comparison_dat$gene_length, use = "pairwise.complete.obs"), 3))) +
   plot_theme 
 
@@ -1185,12 +1183,12 @@ figs4m <- ggplot(data = wa_full_60min_dat,
   ylim(0, 10) +
   xlim(0, 15000) +
   xlab("Gene Length (bp)") +
-  ylab("GLMM Estimate DtL") +
+  ylab("GLMM Estimate\nDark to Light") +
   scale_color_gradient(low = "yellow", high = "red") +
   plot_theme +
   theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "vertical") +
   guides(color = guide_colorbar(title.position = "top", 
-                                title = "RNA Abundance (log TPM) at t = 60 min"))
+                                title = "RNA Abundance\n(t = 60 min)\n(log TPM)"))
 
 ## ZIO beta GLMM rate errors by gene length, colored by RNA abundance for DtL (Supplemental Figure S4N)
 figs4n <- ggplot(data = wa_full_60min_dat,
@@ -1199,12 +1197,12 @@ figs4n <- ggplot(data = wa_full_60min_dat,
   ylim(0, 3) +
   xlim(0, 15000) +
   xlab("Gene Length (bp)") +
-  ylab("GLMM Estimate Error DtL") +
+  ylab("GLMM Estimate Error\nDark to Light") +
   scale_color_gradient(low = "yellow", high = "red") +
   plot_theme +
   theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "vertical") +
   guides(color = guide_colorbar(title.position = "top", 
-                                title = "RNA Abundance (log TPM) at t = 60 min"))
+                                title = "RNA Abundance\n(t = 60 min)\nlog TPM"))
 
 ## ZIO beta GLMM rates by mean h3k36 at time = 60, colored by RNA abundance for DtL (Supplemental Figure S4O)
 figs4o <- ggplot(data = wa_full_60min_dat,
@@ -1213,12 +1211,12 @@ figs4o <- ggplot(data = wa_full_60min_dat,
   ylim(0, 10) +
   xlim(0, 1) +
   xlab("Mean H3K36me3/H3 Signal (t = 60 min)") +
-  ylab("GLMM Estimate DtL") +
+  ylab("GLMM Estimate\nDark to Light") +
   scale_color_gradient(low = "yellow", high = "red") +
   plot_theme +
   theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "vertical") +
   guides(color = guide_colorbar(title.position = "top", 
-                                title = "RNA Abundance (log TPM) at t = 60 min"))
+                                title = "RNA Abundance\n(t = 60 min)\nlog TPM"))
 
 ## ZIO beta GLMM rate errors by mean h3k36 at time = 60, colored by RNA abundance for DtL (Supplemental Figure S4P)
 figs4p <- ggplot(data = wa_full_60min_dat,
@@ -1227,12 +1225,12 @@ figs4p <- ggplot(data = wa_full_60min_dat,
   ylim(0, 3) +
   xlim(0, 1) +
   xlab("Mean H3K36me3/H3 Signal (t = 60 min)") +
-  ylab("GLMM Estimate Error DtL") +
+  ylab("GLMM Estimate Error\nDark to Light") +
   scale_color_gradient(low = "yellow", high = "red") +
   plot_theme +
   theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "vertical") +
   guides(color = guide_colorbar(title.position = "top", 
-                                title = "RNA Abundance (log TPM) at t = 60 min"))
+                                title = "RNA Abundance\n(t = 60 min)\nlog TPM"))
 
 ## ZIO beta GLMM rates by gene length, colored by RNA abundance for LtD (Supplemental Figure S4Q)
 # Grab GLMM estimates, errors, average h3k36 and averate RNA at time = 0 for LtD, and gene length
@@ -1250,12 +1248,12 @@ figs4q <- ggplot(data = wl_full_0min_dat,
   scale_y_reverse(lim = c(0, -5)) +
   xlim(0, 15000) +
   xlab("Gene Length (bp)") +
-  ylab("GLMM Estimate LtD") +
+  ylab("GLMM Estimate\nLight to Dark") +
   scale_color_gradient(low = "yellow", high = "red") +
   plot_theme +
   theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "vertical") +
   guides(color = guide_colorbar(title.position = "top", 
-                                title = "RNA Abundance (log TPM) at t = 0 min"))
+                                title = "RNA Abundance\n(t = 0 min)\nlog TPM"))
 
 ## ZIO beta GLMM rate errors by gene length, colored by RNA abundance for LtD (Supplemental Figure S4R)
 figs4r <- ggplot(data = wl_full_0min_dat,
@@ -1264,12 +1262,12 @@ figs4r <- ggplot(data = wl_full_0min_dat,
   ylim(0, 3) +
   xlim(0, 15000) +
   xlab("Gene Length (bp)") +
-  ylab("GLMM Estimate Error LtD") +
+  ylab("GLMM Estimate Error\nLight to Dark") +
   scale_color_gradient(low = "yellow", high = "red") +
   plot_theme +
   theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "vertical") +
   guides(color = guide_colorbar(title.position = "top", 
-                                title = "RNA Abundance (log TPM) at t = 0 min"))
+                                title = "RNA Abundance\n(t = 0 min)\nlog TPM"))
 
 ## ZIO beta GLMM rates by mean h3k36 at time = 60, colored by RNA abundance for LtD (Supplemental Figure S4S)
 figs4s <- ggplot(data = wl_full_0min_dat,
@@ -1278,12 +1276,12 @@ figs4s <- ggplot(data = wl_full_0min_dat,
   scale_y_reverse(lim = c(0, -5)) +
   xlim(0, 1) +
   xlab("Mean H3K36me3/H3 Signal (t = 0 min)") +
-  ylab("GLMM Estimate LtD") +
+  ylab("GLMM Estimate\nLight to Dark") +
   scale_color_gradient(low = "yellow", high = "red") +
   plot_theme +
   theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "vertical") +
   guides(color = guide_colorbar(title.position = "top", 
-                                title = "RNA Abundance (log TPM) at t = 0 min"))
+                                title = "RNA Abundance\n(t = 0 min)\nlog TPM"))
 
 ## ZIO beta GLMM rate errors by mean h3k36 at time = 60, colored by RNA abundance for LtD (Supplemental Figure S4T)
 figs4t <- ggplot(data = wl_full_0min_dat,
@@ -1292,12 +1290,12 @@ figs4t <- ggplot(data = wl_full_0min_dat,
   ylim(0, 3) +
   xlim(0, 1) +
   xlab("Mean H3K36me3/H3 Signal (t = 0 min)") +
-  ylab("GLMM Estimate Error LtD") +
+  ylab("GLMM Estimate Error\nLight to Dark") +
   scale_color_gradient(low = "yellow", high = "red") +
   plot_theme +
   theme(legend.position = c(x = 0.75, y = 0.25), legend.direction = "vertical") +
   guides(color = guide_colorbar(title.position = "top", 
-                                title = "RNA Abundance (log TPM) at t = 0 min"))
+                                title = "RNA Abundance\n(t = 0 min)\nlog TPM"))
 
 ###########################################
 ##        
@@ -1341,7 +1339,9 @@ figs6b <- ggplot(data = abs_h3k36_dat %>%
                               assay %in% c("writer_loss", "writer_eraser_loss")),
                      aes(x = timepoint_min, y = value, col = assay)) +
   geom_line(aes(group = sample_unit), linetype = "dashed") +
-  scale_color_manual(values = c(wl_col, wel_col)) +
+  scale_color_manual(values = c(wl_col, wel_col), 
+                     labels = c(expression(paste(bolditalic("set2"), Delta, bold(" + LANS-Set2:"))), 
+                                expression(paste(bolditalic("set2"), Delta, bolditalic("rph1"), Delta, bold(" + LANS-Set2:"))))) +
   geom_smooth(data = pcl6_negbin_writer_eraser_loss_post_dat$timepoint,
               aes(x = `effect1__` * 60, y = `estimate__`/1000, ymin = `lower__`/1000, ymax = `upper__`/1000), 
               stat = "identity", se = TRUE, col = wel_col, method = "loess", size = 2) + 
@@ -1349,8 +1349,12 @@ figs6b <- ggplot(data = abs_h3k36_dat %>%
               aes(x = `effect1__` * 60, y = `estimate__`/1000, ymin = `lower__`/1000, ymax = `upper__`/1000), 
               stat = "identity", se = TRUE, col = wl_col, method = "loess", size = 2) +
   xlim(0, 90) +
-  ylab("Mean H3K36me3/H3") + xlab("Time (minutes)") +
-  plot_theme
+  ylab("Mean H3K36me3/H3\n(normalized ChIP Signal)") + xlab("Time (minutes)") +
+  annotate(geom = "text", x = 0, y = 0.6, label = "PCL6") +
+  plot_theme +
+  theme(legend.position = c(0.8, 0.9)) +
+  labs(col = "") +
+  guides(color = guide_legend(override.aes = list(size = 1.5, alpha = 1)))
 
 ## LtD and LtD + RPH1delta for relative PCL6 (Supplemental Figure 6C)
 ## Run the Stan model fits
@@ -1371,7 +1375,9 @@ figs6c <- ggplot(data = rel_h3k36_dat %>%
                                assay %in% c("writer_loss", "writer_eraser_loss")),
                       aes(x = timepoint_min, y = value, col = assay)) +
   geom_line(aes(group = sample_unit), linetype = "dashed") +
-  scale_color_manual(values = c(wl_col, wel_col)) +
+  scale_color_manual(values = c(wl_col, wel_col),
+                     labels = c(expression(paste(bolditalic("set2"), Delta, bold(" + LANS-Set2:"))), 
+                                expression(paste(bolditalic("set2"), Delta, bolditalic("rph1"), Delta, bold(" + LANS-Set2:"))))) +
   geom_smooth(data = pcl6_beta_writer_loss_post_dat$timepoint,
               aes(x = `effect1__` * 60, y = `estimate__`, ymin = `lower__`, ymax = `upper__`), 
               stat = "identity", se = TRUE, col = wl_col, method = "loess", size = 2) + 
@@ -1379,8 +1385,12 @@ figs6c <- ggplot(data = rel_h3k36_dat %>%
               aes(x = `effect1__` * 60, y = `estimate__`, ymin = `lower__`, ymax = `upper__`), 
               stat = "identity", se = TRUE, col = wel_col, method = "loess", size = 2) +
   ylim(0, 1) + xlim(0, 90) +
-  ylab("Proportional H3K36me3/H3") + xlab("Time (minutes)") +
-  plot_theme
+  ylab("Proportional H3K36me3/H3\n(as a fraction of each gene max)") + xlab("Time (minutes)") +
+  annotate(geom = "text", x = 85, y = 1, label = "PCL6") +
+  plot_theme +
+  theme(legend.position = c(0.15, 0.15)) +
+  labs(col = "") +
+  guides(color = guide_legend(override.aes = list(size = 1.5, alpha = 1)))
 
 ## ZIO beta GLMM rates by RNA abundance for dark to light + RPH1detla (Supplemental Figure S6D)
 # Grab RNA abundance and average at time = 0
