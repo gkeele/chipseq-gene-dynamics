@@ -1,7 +1,7 @@
 ##############################################################################
 ##############################################################################
 ###
-###       Title: Supplemental_Code.R
+###       Title: Supplemental_Code.txt
 ###
 ###       Description: R code to generate findings on the dynamics 
 ###                    of histone trimethylation in yeast genes
@@ -55,8 +55,7 @@ plot_theme <- theme(panel.grid.major = element_blank(),
 setwd("<your directory>")
 
 ###  Relative h3k36 methylation data (quantiles of maximum value)
-raw_rel_h3k36_dat <- read.table("Supplemental_Data1.txt")
-names(raw_rel_h3k36_dat) <- c("gene", "assay", "replicate", "timepoint", "value")
+raw_rel_h3k36_dat <- read.table("Supplemental_Data1.txt", header = TRUE)
 
 ## Process for further analysis
 rel_h3k36_dat <- raw_rel_h3k36_dat %>%
@@ -88,8 +87,7 @@ mean_rel_h3k36_dat <- rel_h3k36_dat %>%
   ungroup
 
 ###  Absolute h3k36 data
-raw_abs_h3k36_dat <- read.table("Supplemental_Data2.txt")
-names(raw_abs_h3k36_dat) <- c("gene", "assay", "replicate", "timepoint", "value")
+raw_abs_h3k36_dat <- read.table("Supplemental_Data2.txt", header = TRUE)
 
 ## Process for further analysis
 abs_h3k36_dat <- raw_abs_h3k36_dat %>%
@@ -551,7 +549,7 @@ fig4a_right <- ggplot(data = rel_h3k36_dat %>%
 
 ## Venn diagram of high confidence genes under DtL and LtD (Figure 4B)
 # ZOI Beta GLMM rate data
-beta_glmm_dat <- read.csv("Supplemental_Data3.csv", header = TRUE)
+beta_glmm_dat <- read.table("Supplemental_Data3.txt", header = TRUE)
 
 # High confidence genes
 high_confidence_genes_down <- beta_glmm_dat %>%
@@ -587,7 +585,7 @@ plot(fig4b, gp = gp, show = list(Faces = FALSE, Universe = FALSE))
 
 ## Comparison of ZIO beta GLMM rates to ZI negbin GLMM rates (Figure 4C)
 # ZI Negbin GLMM rate data
-negbin_glmm_dat <- read.csv("Supplemental_Data4.csv", header = TRUE)
+negbin_glmm_dat <- read.table("Supplemental_Data4.txt", header = TRUE)
 
 # Make data.frame to compare rates
 compare_rate_dat <- inner_join(beta_glmm_dat %>%
@@ -882,7 +880,7 @@ fig6e <- ggplot(data = beta_glmm_dat %>%
 
 ## Difference in modeled timepoints between writer loss and writer eraser loss (Figure 6F)
 # Parameter estimates data for model comparing writer loss and writer eraser loss
-loss_compare_dat <- read.csv("Supplemental_Data7.csv", header = TRUE)
+loss_compare_dat <- read.table("Supplemental_Data7.txt", header = TRUE)
 
 loss_compare_plot_dat <- loss_compare_dat %>%
   filter(grepl(x = parameter, pattern = "assay")) %>%
